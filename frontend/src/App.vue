@@ -5,13 +5,12 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { onMounted } from 'vue'
 
 const authStore = useAuthStore()
 
 onMounted(() => {
-  // Verificar se há token salvo e validar
   authStore.checkAuth()
 })
 </script>
