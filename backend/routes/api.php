@@ -21,7 +21,7 @@ use App\Http\Controllers\ExecucaoController;
 // Autenticação
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('jwt.auth');
 
 // Rotas públicas (catálogos)
 Route::prefix('catalogos')->group(function () {
@@ -33,7 +33,7 @@ Route::prefix('catalogos')->group(function () {
 });
 
 // Rotas protegidas
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('jwt.auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
