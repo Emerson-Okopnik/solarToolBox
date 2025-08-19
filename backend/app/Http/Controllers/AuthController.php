@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -20,19 +21,21 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $credentials = $request->only('email', 'password');
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$token = JWTAuth::attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => ['As credenciais fornecidas estão incorretas.'],
             ]);
         }
 
-        $token = $user->createToken('solar-toolbox')->plainTextToken;
+        $user = Auth::user();
 
         return $this->successResponse([
             'user' => $user,
             'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => config('jwt.ttl') * 60,
         ], 'Login realizado com sucesso');
     }
 
@@ -55,14 +58,16 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'company' => $request->company,
             'phone' => $request->phone,
-            'role' => 'user', // Role padrão
+            'role' => 'user',
         ]);
 
-        $token = $user->createToken('solar-toolbox')->plainTextToken;
+        $token = JWTAuth::fromUser($user);
 
         return $this->successResponse([
             'user' => $user,
             'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => config('jwt.ttl') * 60,
         ], 'Usuário registrado com sucesso', 201);
     }
 
@@ -71,8 +76,30 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        JWTAuth::invalidate(JWTAuth::getToken());
 
         return $this->successResponse(null, 'Logout realizado com sucesso');
+    }
+
+    /**
+     * Refresh token
+     */
+    public function refresh()
+    {
+        $token = JWTAuth::refresh(JWTAuth::getToken());
+
+        return $this->successResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => config('jwt.ttl') * 60,
+        ], 'Token renovado com sucesso');
+    }
+
+    /**
+     * Get user profile
+     */
+    public function me()
+    {
+        return $this->successResponse(Auth::user(), 'Perfil do usuário');
     }
 }
