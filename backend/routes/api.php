@@ -11,10 +11,12 @@ use App\Http\Controllers\ProjetoController;
 use App\Http\Controllers\ArranjoController;
 use App\Http\Controllers\StringController;
 use App\Http\Controllers\ExecucaoController;
+use App\Http\Controllers\Controller;
 
 // Autenticação (públicas)
 Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/test', [Controller::class, 'successResponse']);
 
 // Rotas públicas (catálogos)
 Route::prefix('catalogos')->group(function () {
