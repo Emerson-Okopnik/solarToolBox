@@ -551,7 +551,7 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Http\\Controllers\\ModuloController' => __DIR__ . '/../..' . '/app/Http/Controllers/ModuloController.php',
         'App\\Http\\Controllers\\ProjetoController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProjetoController.php',
         'App\\Http\\Controllers\\StringController' => __DIR__ . '/../..' . '/app/Http/Controllers/StringController.php',
-        'App\\Http\\Kernel' => __DIR__ . '/../..' . '/app/Http/Kernel.php',
+        'App\\Http\\Middleware\\JwtMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/JwtMiddleware.php',
         'App\\Models\\Arranjo' => __DIR__ . '/../..' . '/app/Models/Arranjo.php',
         'App\\Models\\Checagem' => __DIR__ . '/../..' . '/app/Models/Checagem.php',
         'App\\Models\\Clima' => __DIR__ . '/../..' . '/app/Models/Clima.php',

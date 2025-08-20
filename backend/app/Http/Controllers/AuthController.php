@@ -10,7 +10,6 @@ use Illuminate\Validation\ValidationException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-
 class AuthController extends Controller
 {
     /**
@@ -47,7 +46,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:6',
             'company' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
         ]);
@@ -61,7 +60,7 @@ class AuthController extends Controller
             'role' => 'user', // Role padrão
         ]);
 
-        $token = $user->createToken('solar-toolbox')->plainTextToken;
+        $token = JWT::encode($payload, config('jwt.secret'), config('jwt.alg'));
 
         return $this->successResponse([
             'user' => $user,

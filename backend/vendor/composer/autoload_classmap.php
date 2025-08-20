@@ -18,7 +18,7 @@ return array(
     'App\\Http\\Controllers\\ModuloController' => $baseDir . '/app/Http/Controllers/ModuloController.php',
     'App\\Http\\Controllers\\ProjetoController' => $baseDir . '/app/Http/Controllers/ProjetoController.php',
     'App\\Http\\Controllers\\StringController' => $baseDir . '/app/Http/Controllers/StringController.php',
-    'App\\Http\\Kernel' => $baseDir . '/app/Http/Kernel.php',
+    'App\\Http\\Middleware\\JwtMiddleware' => $baseDir . '/app/Http/Middleware/JwtMiddleware.php',
     'App\\Models\\Arranjo' => $baseDir . '/app/Models/Arranjo.php',
     'App\\Models\\Checagem' => $baseDir . '/app/Models/Checagem.php',
     'App\\Models\\Clima' => $baseDir . '/app/Models/Clima.php',
