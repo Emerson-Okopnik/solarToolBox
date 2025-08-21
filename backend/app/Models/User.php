@@ -15,6 +15,9 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'role',
+        'company',
+        'phone',
     ];
 
     protected $hidden = [
@@ -22,14 +25,45 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    // Relacionamentos
+    public function projetos()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(Projeto::class);
     }
 
+    public function execucoes()
+    {
+        return $this->hasMany(Execucao::class);
+    }
+
+    public function relatorios()
+    {
+        return $this->hasMany(Relatorio::class);
+    }
+
+    // Scopes
+    public function scopeEngineers($query)
+    {
+        return $query->whereIn('role', ['admin', 'engineer']);
+    }
+
+    // Helpers
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isEngineer()
+    {
+        return in_array($this->role, ['admin', 'engineer']);
+    }
+
+    // Métodos obrigatórios do JWT
     public function getJWTIdentifier()
     {
         return $this->getKey();
@@ -37,6 +71,9 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'role' => $this->role,
+            'company' => $this->company,
+        ];
     }
 }
