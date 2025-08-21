@@ -16,45 +16,56 @@ class ExecucaoController extends Controller
         $this->calculationEngine = $calculationEngine;
     }
 
-    /**
-     * Lista execuções de um projeto
-     */
+    //Lista execuções de um projeto
     public function index(Projeto $projeto)
     {
         // Verificar acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $execucoes = $projeto->execucoes()
-                            ->with('user')
-                            ->orderBy('created_at', 'desc')
-                            ->paginate(10);
+                             ->with('user')
+                             ->orderBy('created_at', 'desc')
+                             ->paginate(10);
 
-        return $this->successResponse($execucoes);
+        return response()->json([
+            'success' => true,
+            'data' => $execucoes,
+        ]);
     }
 
-    /**
-     * Executa análise do projeto
-     */
+    //Executa análise do projeto
     public function executar(Request $request, Projeto $projeto)
     {
         // Verificar acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         // Validar se projeto tem arranjos e strings
         if ($projeto->arranjos()->count() === 0) {
-            return $this->errorResponse('Projeto deve ter pelo menos um arranjo configurado', 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'Projeto deve ter pelo menos um arranjo configurado',
+            ], 400);
         }
 
         $temStrings = $projeto->arranjos()
-                             ->whereHas('strings')
-                             ->exists();
+                              ->whereHas('strings')
+                              ->exists();
 
         if (!$temStrings) {
-            return $this->errorResponse('Projeto deve ter pelo menos uma string configurada', 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'Projeto deve ter pelo menos uma string configurada',
+            ], 400);
         }
 
         $request->validate([
@@ -81,36 +92,41 @@ class ExecucaoController extends Controller
 
             $execucao = $this->calculationEngine->executarAnalise($projeto, $configuracoes);
 
-            return $this->successResponse($execucao, 'Análise executada com sucesso', 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Análise executada com sucesso',
+                'data' => $execucao,
+            ], 201);
 
         } catch (\Exception $e) {
-            return $this->errorResponse(
-                'Erro ao executar análise: ' . $e->getMessage(),
-                400,
-                ['details' => method_exists($e, 'getDetails') ? $e->getDetails() : []]
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao executar análise: ' . $e->getMessage(),
+                'details' => method_exists($e, 'getDetails') ? $e->getDetails() : [],
+            ], 400);
         }
     }
 
-    /**
-     * Exibe resultado de uma execução
-     */
+    //Exibe resultado de uma execução
     public function show(Execucao $execucao)
     {
         // Verificar acesso ao projeto
         if ($execucao->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $execucao->load([
             'projeto',
             'user',
-            'checagens' => function($query) {
+            'checagens' => function ($query) {
                 $query->orderBy('tipo')->orderBy('resultado', 'desc');
             },
-            'recomendacoes' => function($query) {
+            'recomendacoes' => function ($query) {
                 $query->orderBy('prioridade')->orderBy('categoria');
-            }
+            },
         ]);
 
         // Estatísticas detalhadas
@@ -124,13 +140,17 @@ class ExecucaoController extends Controller
             'checagens_por_tipo' => $execucao->checagens->groupBy('tipo')->map->count(),
             'recomendacoes_por_prioridade' => $execucao->recomendacoes->groupBy('prioridade')->map->count(),
             'recomendacoes_por_categoria' => $execucao->recomendacoes->groupBy('categoria')->map->count(),
-            'tempo_execucao' => $execucao->concluida_em ? 
-                $execucao->concluida_em->diffInSeconds($execucao->iniciada_em) : null,
+            'tempo_execucao' => $execucao->concluida_em
+                ? $execucao->concluida_em->diffInSeconds($execucao->iniciada_em)
+                : null,
         ];
 
-        return $this->successResponse([
-            'execucao' => $execucao,
-            'estatisticas' => $estatisticas
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'execucao' => $execucao,
+                'estatisticas' => $estatisticas,
+            ],
         ]);
     }
 }

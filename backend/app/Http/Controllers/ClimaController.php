@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class ClimaController extends Controller
 {
-    /**
-     * Lista todos os climas
-     */
+    //Lista todos os climas
     public function index(Request $request)
     {
         $query = Clima::query();
@@ -29,26 +27,29 @@ class ClimaController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nome', 'like', "%{$search}%")
                   ->orWhere('cidade', 'like', "%{$search}%")
                   ->orWhere('estado', 'like', "%{$search}%");
             });
         }
 
+        // Ordenação
         $sortBy = $request->get('sort_by', 'nome');
         $sortOrder = $request->get('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 15);
+        // Paginação
+        $perPage = (int) $request->get('per_page', 15);
         $climas = $query->paginate($perPage);
 
-        return $this->successResponse($climas);
+        return response()->json([
+            'success' => true,
+            'data' => $climas,
+        ]);
     }
 
-    /**
-     * Cria novo clima
-     */
+    //Cria novo clima
     public function store(Request $request)
     {
         $request->validate([
@@ -69,20 +70,23 @@ class ClimaController extends Controller
 
         $clima = Clima::create($request->all());
 
-        return $this->successResponse($clima, 'Clima criado com sucesso', 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Clima criado com sucesso',
+            'data' => $clima,
+        ], 201);
     }
 
-    /**
-     * Exibe clima específico
-     */
+    //Exibe clima específico
     public function show(Clima $clima)
     {
-        return $this->successResponse($clima);
+        return response()->json([
+            'success' => true,
+            'data' => $clima,
+        ]);
     }
 
-    /**
-     * Atualiza clima
-     */
+    //Atualiza clima
     public function update(Request $request, Clima $clima)
     {
         $request->validate([
@@ -103,24 +107,29 @@ class ClimaController extends Controller
 
         $clima->update($request->all());
 
-        return $this->successResponse($clima, 'Clima atualizado com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Clima atualizado com sucesso',
+            'data' => $clima,
+        ]);
     }
 
-    /**
-     * Remove clima
-     */
+    //Remove clima
     public function destroy(Clima $clima)
     {
         // Verificar se há projetos usando este clima
         if ($clima->projetos()->exists()) {
-            return $this->errorResponse(
-                'Não é possível excluir clima que está sendo usado em projetos',
-                400
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é possível excluir clima que está sendo usado em projetos',
+            ], 400);
         }
 
         $clima->delete();
 
-        return $this->successResponse(null, 'Clima excluído com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Clima excluído com sucesso',
+        ]);
     }
 }

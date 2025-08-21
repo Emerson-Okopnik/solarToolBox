@@ -12,21 +12,9 @@ use App\Http\Controllers\ArranjoController;
 use App\Http\Controllers\StringController;
 use App\Http\Controllers\ExecucaoController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
-
 // Autenticação
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-
-Route::middleware('jwt.auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/me', [AuthController::class, 'me']);
-});
 
 // Rotas públicas (catálogos)
 Route::prefix('catalogos')->group(function () {

@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class FabricanteController extends Controller
 {
-    /**
-     * Lista todos os fabricantes
-     */
+    //Lista todos os fabricantes
     public function index(Request $request)
     {
         $query = Fabricante::query();
@@ -21,7 +19,7 @@ class FabricanteController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nome', 'like', "%{$search}%")
                   ->orWhere('pais', 'like', "%{$search}%");
             });
@@ -33,15 +31,16 @@ class FabricanteController extends Controller
         $query->orderBy($sortBy, $sortOrder);
 
         // Paginação
-        $perPage = $request->get('per_page', 15);
+        $perPage = (int) $request->get('per_page', 15);
         $fabricantes = $query->paginate($perPage);
 
-        return $this->successResponse($fabricantes);
+        return response()->json([
+            'success' => true,
+            'data' => $fabricantes,
+        ]);
     }
 
-    /**
-     * Cria novo fabricante
-     */
+    //Cria novo fabricante
     public function store(Request $request)
     {
         $request->validate([
@@ -54,26 +53,32 @@ class FabricanteController extends Controller
 
         $fabricante = Fabricante::create($request->all());
 
-        return $this->successResponse($fabricante, 'Fabricante criado com sucesso', 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Fabricante criado com sucesso',
+            'data' => $fabricante,
+        ], 201);
     }
 
-    /**
-     * Exibe fabricante específico
-     */
+    //Exibe fabricante específico
     public function show(Fabricante $fabricante)
     {
-        $fabricante->load(['modulos' => function($query) {
-            $query->where('ativo', true)->orderBy('modelo');
-        }, 'inversores' => function($query) {
-            $query->where('ativo', true)->orderBy('modelo');
-        }]);
+        $fabricante->load([
+            'modulos' => function ($query) {
+                $query->where('ativo', true)->orderBy('modelo');
+            },
+            'inversores' => function ($query) {
+                $query->where('ativo', true)->orderBy('modelo');
+            },
+        ]);
 
-        return $this->successResponse($fabricante);
+        return response()->json([
+            'success' => true,
+            'data' => $fabricante,
+        ]);
     }
 
-    /**
-     * Atualiza fabricante
-     */
+    //Atualiza fabricante
     public function update(Request $request, Fabricante $fabricante)
     {
         $request->validate([
@@ -86,24 +91,29 @@ class FabricanteController extends Controller
 
         $fabricante->update($request->all());
 
-        return $this->successResponse($fabricante, 'Fabricante atualizado com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Fabricante atualizado com sucesso',
+            'data' => $fabricante,
+        ]);
     }
 
-    /**
-     * Remove fabricante
-     */
+    //Remove fabricante
     public function destroy(Fabricante $fabricante)
     {
         // Verificar se há módulos ou inversores associados
         if ($fabricante->modulos()->exists() || $fabricante->inversores()->exists()) {
-            return $this->errorResponse(
-                'Não é possível excluir fabricante com módulos ou inversores associados',
-                400
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é possível excluir fabricante com módulos ou inversores associados',
+            ], 400);
         }
 
         $fabricante->delete();
 
-        return $this->successResponse(null, 'Fabricante excluído com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Fabricante excluído com sucesso',
+        ]);
     }
 }

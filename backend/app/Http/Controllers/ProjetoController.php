@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class ProjetoController extends Controller
 {
-    /**
-     * Lista projetos do usuário
-     */
+    //Lista projetos do usuário
     public function index(Request $request)
     {
         $query = Projeto::with(['clima', 'user'])
@@ -22,25 +20,28 @@ class ProjetoController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nome', 'like', "%{$search}%")
                   ->orWhere('cliente', 'like', "%{$search}%");
             });
         }
 
+        // Ordenação
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 15);
+        // Paginação
+        $perPage = (int) $request->get('per_page', 15);
         $projetos = $query->paginate($perPage);
 
-        return $this->successResponse($projetos);
+        return response()->json([
+            'success' => true,
+            'data' => $projetos,
+        ]);
     }
 
-    /**
-     * Cria novo projeto
-     */
+    //Cria novo projeto
     public function store(Request $request)
     {
         $request->validate([
@@ -67,17 +68,22 @@ class ProjetoController extends Controller
 
         $projeto->load(['clima', 'user']);
 
-        return $this->successResponse($projeto, 'Projeto criado com sucesso', 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto criado com sucesso',
+            'data' => $projeto,
+        ], 201);
     }
 
-    /**
-     * Exibe projeto específico
-     */
+    //Exibe projeto específico
     public function show(Projeto $projeto)
     {
         // Verificar se o usuário tem acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $projeto->load([
@@ -86,37 +92,41 @@ class ProjetoController extends Controller
             'arranjos.modulo.fabricante',
             'arranjos.inversor.fabricante',
             'arranjos.strings',
-            'execucoes' => function($query) {
+            'execucoes' => function ($query) {
                 $query->latest()->limit(5);
-            }
+            },
         ]);
 
         // Estatísticas do projeto
         $estatisticas = [
             'total_arranjos' => $projeto->arranjos->count(),
-            'total_strings' => $projeto->arranjos->sum(function($arranjo) {
+            'total_strings' => $projeto->arranjos->sum(function ($arranjo) {
                 return $arranjo->strings->count();
             }),
-            'potencia_total' => $projeto->arranjos->sum(function($arranjo) {
+            'potencia_total' => $projeto->arranjos->sum(function ($arranjo) {
                 return $arranjo->strings->sum('potencia_total');
             }),
             'ultima_execucao' => $projeto->execucoes->first()?->created_at,
         ];
 
-        return $this->successResponse([
-            'projeto' => $projeto,
-            'estatisticas' => $estatisticas
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'projeto' => $projeto,
+                'estatisticas' => $estatisticas,
+            ],
         ]);
     }
 
-    /**
-     * Atualiza projeto
-     */
+    //Atualiza projeto
     public function update(Request $request, Projeto $projeto)
     {
         // Verificar se o usuário tem acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $request->validate([
@@ -133,29 +143,37 @@ class ProjetoController extends Controller
         $projeto->update($request->all());
         $projeto->load(['clima', 'user']);
 
-        return $this->successResponse($projeto, 'Projeto atualizado com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto atualizado com sucesso',
+            'data' => $projeto,
+        ]);
     }
 
-    /**
-     * Remove projeto
-     */
+    //Remove projeto
     public function destroy(Projeto $projeto)
     {
         // Verificar se o usuário tem acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         // Verificar se há execuções
         if ($projeto->execucoes()->exists()) {
-            return $this->errorResponse(
-                'Não é possível excluir projeto com execuções. Considere alterar o status.',
-                400
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é possível excluir projeto com execuções. Considere alterar o status.',
+            ], 400);
         }
 
         $projeto->delete();
 
-        return $this->successResponse(null, 'Projeto excluído com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto excluído com sucesso',
+        ]);
     }
 }

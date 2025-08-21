@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class ModuloController extends Controller
 {
-    /**
-     * Lista todos os módulos
-     */
+    //Lista todos os módulos
     public function index(Request $request)
     {
         $query = Modulo::with('fabricante');
@@ -29,9 +27,9 @@ class ModuloController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('modelo', 'like', "%{$search}%")
-                  ->orWhereHas('fabricante', function($fab) use ($search) {
+                  ->orWhereHas('fabricante', function ($fab) use ($search) {
                       $fab->where('nome', 'like', "%{$search}%");
                   });
             });
@@ -51,15 +49,16 @@ class ModuloController extends Controller
         $sortOrder = $request->get('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 15);
+        $perPage = (int) $request->get('per_page', 15);
         $modulos = $query->paginate($perPage);
 
-        return $this->successResponse($modulos);
+        return response()->json([
+            'success' => true,
+            'data' => $modulos,
+        ]);
     }
 
-    /**
-     * Cria novo módulo
-     */
+    //Cria novo módulo
     public function store(Request $request)
     {
         $request->validate([
@@ -92,29 +91,37 @@ class ModuloController extends Controller
                         ->exists();
 
         if ($exists) {
-            return $this->validationErrorResponse([
-                'modelo' => ['Este modelo já existe para o fabricante selecionado.']
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erros de validação.',
+                'errors' => [
+                    'modelo' => ['Este modelo já existe para o fabricante selecionado.'],
+                ],
+            ], 422);
         }
 
         $modulo = Modulo::create($request->all());
         $modulo->load('fabricante');
 
-        return $this->successResponse($modulo, 'Módulo criado com sucesso', 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Módulo criado com sucesso',
+            'data' => $modulo,
+        ], 201);
     }
 
-    /**
-     * Exibe módulo específico
-     */
+    //Exibe módulo específico
     public function show(Modulo $modulo)
     {
         $modulo->load('fabricante');
-        return $this->successResponse($modulo);
+
+        return response()->json([
+            'success' => true,
+            'data' => $modulo,
+        ]);
     }
 
-    /**
-     * Atualiza módulo
-     */
+    //Atualiza módulo
     public function update(Request $request, Modulo $modulo)
     {
         $request->validate([
@@ -148,32 +155,42 @@ class ModuloController extends Controller
                         ->exists();
 
         if ($exists) {
-            return $this->validationErrorResponse([
-                'modelo' => ['Este modelo já existe para o fabricante selecionado.']
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erros de validação.',
+                'errors' => [
+                    'modelo' => ['Este modelo já existe para o fabricante selecionado.'],
+                ],
+            ], 422);
         }
 
         $modulo->update($request->all());
         $modulo->load('fabricante');
 
-        return $this->successResponse($modulo, 'Módulo atualizado com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Módulo atualizado com sucesso',
+            'data' => $modulo,
+        ]);
     }
 
-    /**
-     * Remove módulo
-     */
+    //Remove módulo
+
     public function destroy(Modulo $modulo)
     {
         // Verificar se há arranjos usando este módulo
         if ($modulo->arranjos()->exists()) {
-            return $this->errorResponse(
-                'Não é possível excluir módulo que está sendo usado em arranjos',
-                400
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é possível excluir módulo que está sendo usado em arranjos',
+            ], 400);
         }
 
         $modulo->delete();
 
-        return $this->successResponse(null, 'Módulo excluído com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Módulo excluído com sucesso',
+        ]);
     }
 }

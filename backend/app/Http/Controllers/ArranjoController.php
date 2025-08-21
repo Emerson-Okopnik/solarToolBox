@@ -8,32 +8,39 @@ use Illuminate\Http\Request;
 
 class ArranjoController extends Controller
 {
-    /**
-     * Lista arranjos de um projeto
-     */
+    //Lista arranjos de um projeto
+
     public function index(Projeto $projeto)
     {
         // Verificar acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $arranjos = $projeto->arranjos()
-                           ->with(['modulo.fabricante', 'inversor.fabricante', 'strings'])
-                           ->orderBy('nome')
-                           ->get();
+                            ->with(['modulo.fabricante', 'inversor.fabricante', 'strings'])
+                            ->orderBy('nome')
+                            ->get();
 
-        return $this->successResponse($arranjos);
+        return response()->json([
+            'success' => true,
+            'data' => $arranjos,
+        ]);
     }
 
-    /**
-     * Cria novo arranjo
-     */
+    //Cria novo arranjo
+
     public function store(Request $request, Projeto $projeto)
     {
         // Verificar acesso ao projeto
         if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $request->validate([
@@ -58,17 +65,23 @@ class ArranjoController extends Controller
 
         $arranjo->load(['modulo.fabricante', 'inversor.fabricante']);
 
-        return $this->successResponse($arranjo, 'Arranjo criado com sucesso', 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Arranjo criado com sucesso',
+            'data' => $arranjo,
+        ], 201);
     }
 
-    /**
-     * Exibe arranjo específico
-     */
+    //Exibe arranjo específico
+
     public function show(Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
         if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $arranjo->load([
@@ -76,20 +89,25 @@ class ArranjoController extends Controller
             'modulo.fabricante',
             'inversor.fabricante',
             'inversor.mppts',
-            'strings.mppt'
+            'strings.mppt',
         ]);
 
-        return $this->successResponse($arranjo);
+        return response()->json([
+            'success' => true,
+            'data' => $arranjo,
+        ]);
     }
 
-    /**
-     * Atualiza arranjo
-     */
+    //Atualiza arranjo
+
     public function update(Request $request, Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
         if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         $request->validate([
@@ -105,29 +123,38 @@ class ArranjoController extends Controller
         $arranjo->update($request->all());
         $arranjo->load(['modulo.fabricante', 'inversor.fabricante']);
 
-        return $this->successResponse($arranjo, 'Arranjo atualizado com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Arranjo atualizado com sucesso',
+            'data' => $arranjo,
+        ]);
     }
 
-    /**
-     * Remove arranjo
-     */
+    //Remove arranjo
+
     public function destroy(Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
         if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            return $this->errorResponse('Acesso negado', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
         }
 
         // Verificar se há strings
         if ($arranjo->strings()->exists()) {
-            return $this->errorResponse(
-                'Não é possível excluir arranjo com strings configuradas',
-                400
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é possível excluir arranjo com strings configuradas',
+            ], 400);
         }
 
         $arranjo->delete();
 
-        return $this->successResponse(null, 'Arranjo excluído com sucesso');
+        return response()->json([
+            'success' => true,
+            'message' => 'Arranjo excluído com sucesso',
+        ]);
     }
 }

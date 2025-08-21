@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class InversorController extends Controller
 {
-    /**
-     * Lista todos os inversores
-     */
+    //Lista todos os inversores
     public function index(Request $request)
     {
         $query = Inversor::with('fabricante');
@@ -31,9 +29,9 @@ class InversorController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('modelo', 'like', "%{$search}%")
-                  ->orWhereHas('fabricante', function($fab) use ($search) {
+                  ->orWhereHas('fabricante', function ($fab) use ($search) {
                       $fab->where('nome', 'like', "%{$search}%");
                   });
             });
@@ -48,19 +46,22 @@ class InversorController extends Controller
             $query->where('potencia_ac_nominal', '<=', $request->get('potencia_max'));
         }
 
+        // Ordenação
         $sortBy = $request->get('sort_by', 'modelo');
         $sortOrder = $request->get('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 15);
+        // Paginação
+        $perPage = (int) $request->get('per_page', 15);
         $inversores = $query->paginate($perPage);
 
-        return $this->successResponse($inversores);
+        return response()->json([
+            'success' => true,
+            'data' => $inversores,
+        ]);
     }
 
-    /**
-     * Cria novo inversor
-     */
+    //Cria novo inversor
     public function store(Request $request)
     {
         $request->validate([
@@ -82,7 +83,7 @@ class InversorController extends Controller
             'altitude_max' => 'nullable|numeric|min:0|max:10000',
             'umidade_max' => 'nullable|numeric|min:0|max:100',
             'ativo' => 'boolean',
-            // Dados dos MPPTs
+            // MPPTs
             'mppts' => 'required|array|min:1',
             'mppts.*.numero' => 'required|integer|min:1',
             'mppts.*.tensao_mppt_min' => 'required|numeric|min:50|max:1000',
@@ -97,16 +98,24 @@ class InversorController extends Controller
                           ->exists();
 
         if ($exists) {
-            return $this->validationErrorResponse([
-                'modelo' => ['Este modelo já existe para o fabricante selecionado.']
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erros de validação.',
+                'errors' => [
+                    'modelo' => ['Este modelo já existe para o fabricante selecionado.'],
+                ],
+            ], 422);
         }
 
         // Validar número de MPPTs
-        if (count($request->mppts) != $request->num_mppts) {
-            return $this->validationErrorResponse([
-                'mppts' => ['O número de MPPTs deve corresponder ao valor informado.']
-            ]);
+        if (count($request->mppts) != (int) $request->num_mppts) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erros de validação.',
+                'errors' => [
+                    'mppts' => ['O número de MPPTs deve corresponder ao valor informado.'],
+                ],
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -122,29 +131,39 @@ class InversorController extends Controller
             DB::commit();
 
             $inversor->load(['fabricante', 'mppts']);
-            return $this->successResponse($inversor, 'Inversor criado com sucesso', 201);
 
+            return response()->json([
+                'success' => true,
+                'message' => 'Inversor criado com sucesso',
+                'data' => $inversor,
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->errorResponse('Erro ao criar inversor: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao criar inversor: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
-    /**
-     * Exibe inversor específico
-     */
+    //Exibe inversor específico
     public function show(Inversor $inversor)
     {
-        $inversor->load(['fabricante', 'mppts' => function($query) {
-            $query->orderBy('numero');
-        }]);
+        $inversor->load([
+            'fabricante',
+            'mppts' => function ($query) {
+                $query->orderBy('numero');
+            },
+        ]);
 
-        return $this->successResponse($inversor);
+        return response()->json([
+            'success' => true,
+            'data' => $inversor,
+        ]);
     }
 
-    /**
-     * Atualiza inversor
-     */
+    //Atualiza inversor
     public function update(Request $request, Inversor $inversor)
     {
         $request->validate([
@@ -166,6 +185,7 @@ class InversorController extends Controller
             'altitude_max' => 'nullable|numeric|min:0|max:10000',
             'umidade_max' => 'nullable|numeric|min:0|max:100',
             'ativo' => 'boolean',
+            // MPPTs
             'mppts' => 'required|array|min:1',
             'mppts.*.numero' => 'required|integer|min:1',
             'mppts.*.tensao_mppt_min' => 'required|numeric|min:50|max:1000',
@@ -181,15 +201,23 @@ class InversorController extends Controller
                           ->exists();
 
         if ($exists) {
-            return $this->validationErrorResponse([
-                'modelo' => ['Este modelo já existe para o fabricante selecionado.']
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erros de validação.',
+                'errors' => [
+                    'modelo' => ['Este modelo já existe para o fabricante selecionado.'],
+                ],
+            ], 422);
         }
 
-        if (count($request->mppts) != $request->num_mppts) {
-            return $this->validationErrorResponse([
-                'mppts' => ['O número de MPPTs deve corresponder ao valor informado.']
-            ]);
+        if (count($request->mppts) != (int) $request->num_mppts) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erros de validação.',
+                'errors' => [
+                    'mppts' => ['O número de MPPTs deve corresponder ao valor informado.'],
+                ],
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -206,47 +234,62 @@ class InversorController extends Controller
             DB::commit();
 
             $inversor->load(['fabricante', 'mppts']);
-            return $this->successResponse($inversor, 'Inversor atualizado com sucesso');
 
+            return response()->json([
+                'success' => true,
+                'message' => 'Inversor atualizado com sucesso',
+                'data' => $inversor,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->errorResponse('Erro ao atualizar inversor: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao atualizar inversor: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
-    /**
-     * Remove inversor
-     */
+    // Remove inversor
     public function destroy(Inversor $inversor)
     {
         // Verificar se há arranjos usando este inversor
         if ($inversor->arranjos()->exists()) {
-            return $this->errorResponse(
-                'Não é possível excluir inversor que está sendo usado em arranjos',
-                400
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Não é possível excluir inversor que está sendo usado em arranjos',
+            ], 400);
         }
 
         DB::beginTransaction();
         try {
             $inversor->mppts()->delete();
             $inversor->delete();
+
             DB::commit();
 
-            return $this->successResponse(null, 'Inversor excluído com sucesso');
-
+            return response()->json([
+                'success' => true,
+                'message' => 'Inversor excluído com sucesso',
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->errorResponse('Erro ao excluir inversor: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao excluir inversor: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
-    /**
-     * Retorna MPPTs de um inversor
-     */
+    //Retorna MPPTs de um inversor
     public function getMppts(Inversor $inversor)
     {
         $mppts = $inversor->mppts()->orderBy('numero')->get();
-        return $this->successResponse($mppts);
+
+        return response()->json([
+            'success' => true,
+            'data' => $mppts,
+        ]);
     }
 }
