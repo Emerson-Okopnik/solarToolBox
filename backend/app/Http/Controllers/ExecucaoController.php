@@ -20,7 +20,7 @@ class ExecucaoController extends Controller
     public function index(Projeto $projeto)
     {
         // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -42,7 +42,7 @@ class ExecucaoController extends Controller
     public function executar(Request $request, Projeto $projeto)
     {
         // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -101,8 +101,7 @@ class ExecucaoController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro ao executar análise: ' . $e->getMessage(),
-                'details' => method_exists($e, 'getDetails') ? $e->getDetails() : [],
+                'message' => 'Erro ao executar análise: ' . $e->getMessage()
             ], 400);
         }
     }
@@ -111,7 +110,7 @@ class ExecucaoController extends Controller
     public function show(Execucao $execucao)
     {
         // Verificar acesso ao projeto
-        if ($execucao->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($execucao->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',

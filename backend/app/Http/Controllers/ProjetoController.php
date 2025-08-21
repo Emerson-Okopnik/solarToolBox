@@ -79,7 +79,7 @@ class ProjetoController extends Controller
     public function show(Projeto $projeto)
     {
         // Verificar se o usuário tem acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -122,7 +122,7 @@ class ProjetoController extends Controller
     public function update(Request $request, Projeto $projeto)
     {
         // Verificar se o usuário tem acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -154,7 +154,7 @@ class ProjetoController extends Controller
     public function destroy(Projeto $projeto)
     {
         // Verificar se o usuário tem acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',

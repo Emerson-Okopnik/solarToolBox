@@ -12,7 +12,7 @@ class StringController extends Controller
     public function index(Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -34,7 +34,7 @@ class StringController extends Controller
     public function store(Request $request, Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -89,7 +89,7 @@ class StringController extends Controller
     public function show(StringModel $string)
     {
         // Verificar acesso ao projeto
-        if ($string->arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($string->arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -108,7 +108,7 @@ class StringController extends Controller
     public function update(Request $request, StringModel $string)
     {
         // Verificar acesso ao projeto
-        if ($string->arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        if ($string->arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -163,7 +163,7 @@ class StringController extends Controller
     public function destroy(StringModel $string)
     {
         // Verificar acesso ao projeto
-        if ($string->arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($string->arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
