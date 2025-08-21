@@ -18,6 +18,7 @@ class HtmlString implements Htmlable, Stringable
      * Create a new HTML string instance.
      *
      * @param  string  $html
+     * @return void
      */
     public function __construct($html = '')
     {
@@ -41,7 +42,7 @@ class HtmlString implements Htmlable, Stringable
      */
     public function isEmpty()
     {
-        return ($this->html ?? '') === '';
+        return $this->html === '';
     }
 
     /**
@@ -61,6 +62,6 @@ class HtmlString implements Htmlable, Stringable
      */
     public function __toString()
     {
-        return $this->toHtml() ?? '';
+        return $this->toHtml();
     }
 }

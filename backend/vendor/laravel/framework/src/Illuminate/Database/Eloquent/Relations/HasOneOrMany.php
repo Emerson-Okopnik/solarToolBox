@@ -3,7 +3,7 @@
 namespace Illuminate\Database\Eloquent\Relations;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Concerns\InteractsWithDictionary;
 use Illuminate\Database\Eloquent\Relations\Concerns\SupportsInverseRelations;
@@ -41,6 +41,7 @@ abstract class HasOneOrMany extends Relation
      * @param  TDeclaringModel  $parent
      * @param  string  $foreignKey
      * @param  string  $localKey
+     * @return void
      */
     public function __construct(Builder $query, Model $parent, $foreignKey, $localKey)
     {
@@ -118,7 +119,7 @@ abstract class HasOneOrMany extends Relation
      * @param  string  $relation
      * @return array<int, TDeclaringModel>
      */
-    public function matchOne(array $models, EloquentCollection $results, $relation)
+    public function matchOne(array $models, Collection $results, $relation)
     {
         return $this->matchOneOrMany($models, $results, $relation, 'one');
     }
@@ -131,7 +132,7 @@ abstract class HasOneOrMany extends Relation
      * @param  string  $relation
      * @return array<int, TDeclaringModel>
      */
-    public function matchMany(array $models, EloquentCollection $results, $relation)
+    public function matchMany(array $models, Collection $results, $relation)
     {
         return $this->matchOneOrMany($models, $results, $relation, 'many');
     }
@@ -145,7 +146,7 @@ abstract class HasOneOrMany extends Relation
      * @param  string  $type
      * @return array<int, TDeclaringModel>
      */
-    protected function matchOneOrMany(array $models, EloquentCollection $results, $relation, $type)
+    protected function matchOneOrMany(array $models, Collection $results, $relation, $type)
     {
         $dictionary = $this->buildDictionary($results);
 
@@ -188,7 +189,7 @@ abstract class HasOneOrMany extends Relation
      * @param  \Illuminate\Database\Eloquent\Collection<int, TRelatedModel>  $results
      * @return array<array<int, TRelatedModel>>
      */
-    protected function buildDictionary(EloquentCollection $results)
+    protected function buildDictionary(Collection $results)
     {
         $foreign = $this->getForeignKeyName();
 
@@ -437,34 +438,6 @@ abstract class HasOneOrMany extends Relation
     }
 
     /**
-     * Create a Collection of new instances of the related model, allowing mass-assignment.
-     *
-     * @param  iterable  $records
-     * @return \Illuminate\Database\Eloquent\Collection<int, TRelatedModel>
-     */
-    public function forceCreateMany(iterable $records)
-    {
-        $instances = $this->related->newCollection();
-
-        foreach ($records as $record) {
-            $instances->push($this->forceCreate($record));
-        }
-
-        return $instances;
-    }
-
-    /**
-     * Create a Collection of new instances of the related model, allowing mass-assignment and without raising any events to the parent model.
-     *
-     * @param  iterable  $records
-     * @return \Illuminate\Database\Eloquent\Collection<int, TRelatedModel>
-     */
-    public function forceCreateManyQuietly(iterable $records)
-    {
-        return Model::withoutEvents(fn () => $this->forceCreateMany($records));
-    }
-
-    /**
      * Set the foreign ID for creating a related model.
      *
      * @param  TRelatedModel  $model
@@ -473,14 +446,6 @@ abstract class HasOneOrMany extends Relation
     protected function setForeignAttributesForCreate(Model $model)
     {
         $model->setAttribute($this->getForeignKeyName(), $this->getParentKey());
-
-        foreach ($this->getQuery()->pendingAttributes as $key => $value) {
-            $attributes ??= $model->getAttributes();
-
-            if (! array_key_exists($key, $attributes)) {
-                $model->setAttribute($key, $value);
-            }
-        }
 
         $this->applyInverseRelationToModel($model);
     }

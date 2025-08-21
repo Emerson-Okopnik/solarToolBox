@@ -5,7 +5,6 @@ namespace Illuminate\Config;
 use ArrayAccess;
 use Illuminate\Contracts\Config\Repository as ConfigContract;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 
@@ -16,7 +15,7 @@ class Repository implements ArrayAccess, ConfigContract
     /**
      * All of the configuration items.
      *
-     * @var array<string,mixed>
+     * @var array
      */
     protected $items = [];
 
@@ -24,6 +23,7 @@ class Repository implements ArrayAccess, ConfigContract
      * Create a new configuration repository.
      *
      * @param  array  $items
+     * @return void
      */
     public function __construct(array $items = [])
     {
@@ -60,8 +60,8 @@ class Repository implements ArrayAccess, ConfigContract
     /**
      * Get many configuration values.
      *
-     * @param  array<string|int,mixed>  $keys
-     * @return array<string,mixed>
+     * @param  array  $keys
+     * @return array
      */
     public function getMany($keys)
     {
@@ -176,18 +176,6 @@ class Repository implements ArrayAccess, ConfigContract
         }
 
         return $value;
-    }
-
-    /**
-     * Get the specified array configuration value as a collection.
-     *
-     * @param  string  $key
-     * @param  (\Closure():(array<array-key, mixed>|null))|array<array-key, mixed>|null  $default
-     * @return Collection<array-key, mixed>
-     */
-    public function collection(string $key, $default = null): Collection
-    {
-        return new Collection($this->array($key, $default));
     }
 
     /**

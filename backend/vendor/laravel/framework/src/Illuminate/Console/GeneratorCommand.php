@@ -5,7 +5,6 @@ namespace Illuminate\Console;
 use Illuminate\Console\Concerns\CreatesMatchingTest;
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Finder\Finder;
@@ -121,6 +120,7 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
      * Create a new generator command instance.
      *
      * @param  \Illuminate\Filesystem\Filesystem  $files
+     * @return void
      */
     public function __construct(Filesystem $files)
     {
@@ -235,8 +235,8 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
         }
 
         return is_dir(app_path('Models'))
-            ? $rootNamespace.'Models\\'.$model
-            : $rootNamespace.$model;
+                    ? $rootNamespace.'Models\\'.$model
+                    : $rootNamespace.$model;
     }
 
     /**
@@ -248,7 +248,7 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
     {
         $modelPath = is_dir(app_path('Models')) ? app_path('Models') : app_path();
 
-        return (new Collection(Finder::create()->files()->depth(0)->in($modelPath)))
+        return collect(Finder::create()->files()->depth(0)->in($modelPath))
             ->map(fn ($file) => $file->getBasename('.php'))
             ->sort()
             ->values()
@@ -268,7 +268,7 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
             return [];
         }
 
-        return (new Collection(Finder::create()->files()->depth(0)->in($eventPath)))
+        return collect(Finder::create()->files()->depth(0)->in($eventPath))
             ->map(fn ($file) => $file->getBasename('.php'))
             ->sort()
             ->values()
@@ -460,7 +460,7 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
     {
         return in_array(
             strtolower($name),
-            (new Collection($this->reservedNames))
+            collect($this->reservedNames)
                 ->transform(fn ($name) => strtolower($name))
                 ->all()
         );

@@ -45,7 +45,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      *
      * @var string
      */
-    const VERSION = '12.25.0';
+    const VERSION = '11.30.0';
 
     /**
      * The base path for the Laravel installation.
@@ -212,6 +212,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      * Create a new Illuminate application instance.
      *
      * @param  string|null  $basePath
+     * @return void
      */
     public function __construct($basePath = null)
     {
@@ -222,7 +223,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->registerBaseBindings();
         $this->registerBaseServiceProviders();
         $this->registerCoreContainerAliases();
-        $this->registerLaravelCloudServices();
     }
 
     /**
@@ -254,10 +254,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
     {
         return match (true) {
             isset($_ENV['APP_BASE_PATH']) => $_ENV['APP_BASE_PATH'],
-            default => dirname(array_values(array_filter(
-                array_keys(ClassLoader::getRegisteredLoaders()),
-                fn ($path) => ! str_starts_with($path, 'phar://'),
-            ))[0]),
+            default => dirname(array_keys(ClassLoader::getRegisteredLoaders())[0]),
         };
     }
 
@@ -301,28 +298,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
         $this->register(new LogServiceProvider($this));
         $this->register(new ContextServiceProvider($this));
         $this->register(new RoutingServiceProvider($this));
-    }
-
-    /**
-     * Register any services needed for Laravel Cloud.
-     *
-     * @return void
-     */
-    protected function registerLaravelCloudServices()
-    {
-        if (! laravel_cloud()) {
-            return;
-        }
-
-        $this['events']->listen(
-            'bootstrapping: *',
-            fn ($bootstrapper) => Cloud::bootstrapperBootstrapping($this, Str::after($bootstrapper, 'bootstrapping: '))
-        );
-
-        $this['events']->listen(
-            'bootstrapped: *',
-            fn ($bootstrapper) => Cloud::bootstrapperBootstrapped($this, Str::after($bootstrapper, 'bootstrapped: '))
-        );
     }
 
     /**
@@ -423,14 +398,14 @@ class Application extends Container implements ApplicationContract, CachesConfig
 
         $this->useBootstrapPath(value(function () {
             return is_dir($directory = $this->basePath('.laravel'))
-                ? $directory
-                : $this->basePath('bootstrap');
+                        ? $directory
+                        : $this->basePath('bootstrap');
         }));
 
         $this->useLangPath(value(function () {
             return is_dir($directory = $this->resourcePath('lang'))
-                ? $directory
-                : $this->basePath('lang');
+                        ? $directory
+                        : $this->basePath('lang');
         }));
     }
 
@@ -784,9 +759,7 @@ class Application extends Container implements ApplicationContract, CachesConfig
      */
     public function detectEnvironment(Closure $callback)
     {
-        $args = $this->runningInConsole() && isset($_SERVER['argv'])
-            ? $_SERVER['argv']
-            : null;
+        $args = $_SERVER['argv'] ?? null;
 
         return $this['env'] = (new EnvironmentDetector)->detect($callback, $args);
     }
@@ -861,13 +834,13 @@ class Application extends Container implements ApplicationContract, CachesConfig
      */
     public function registerConfiguredProviders()
     {
-        $providers = (new Collection($this->make('config')->get('app.providers')))
-            ->partition(fn ($provider) => str_starts_with($provider, 'Illuminate\\'));
+        $providers = Collection::make($this->make('config')->get('app.providers'))
+                        ->partition(fn ($provider) => str_starts_with($provider, 'Illuminate\\'));
 
         $providers->splice(1, 0, [$this->make(PackageManifest::class)->providers()]);
 
         (new ProviderRepository($this, new Filesystem, $this->getCachedServicesPath()))
-            ->load($providers->collapse()->toArray());
+                    ->load($providers->collapse()->toArray());
 
         $this->fireAppCallbacks($this->registeredCallbacks);
     }
@@ -1042,11 +1015,9 @@ class Application extends Container implements ApplicationContract, CachesConfig
     /**
      * Resolve the given type from the container.
      *
-     * @template TClass of object
-     *
-     * @param  string|class-string<TClass>  $abstract
+     * @param  string  $abstract
      * @param  array  $parameters
-     * @return ($abstract is class-string<TClass> ? TClass : mixed)
+     * @return mixed
      *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
@@ -1060,12 +1031,10 @@ class Application extends Container implements ApplicationContract, CachesConfig
     /**
      * Resolve the given type from the container.
      *
-     * @template TClass of object
-     *
-     * @param  string|class-string<TClass>|callable  $abstract
+     * @param  string  $abstract
      * @param  array  $parameters
      * @param  bool  $raiseEvents
-     * @return ($abstract is class-string<TClass> ? TClass : mixed)
+     * @return mixed
      *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      * @throws \Illuminate\Contracts\Container\CircularDependencyException
@@ -1368,8 +1337,8 @@ class Application extends Container implements ApplicationContract, CachesConfig
         }
 
         return Str::startsWith($env, $this->absoluteCachePathPrefixes)
-            ? $env
-            : $this->basePath($env);
+                ? $env
+                : $this->basePath($env);
     }
 
     /**
@@ -1497,17 +1466,6 @@ class Application extends Container implements ApplicationContract, CachesConfig
     }
 
     /**
-     * Determine if the given service is a deferred service.
-     *
-     * @param  string  $service
-     * @return bool
-     */
-    public function isDeferredService($service)
-    {
-        return isset($this->deferredServices[$service]);
-    }
-
-    /**
      * Add an array of services to the application's deferred services.
      *
      * @param  array  $services
@@ -1519,16 +1477,14 @@ class Application extends Container implements ApplicationContract, CachesConfig
     }
 
     /**
-     * Remove an array of services from the application's deferred services.
+     * Determine if the given service is a deferred service.
      *
-     * @param  array  $services
-     * @return void
+     * @param  string  $service
+     * @return bool
      */
-    public function removeDeferredServices(array $services)
+    public function isDeferredService($service)
     {
-        foreach ($services as $service) {
-            unset($this->deferredServices[$service]);
-        }
+        return isset($this->deferredServices[$service]);
     }
 
     /**

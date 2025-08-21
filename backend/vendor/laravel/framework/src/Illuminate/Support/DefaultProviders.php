@@ -13,6 +13,8 @@ class DefaultProviders
 
     /**
      * Create a new default provider collection.
+     *
+     * @return void
      */
     public function __construct(?array $providers = null)
     {
@@ -64,7 +66,7 @@ class DefaultProviders
      */
     public function replace(array $replacements)
     {
-        $current = new Collection($this->providers);
+        $current = collect($this->providers);
 
         foreach ($replacements as $from => $to) {
             $key = $current->search($from);
@@ -83,10 +85,10 @@ class DefaultProviders
      */
     public function except(array $providers)
     {
-        return new static((new Collection($this->providers))
-            ->reject(fn ($p) => in_array($p, $providers))
-            ->values()
-            ->toArray());
+        return new static(collect($this->providers)
+                ->reject(fn ($p) => in_array($p, $providers))
+                ->values()
+                ->toArray());
     }
 
     /**

@@ -5,19 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role',
-        'company',
-        'phone',
     ];
 
     protected $hidden = [
@@ -25,41 +22,21 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
-
-    // Relacionamentos
-    public function projetos()
+    protected function casts(): array
     {
-        return $this->hasMany(Projeto::class);
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 
-    public function execucoes()
+    public function getJWTIdentifier()
     {
-        return $this->hasMany(Execucao::class);
+        return $this->getKey();
     }
 
-    public function relatorios()
+    public function getJWTCustomClaims()
     {
-        return $this->hasMany(Relatorio::class);
-    }
-
-    // Scopes
-    public function scopeEngineers($query)
-    {
-        return $query->whereIn('role', ['admin', 'engineer']);
-    }
-
-    // Helpers
-    public function isAdmin()
-    {
-        return $this->role === 'admin';
-    }
-
-    public function isEngineer()
-    {
-        return in_array($this->role, ['admin', 'engineer']);
+        return [];
     }
 }

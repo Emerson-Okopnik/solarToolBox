@@ -6,9 +6,6 @@ use ArrayAccess;
 use BadMethodCallException;
 use Closure;
 use DateTimeInterface;
-use Illuminate\Cache\Events\CacheFlushed;
-use Illuminate\Cache\Events\CacheFlushFailed;
-use Illuminate\Cache\Events\CacheFlushing;
 use Illuminate\Cache\Events\CacheHit;
 use Illuminate\Cache\Events\CacheMissed;
 use Illuminate\Cache\Events\ForgettingKey;
@@ -24,7 +21,6 @@ use Illuminate\Contracts\Cache\Repository as CacheContract;
 use Illuminate\Contracts\Cache\Store;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\InteractsWithTime;
 use Illuminate\Support\Traits\Macroable;
 
@@ -72,6 +68,7 @@ class Repository implements ArrayAccess, CacheContract
      *
      * @param  \Illuminate\Contracts\Cache\Store  $store
      * @param  array  $config
+     * @return void
      */
     public function __construct(Store $store, array $config = [])
     {
@@ -144,15 +141,13 @@ class Repository implements ArrayAccess, CacheContract
     {
         $this->event(new RetrievingManyKeys($this->getName(), $keys));
 
-        $values = $this->store->many((new Collection($keys))
-            ->map(fn ($value, $key) => is_string($key) ? $key : $value)
-            ->values()
-            ->all()
-        );
+        $values = $this->store->many(collect($keys)->map(function ($value, $key) {
+            return is_string($key) ? $key : $value;
+        })->values()->all());
 
-        return (new Collection($values))
-            ->map(fn ($value, $key) => $this->handleManyResult($keys, $key, $value))
-            ->all();
+        return collect($values)->map(function ($value, $key) use ($keys) {
+            return $this->handleManyResult($keys, $key, $value);
+        })->all();
     }
 
     /**
@@ -483,10 +478,9 @@ class Repository implements ArrayAccess, CacheContract
      * @param  array{ 0: \DateTimeInterface|\DateInterval|int, 1: \DateTimeInterface|\DateInterval|int }  $ttl
      * @param  (callable(): TCacheValue)  $callback
      * @param  array{ seconds?: int, owner?: string }|null  $lock
-     * @param  bool  $alwaysDefer
      * @return TCacheValue
      */
-    public function flexible($key, $ttl, $callback, $lock = null, $alwaysDefer = false)
+    public function flexible($key, $ttl, $callback, $lock = null)
     {
         [
             $key => $value,
@@ -521,7 +515,7 @@ class Repository implements ArrayAccess, CacheContract
             });
         };
 
-        defer($refresh, "illuminate:cache:flexible:{$key}", $alwaysDefer);
+        defer($refresh, "illuminate:cache:flexible:{$key}");
 
         return $value;
     }
@@ -580,17 +574,7 @@ class Repository implements ArrayAccess, CacheContract
      */
     public function clear(): bool
     {
-        $this->event(new CacheFlushing($this->getName()));
-
-        $result = $this->store->flush();
-
-        if ($result) {
-            $this->event(new CacheFlushed($this->getName()));
-        } else {
-            $this->event(new CacheFlushFailed($this->getName()));
-        }
-
-        return $result;
+        return $this->store->flush();
     }
 
     /**
@@ -640,9 +624,7 @@ class Repository implements ArrayAccess, CacheContract
         $duration = $this->parseDateInterval($ttl);
 
         if ($duration instanceof DateTimeInterface) {
-            $duration = (int) ceil(
-                Carbon::now()->diffInMilliseconds($duration, false) / 1000
-            );
+            $duration = Carbon::now()->diffInSeconds($duration, false);
         }
 
         return (int) ($duration > 0 ? $duration : 0);
@@ -653,7 +635,7 @@ class Repository implements ArrayAccess, CacheContract
      *
      * @return string|null
      */
-    public function getName()
+    protected function getName()
     {
         return $this->config['store'] ?? null;
     }

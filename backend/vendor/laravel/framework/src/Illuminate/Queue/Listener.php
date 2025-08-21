@@ -5,7 +5,6 @@ namespace Illuminate\Queue;
 use Closure;
 use Symfony\Component\Process\Process;
 
-use function Illuminate\Support\artisan_binary;
 use function Illuminate\Support\php_binary;
 
 class Listener
@@ -49,6 +48,7 @@ class Listener
      * Create a new queue listener.
      *
      * @param  string  $commandPath
+     * @return void
      */
     public function __construct($commandPath)
     {
@@ -72,7 +72,7 @@ class Listener
      */
     protected function artisanBinary()
     {
-        return artisan_binary();
+        return defined('ARTISAN_BINARY') ? ARTISAN_BINARY : 'artisan';
     }
 
     /**

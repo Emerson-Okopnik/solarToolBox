@@ -3,31 +3,25 @@
 namespace Illuminate\Pagination;
 
 use Closure;
-use Illuminate\Contracts\Support\CanBeEscapedWhenCastToString;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;
 use Illuminate\Support\Traits\Tappable;
-use Illuminate\Support\Traits\TransformsToResourceCollection;
 use Stringable;
 use Traversable;
 
 /**
- * @template TKey of array-key
- *
- * @template-covariant TValue
- *
- * @mixin \Illuminate\Support\Collection<TKey, TValue>
+ * @mixin \Illuminate\Support\Collection
  */
-abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlable, Stringable
+abstract class AbstractPaginator implements Htmlable, Stringable
 {
-    use ForwardsCalls, Tappable, TransformsToResourceCollection;
+    use ForwardsCalls, Tappable;
 
     /**
      * All of the items being paginated.
      *
-     * @var \Illuminate\Support\Collection<TKey, TValue>
+     * @var \Illuminate\Support\Collection
      */
     protected $items;
 
@@ -72,13 +66,6 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
      * @var string
      */
     protected $pageName = 'page';
-
-    /**
-     * Indicates that the paginator's string representation should be escaped when __toString is invoked.
-     *
-     * @var bool
-     */
-    protected $escapeWhenCastingToString = false;
 
     /**
      * The number of links to display on each side of current page link.
@@ -168,9 +155,9 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
      */
     public function getUrlRange($start, $end)
     {
-        return Collection::range($start, $end)
-            ->mapWithKeys(fn ($page) => [$page => $this->url($page)])
-            ->all();
+        return collect(range($start, $end))->mapWithKeys(function ($page) {
+            return [$page => $this->url($page)];
+        })->all();
     }
 
     /**
@@ -323,7 +310,7 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Get the slice of items being paginated.
      *
-     * @return array<TKey, TValue>
+     * @return array
      */
     public function items()
     {
@@ -353,12 +340,8 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Transform each item in the slice of items using a callback.
      *
-     * @template TMapValue
-     *
-     * @param  callable(TValue, TKey): TMapValue  $callback
+     * @param  callable  $callback
      * @return $this
-     *
-     * @phpstan-this-out static<TKey, TMapValue>
      */
     public function through(callable $callback)
     {
@@ -666,7 +649,7 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Get an iterator for the items.
      *
-     * @return \ArrayIterator<TKey, TValue>
+     * @return \ArrayIterator
      */
     public function getIterator(): Traversable
     {
@@ -706,7 +689,7 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Get the paginator's underlying collection.
      *
-     * @return \Illuminate\Support\Collection<TKey, TValue>
+     * @return \Illuminate\Support\Collection
      */
     public function getCollection()
     {
@@ -716,7 +699,7 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Set the paginator's underlying collection.
      *
-     * @param  \Illuminate\Support\Collection<TKey, TValue>  $collection
+     * @param  \Illuminate\Support\Collection  $collection
      * @return $this
      */
     public function setCollection(Collection $collection)
@@ -739,7 +722,7 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Determine if the given item exists.
      *
-     * @param  TKey  $key
+     * @param  mixed  $key
      * @return bool
      */
     public function offsetExists($key): bool
@@ -750,8 +733,8 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Get the item at the given offset.
      *
-     * @param  TKey  $key
-     * @return TValue|null
+     * @param  mixed  $key
+     * @return mixed
      */
     public function offsetGet($key): mixed
     {
@@ -761,8 +744,8 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Set the item at the given offset.
      *
-     * @param  TKey|null  $key
-     * @param  TValue  $value
+     * @param  mixed  $key
+     * @param  mixed  $value
      * @return void
      */
     public function offsetSet($key, $value): void
@@ -773,7 +756,7 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
     /**
      * Unset the item at the given key.
      *
-     * @param  TKey  $key
+     * @param  mixed  $key
      * @return void
      */
     public function offsetUnset($key): void
@@ -810,21 +793,6 @@ abstract class AbstractPaginator implements CanBeEscapedWhenCastToString, Htmlab
      */
     public function __toString()
     {
-        return $this->escapeWhenCastingToString
-            ? e((string) $this->render())
-            : (string) $this->render();
-    }
-
-    /**
-     * Indicate that the paginator's string representation should be escaped when __toString is invoked.
-     *
-     * @param  bool  $escape
-     * @return $this
-     */
-    public function escapeWhenCastingToString($escape = true)
-    {
-        $this->escapeWhenCastingToString = $escape;
-
-        return $this;
+        return (string) $this->render();
     }
 }

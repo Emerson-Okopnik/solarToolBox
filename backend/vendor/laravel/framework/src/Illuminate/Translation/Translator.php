@@ -84,6 +84,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
      *
      * @param  \Illuminate\Contracts\Translation\Loader  $loader
      * @param  string  $locale
+     * @return void
      */
     public function __construct(Loader $loader, $locale)
     {
@@ -117,7 +118,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
         $locale = $locale ?: $this->locale;
 
         // We should temporarily disable the handling of missing translation keys
-        // while performing the existence check. After the check, we will turn
+        // while perfroming the existence check. After the check, we will turn
         // the missing translation keys handling back to its original value.
         $handleMissingTranslationKeys = $this->handleMissingTranslationKeys;
 
@@ -209,9 +210,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
             $number = count($number);
         }
 
-        if (! isset($replace['count'])) {
-            $replace['count'] = $number;
-        }
+        $replace['count'] = $number;
 
         return $this->makeReplacements(
             $this->getSelector()->choose($line, $number, $locale), $replace
@@ -401,17 +400,6 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
     public function addNamespace($namespace, $hint)
     {
         $this->loader->addNamespace($namespace, $hint);
-    }
-
-    /**
-     * Add a new path to the loader.
-     *
-     * @param  string  $path
-     * @return void
-     */
-    public function addPath($path)
-    {
-        $this->loader->addPath($path);
     }
 
     /**

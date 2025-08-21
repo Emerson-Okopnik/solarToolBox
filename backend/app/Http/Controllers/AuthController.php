@@ -4,77 +4,59 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
+
 
 class AuthController extends Controller
 {
-    /**
-     * Login do usuário
-     */
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
+    public function login(Request $request) {
+        $credentials = $request->only('email', 'password');
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['As credenciais fornecidas estão incorretas.'],
-            ]);
+        try {
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return response()->json(['error' => 'Credenciais inválidas'], 401);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Não foi possível criar o token'], 500);
         }
 
-        $token = $user->createToken('solar-toolbox')->plainTextToken;
-
-        return $this->successResponse([
-            'user' => $user,
-            'token' => $token,
-        ], 'Login realizado com sucesso');
+        return response()->json(compact('token'));
     }
 
-    /**
-     * Registro de novo usuário
-     */
-    public function register(Request $request)
-    {
-        $request->validate([
+    public function register(Request $request) {
+        
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'company' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
         ]);
-
+    
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+    
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'company' => $request->company,
-            'phone' => $request->phone,
-            'role' => 'user', // Role padrão
+            'password' => $request->password, 
         ]);
-
-        $token = JWT::encode($payload, config('jwt.secret'), config('jwt.alg'));
-
-        return $this->successResponse([
-            'user' => $user,
-            'token' => $token,
-        ], 'Usuário registrado com sucesso', 201);
+    
+        
+        try {
+            $token = JWTAuth::fromUser($user);
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Não foi possível criar o token'], 500);
+        }
+    
+        
+        return response()->json(compact('user', 'token'), 201);
     }
 
-    /**
-     * Logout do usuário
-     */
-    public function logout(Request $request)
-    {
-        $request->user()->currentAccessToken()->delete();
-
-        return $this->successResponse(null, 'Logout realizado com sucesso');
+    public function user(Request $request) {
+        $user = JWTAuth::parseToken()->authenticate();
+        return response()->json($user);
     }
 }

@@ -4,7 +4,6 @@ namespace Illuminate\Database\Query\Grammars;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class SQLiteGrammar extends Grammar
@@ -161,8 +160,8 @@ class SQLiteGrammar extends Grammar
     protected function compileIndexHint(Builder $query, $indexHint)
     {
         return $indexHint->type === 'force'
-            ? "indexed by {$indexHint->index}"
-            : '';
+                ? "indexed by {$indexHint->index}"
+                : '';
     }
 
     /**
@@ -289,17 +288,15 @@ class SQLiteGrammar extends Grammar
     {
         $jsonGroups = $this->groupJsonColumnsForUpdate($values);
 
-        return (new Collection($values))
-            ->reject(fn ($value, $key) => $this->isJsonSelector($key))
-            ->merge($jsonGroups)
-            ->map(function ($value, $key) use ($jsonGroups) {
-                $column = last(explode('.', $key));
+        return collect($values)->reject(function ($value, $key) {
+            return $this->isJsonSelector($key);
+        })->merge($jsonGroups)->map(function ($value, $key) use ($jsonGroups) {
+            $column = last(explode('.', $key));
 
-                $value = isset($jsonGroups[$key]) ? $this->compileJsonPatch($column, $value) : $this->parameter($value);
+            $value = isset($jsonGroups[$key]) ? $this->compileJsonPatch($column, $value) : $this->parameter($value);
 
-                return $this->wrap($column).' = '.$value;
-            })
-            ->implode(', ');
+            return $this->wrap($column).' = '.$value;
+        })->implode(', ');
     }
 
     /**
@@ -317,7 +314,7 @@ class SQLiteGrammar extends Grammar
 
         $sql .= ' on conflict ('.$this->columnize($uniqueBy).') do update set ';
 
-        $columns = (new Collection($update))->map(function ($value, $key) {
+        $columns = collect($update)->map(function ($value, $key) {
             return is_numeric($key)
                 ? $this->wrap($value).' = '.$this->wrapValue('excluded').'.'.$this->wrap($value)
                 : $this->wrap($key).' = '.$this->parameter($value);
@@ -388,11 +385,11 @@ class SQLiteGrammar extends Grammar
     {
         $groups = $this->groupJsonColumnsForUpdate($values);
 
-        $values = (new Collection($values))
-            ->reject(fn ($value, $key) => $this->isJsonSelector($key))
-            ->merge($groups)
-            ->map(fn ($value) => is_array($value) ? json_encode($value) : $value)
-            ->all();
+        $values = collect($values)->reject(function ($value, $key) {
+            return $this->isJsonSelector($key);
+        })->merge($groups)->map(function ($value) {
+            return is_array($value) ? json_encode($value) : $value;
+        })->all();
 
         $cleanBindings = Arr::except($bindings, 'select');
 
@@ -441,12 +438,8 @@ class SQLiteGrammar extends Grammar
      */
     public function compileTruncate(Builder $query)
     {
-        [$schema, $table] = $query->getConnection()->getSchemaBuilder()->parseSchemaAndTable($query->from);
-
-        $schema = $schema ? $this->wrapValue($schema).'.' : '';
-
         return [
-            'delete from '.$schema.'sqlite_sequence where name = ?' => [$query->getConnection()->getTablePrefix().$table],
+            'delete from sqlite_sequence where name = ?' => [$this->getTablePrefix().$query->from],
             'delete from '.$this->wrapTable($query->from) => [],
         ];
     }

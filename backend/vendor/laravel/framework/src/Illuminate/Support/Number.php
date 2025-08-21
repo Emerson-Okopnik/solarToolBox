@@ -49,47 +49,6 @@ class Number
     }
 
     /**
-     * Parse the given string according to the specified format type.
-     *
-     * @param  string  $string
-     * @param  int|null  $type
-     * @param  string|null  $locale
-     * @return int|float|false
-     */
-    public static function parse(string $string, ?int $type = NumberFormatter::TYPE_DOUBLE, ?string $locale = null): int|float
-    {
-        static::ensureIntlExtensionIsInstalled();
-
-        $formatter = new NumberFormatter($locale ?? static::$locale, NumberFormatter::DECIMAL);
-
-        return $formatter->parse($string, $type);
-    }
-
-    /**
-     * Parse a string into an integer according to the specified locale.
-     *
-     * @param  string  $string
-     * @param  string|null  $locale
-     * @return int|false
-     */
-    public static function parseInt(string $string, ?string $locale = null): int
-    {
-        return self::parse($string, NumberFormatter::TYPE_INT32, $locale);
-    }
-
-    /**
-     * Parse a string into a float according to the specified locale.
-     *
-     * @param  string  $string
-     * @param  string|null  $locale
-     * @return float|false
-     */
-    public static function parseFloat(string $string, ?string $locale = null): float
-    {
-        return self::parse($string, NumberFormatter::TYPE_DOUBLE, $locale);
-    }
-
-    /**
      * Spell out the given number in the given locale.
      *
      * @param  int|float  $number
@@ -132,24 +91,6 @@ class Number
     }
 
     /**
-     * Spell out the given number in the given locale in ordinal form.
-     *
-     * @param  int|float  $number
-     * @param  string|null  $locale
-     * @return string
-     */
-    public static function spellOrdinal(int|float $number, ?string $locale = null)
-    {
-        static::ensureIntlExtensionIsInstalled();
-
-        $formatter = new NumberFormatter($locale ?? static::$locale, NumberFormatter::SPELLOUT);
-
-        $formatter->setTextAttribute(NumberFormatter::DEFAULT_RULESET, '%spellout-ordinal');
-
-        return $formatter->format($number);
-    }
-
-    /**
      * Convert the given number to its percentage equivalent.
      *
      * @param  int|float  $number
@@ -179,18 +120,13 @@ class Number
      * @param  int|float  $number
      * @param  string  $in
      * @param  string|null  $locale
-     * @param  int|null  $precision
      * @return string|false
      */
-    public static function currency(int|float $number, string $in = '', ?string $locale = null, ?int $precision = null)
+    public static function currency(int|float $number, string $in = '', ?string $locale = null)
     {
         static::ensureIntlExtensionIsInstalled();
 
         $formatter = new NumberFormatter($locale ?? static::$locale, NumberFormatter::CURRENCY);
-
-        if (! is_null($precision)) {
-            $formatter->setAttribute(NumberFormatter::FRACTION_DIGITS, $precision);
-        }
 
         return $formatter->formatCurrency($number, ! empty($in) ? $in : static::$currency);
     }
@@ -234,7 +170,7 @@ class Number
      * @param  int  $precision
      * @param  int|null  $maxPrecision
      * @param  bool  $abbreviate
-     * @return string|false
+     * @return false|string
      */
     public static function forHumans(int|float $number, int $precision = 0, ?int $maxPrecision = null, bool $abbreviate = false)
     {
@@ -308,22 +244,21 @@ class Number
      *
      * @param  int|float  $to
      * @param  int|float  $by
-     * @param  int|float  $start
      * @param  int|float  $offset
      * @return array
      */
-    public static function pairs(int|float $to, int|float $by, int|float $start = 0, int|float $offset = 1)
+    public static function pairs(int|float $to, int|float $by, int|float $offset = 1)
     {
         $output = [];
 
-        for ($lower = $start; $lower < $to; $lower += $by) {
-            $upper = $lower + $by - $offset;
+        for ($lower = 0; $lower < $to; $lower += $by) {
+            $upper = $lower + $by;
 
             if ($upper > $to) {
                 $upper = $to;
             }
 
-            $output[] = [$lower, $upper];
+            $output[] = [$lower + $offset, $upper];
         }
 
         return $output;
@@ -353,11 +288,7 @@ class Number
 
         static::useLocale($locale);
 
-        try {
-            return $callback();
-        } finally {
-            static::useLocale($previousLocale);
-        }
+        return tap($callback(), fn () => static::useLocale($previousLocale));
     }
 
     /**
@@ -373,11 +304,7 @@ class Number
 
         static::useCurrency($currency);
 
-        try {
-            return $callback();
-        } finally {
-            static::useCurrency($previousCurrency);
-        }
+        return tap($callback(), fn () => static::useCurrency($previousCurrency));
     }
 
     /**
@@ -426,8 +353,6 @@ class Number
      * Ensure the "intl" PHP extension is installed.
      *
      * @return void
-     *
-     * @throws \RuntimeException
      */
     protected static function ensureIntlExtensionIsInstalled()
     {

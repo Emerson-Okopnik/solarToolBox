@@ -6,7 +6,6 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\View\AnonymousComponent;
 use Illuminate\View\DynamicComponent;
@@ -54,6 +53,7 @@ class ComponentTagCompiler
      * @param  array  $aliases
      * @param  array  $namespaces
      * @param  \Illuminate\View\Compilers\BladeCompiler|null  $blade
+     * @return void
      */
     public function __construct(array $aliases = [], array $namespaces = [], ?BladeCompiler $blade = null)
     {
@@ -336,8 +336,8 @@ class ComponentTagCompiler
                 }
 
                 $formattedComponent = str_starts_with($component, $path['prefix'].$delimiter)
-                    ? Str::after($component, $delimiter)
-                    : $component;
+                        ? Str::after($component, $delimiter)
+                        : $component;
 
                 if (! is_null($guess = match (true) {
                     $viewFactory->exists($guess = $path['prefixHash'].$delimiter.$formattedComponent) => $guess,
@@ -362,7 +362,7 @@ class ComponentTagCompiler
      */
     protected function guessAnonymousComponentUsingNamespaces(Factory $viewFactory, string $component)
     {
-        return (new Collection($this->blade->getAnonymousComponentNamespaces()))
+        return collect($this->blade->getAnonymousComponentNamespaces())
             ->filter(function ($directory, $prefix) use ($component) {
                 return Str::startsWith($component, $prefix.'::');
             })
@@ -409,10 +409,6 @@ class ComponentTagCompiler
         if (class_exists($class = $this->namespaces[$prefix].'\\'.$this->formatClassName($segments[1]))) {
             return $class;
         }
-
-        if (class_exists($class = $class.'\\'.Str::afterLast($class, '\\'))) {
-            return $class;
-        }
     }
 
     /**
@@ -424,8 +420,8 @@ class ComponentTagCompiler
     public function guessClassName(string $component)
     {
         $namespace = Container::getInstance()
-            ->make(Application::class)
-            ->getNamespace();
+                    ->make(Application::class)
+                    ->getNamespace();
 
         $class = $this->formatClassName($component);
 
@@ -482,18 +478,18 @@ class ComponentTagCompiler
         // return all of the attributes as both data and attributes since we have
         // now way to partition them. The user can exclude attributes manually.
         if (! class_exists($class)) {
-            return [new Collection($attributes), new Collection($attributes)];
+            return [collect($attributes), collect($attributes)];
         }
 
         $constructor = (new ReflectionClass($class))->getConstructor();
 
         $parameterNames = $constructor
-            ? (new Collection($constructor->getParameters()))->map->getName()->all()
-            : [];
+                    ? collect($constructor->getParameters())->map->getName()->all()
+                    : [];
 
-        return (new Collection($attributes))
-            ->partition(fn ($value, $key) => in_array(Str::camel($key), $parameterNames))
-            ->all();
+        return collect($attributes)->partition(function ($value, $key) use ($parameterNames) {
+            return in_array(Str::camel($key), $parameterNames);
+        })->all();
     }
 
     /**
@@ -622,7 +618,7 @@ class ComponentTagCompiler
             return [];
         }
 
-        return (new Collection($matches))->mapWithKeys(function ($match) {
+        return collect($matches)->mapWithKeys(function ($match) {
             $attribute = $match['attribute'];
             $value = $match['value'] ?? null;
 
@@ -769,14 +765,14 @@ class ComponentTagCompiler
      */
     protected function escapeSingleQuotesOutsideOfPhpBlocks(string $value)
     {
-        return (new Collection(token_get_all($value)))->map(function ($token) {
+        return collect(token_get_all($value))->map(function ($token) {
             if (! is_array($token)) {
                 return $token;
             }
 
             return $token[0] === T_INLINE_HTML
-                ? str_replace("'", "\\'", $token[1])
-                : $token[1];
+                        ? str_replace("'", "\\'", $token[1])
+                        : $token[1];
         })->implode('');
     }
 
@@ -789,13 +785,13 @@ class ComponentTagCompiler
      */
     protected function attributesToString(array $attributes, $escapeBound = true)
     {
-        return (new Collection($attributes))
-            ->map(function (string $value, string $attribute) use ($escapeBound) {
-                return $escapeBound && isset($this->boundAttributes[$attribute]) && $value !== 'true' && ! is_numeric($value)
-                    ? "'{$attribute}' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute({$value})"
-                    : "'{$attribute}' => {$value}";
-            })
-            ->implode(',');
+        return collect($attributes)
+                ->map(function (string $value, string $attribute) use ($escapeBound) {
+                    return $escapeBound && isset($this->boundAttributes[$attribute]) && $value !== 'true' && ! is_numeric($value)
+                                ? "'{$attribute}' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute({$value})"
+                                : "'{$attribute}' => {$value}";
+                })
+                ->implode(',');
     }
 
     /**
@@ -807,7 +803,7 @@ class ComponentTagCompiler
     public function stripQuotes(string $value)
     {
         return Str::startsWith($value, ['"', '\''])
-            ? substr($value, 1, -1)
-            : $value;
+                    ? substr($value, 1, -1)
+                    : $value;
     }
 }

@@ -27,7 +27,6 @@ use Illuminate\Queue\Events\JobAttempted;
 use Illuminate\Support\AggregateServiceProvider;
 use Illuminate\Support\Defer\DeferredCallbackCollection;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Uri;
 use Illuminate\Testing\LoggedExceptionCollection;
 use Illuminate\Testing\ParallelTestingServiceProvider;
 use Illuminate\Validation\ValidationException;
@@ -90,7 +89,6 @@ class FoundationServiceProvider extends AggregateServiceProvider
         $this->registerDumper();
         $this->registerRequestValidation();
         $this->registerRequestSignatureValidation();
-        $this->registerUriUrlGeneration();
         $this->registerDeferHandler();
         $this->registerExceptionTracking();
         $this->registerExceptionRenderer();
@@ -191,16 +189,6 @@ class FoundationServiceProvider extends AggregateServiceProvider
     }
 
     /**
-     * Register the URL resolver for the URI generator.
-     *
-     * @return void
-     */
-    protected function registerUriUrlGeneration()
-    {
-        Uri::setUrlGeneratorResolver(fn () => app('url'));
-    }
-
-    /**
      * Register the "defer" function termination handler.
      *
      * @return void
@@ -210,11 +198,13 @@ class FoundationServiceProvider extends AggregateServiceProvider
         $this->app->scoped(DeferredCallbackCollection::class);
 
         $this->app['events']->listen(function (CommandFinished $event) {
-            app(DeferredCallbackCollection::class)->invokeWhen(fn ($callback) => app()->runningInConsole() && ($event->exitCode === 0 || $callback->always));
+            app(DeferredCallbackCollection::class)->invokeWhen(fn ($callback) => app()->runningInConsole() && ($event->exitCode === 0 || $callback->always)
+            );
         });
 
         $this->app['events']->listen(function (JobAttempted $event) {
-            app(DeferredCallbackCollection::class)->invokeWhen(fn ($callback) => $event->connectionName !== 'sync' && ($event->successful() || $callback->always));
+            app(DeferredCallbackCollection::class)->invokeWhen(fn ($callback) => $event->connectionName !== 'sync' && ($event->successful() || $callback->always)
+            );
         });
     }
 
@@ -237,7 +227,7 @@ class FoundationServiceProvider extends AggregateServiceProvider
         $this->app->make('events')->listen(MessageLogged::class, function ($event) {
             if (isset($event->context['exception'])) {
                 $this->app->make(LoggedExceptionCollection::class)
-                    ->push($event->context['exception']);
+                        ->push($event->context['exception']);
             }
         });
     }
@@ -249,8 +239,6 @@ class FoundationServiceProvider extends AggregateServiceProvider
      */
     protected function registerExceptionRenderer()
     {
-        $this->loadViewsFrom(__DIR__.'/../Exceptions/views', 'laravel-exceptions');
-
         if (! $this->app->hasDebugModeEnabled()) {
             return;
         }

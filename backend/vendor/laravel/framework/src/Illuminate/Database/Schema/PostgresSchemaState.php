@@ -3,7 +3,6 @@
 namespace Illuminate\Database\Schema;
 
 use Illuminate\Database\Connection;
-use Illuminate\Support\Collection;
 
 class PostgresSchemaState extends SchemaState
 {
@@ -16,7 +15,7 @@ class PostgresSchemaState extends SchemaState
      */
     public function dump(Connection $connection, $path)
     {
-        $commands = new Collection([
+        $commands = collect([
             $this->baseDumpCommand().' --schema-only > '.$path,
         ]);
 
@@ -59,7 +58,7 @@ class PostgresSchemaState extends SchemaState
      */
     protected function getMigrationTable(): string
     {
-        [$schema, $table] = $this->connection->getSchemaBuilder()->parseSchemaAndTable($this->migrationTable, withDefaultSchema: true);
+        [$schema, $table] = $this->connection->getSchemaBuilder()->parseSchemaAndTable($this->migrationTable);
 
         return $schema.'.'.$this->connection->getTablePrefix().$table;
     }

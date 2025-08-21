@@ -16,9 +16,7 @@ use Illuminate\Routing\Matching\MethodValidator;
 use Illuminate\Routing\Matching\SchemeValidator;
 use Illuminate\Routing\Matching\UriValidator;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Illuminate\Support\Traits\Conditionable;
 use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 use Laravel\SerializableClosure\SerializableClosure;
@@ -29,7 +27,7 @@ use function Illuminate\Support\enum_value;
 
 class Route
 {
-    use Conditionable, CreatesRegularExpressionRouteConstraints, FiltersControllerMiddleware, Macroable, ResolvesRouteDependencies;
+    use CreatesRegularExpressionRouteConstraints, FiltersControllerMiddleware, Macroable, ResolvesRouteDependencies;
 
     /**
      * The URI pattern the route responds to.
@@ -170,6 +168,7 @@ class Route
      * @param  array|string  $methods
      * @param  string  $uri
      * @param  \Closure|array  $action
+     * @return void
      */
     public function __construct($methods, $uri, $action)
     {
@@ -271,8 +270,6 @@ class Route
      * Get the controller instance for the route.
      *
      * @return mixed
-     *
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function getController()
     {
@@ -379,7 +376,7 @@ class Route
         $this->compileRoute();
 
         $this->parameters = (new RouteParameterBinder($this))
-            ->parameters($request);
+                        ->parameters($request);
 
         $this->originalParameters = $this->parameters;
 
@@ -793,8 +790,7 @@ class Route
     public function getDomain()
     {
         return isset($this->action['domain'])
-            ? str_replace(['http://', 'https://'], '', $this->action['domain'])
-            : null;
+                ? str_replace(['http://', 'https://'], '', $this->action['domain']) : null;
     }
 
     /**
@@ -1087,7 +1083,7 @@ class Route
     /**
      * Specify that the "Authorize" / "can" middleware should be applied to the route with the given options.
      *
-     * @param  \UnitEnum|string  $ability
+     * @param  \BackedEnum|string  $ability
      * @param  array|string  $models
      * @return $this
      */
@@ -1096,8 +1092,8 @@ class Route
         $ability = enum_value($ability);
 
         return empty($models)
-            ? $this->middleware(['can:'.$ability])
-            : $this->middleware(['can:'.$ability.','.implode(',', Arr::wrap($models))]);
+                    ? $this->middleware(['can:'.$ability])
+                    : $this->middleware(['can:'.$ability.','.implode(',', Arr::wrap($models))]);
     }
 
     /**
@@ -1140,22 +1136,15 @@ class Route
      */
     protected function staticallyProvidedControllerMiddleware(string $class, string $method)
     {
-        return (new Collection($class::middleware()))
-            ->map(function ($middleware) {
-                return $middleware instanceof Middleware
-                    ? $middleware
-                    : new Middleware($middleware);
-            })
-            ->reject(function ($middleware) use ($method) {
-                return static::methodExcludedByOptions(
-                    $method, ['only' => $middleware->only, 'except' => $middleware->except],
-                );
-            })
-            ->map
-            ->middleware
-            ->flatten()
-            ->values()
-            ->all();
+        return collect($class::middleware())->map(function ($middleware) {
+            return $middleware instanceof Middleware
+                ? $middleware
+                : new Middleware($middleware);
+        })->reject(function ($middleware) use ($method) {
+            return static::methodExcludedByOptions(
+                $method, ['only' => $middleware->only, 'except' => $middleware->except]
+            );
+        })->map->middleware->flatten()->values()->all();
     }
 
     /**
@@ -1276,8 +1265,6 @@ class Route
      * Get the dispatcher for the route's controller.
      *
      * @return \Illuminate\Routing\Contracts\ControllerDispatcher
-     *
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function controllerDispatcher()
     {
@@ -1325,9 +1312,9 @@ class Route
     /**
      * Get the optional parameter names for the route.
      *
-     * @return array<string, null>
+     * @return array
      */
-    public function getOptionalParameterNames()
+    protected function getOptionalParameterNames()
     {
         preg_match_all('/\{(\w+?)\?\}/', $this->uri(), $matches);
 

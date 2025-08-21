@@ -146,8 +146,7 @@ trait Creator
             return clone $date;
         }
 
-        $instance = parent::createFromFormat('U.u', $date->format('U.u'))
-            ->setTimezone($date->getTimezone());
+        $instance = new static($date->format('Y-m-d H:i:s.u'), $date->getTimezone());
 
         if ($date instanceof CarbonInterface) {
             $settings = $date->getSettings();
@@ -319,7 +318,7 @@ trait Creator
      *
      * @return static|null
      */
-    public static function create($year = 0, $month = 1, $day = 1, $hour = 0, $minute = 0, $second = 0, $timezone = null): ?static
+    public static function create($year = 0, $month = 1, $day = 1, $hour = 0, $minute = 0, $second = 0, $timezone = null): ?self
     {
         $month = self::monthToInt($month);
 
@@ -405,7 +404,7 @@ trait Creator
      *
      * @return static|null
      */
-    public static function createSafe($year = null, $month = null, $day = null, $hour = null, $minute = null, $second = null, $timezone = null): ?static
+    public static function createSafe($year = null, $month = null, $day = null, $hour = null, $minute = null, $second = null, $timezone = null): ?self
     {
         $month = self::monthToInt($month);
         $fields = static::getRangesByUnit();
@@ -563,7 +562,7 @@ trait Creator
      *
      * @return static|null
      */
-    public static function rawCreateFromFormat(string $format, string $time, $timezone = null): ?static
+    public static function rawCreateFromFormat(string $format, string $time, $timezone = null): ?self
     {
         // Work-around for https://bugs.php.net/bug.php?id=80141
         $format = preg_replace('/(?<!\\\\)((?:\\\\{2})*)c/', '$1Y-m-d\TH:i:sP', $format);
@@ -640,7 +639,7 @@ trait Creator
      * @return static|null
      */
     #[ReturnTypeWillChange]
-    public static function createFromFormat($format, $time, $timezone = null): ?static
+    public static function createFromFormat($format, $time, $timezone = null): ?self
     {
         $function = static::$createFromFormatFunction;
 
@@ -651,7 +650,7 @@ trait Creator
 
         if (!\is_string($time)) {
             @trigger_error(
-                'createFromFormat() $time parameter will only accept string or integer for 1-letter format representing a numeric unit in the next version',
+                'createFromFormat() will only accept string or integer for 1-letter format representing a numeric unit int next version',
                 \E_USER_DEPRECATED,
             );
             $time = (string) $time;
@@ -685,9 +684,9 @@ trait Creator
         string $format,
         string $time,
         $timezone = null,
-        ?string $locale = CarbonInterface::DEFAULT_LOCALE,
+        ?string $locale = self::DEFAULT_LOCALE,
         ?TranslatorInterface $translator = null
-    ): ?static {
+    ): ?self {
         $format = preg_replace_callback('/(?<!\\\\)(\\\\{2})*(LTS|LT|[Ll]{1,4})/', function ($match) use ($locale, $translator) {
             [$code] = $match;
 
@@ -825,7 +824,7 @@ trait Creator
      *
      * @return static|null
      */
-    public static function createFromLocaleFormat(string $format, string $locale, string $time, $timezone = null): ?static
+    public static function createFromLocaleFormat(string $format, string $locale, string $time, $timezone = null): ?self
     {
         $format = preg_replace_callback(
             '/(?:\\\\[a-zA-Z]|[bfkqCEJKQRV]){2,}/',
@@ -855,7 +854,7 @@ trait Creator
      *
      * @return static|null
      */
-    public static function createFromLocaleIsoFormat(string $format, string $locale, string $time, $timezone = null): ?static
+    public static function createFromLocaleIsoFormat(string $format, string $locale, string $time, $timezone = null): ?self
     {
         $time = static::translateTimeString($time, $locale, static::DEFAULT_LOCALE, CarbonInterface::TRANSLATE_MONTHS | CarbonInterface::TRANSLATE_DAYS | CarbonInterface::TRANSLATE_MERIDIEM);
 
@@ -874,7 +873,7 @@ trait Creator
      *
      * @return static|null
      */
-    public static function make($var, DateTimeZone|string|null $timezone = null): ?static
+    public static function make($var, DateTimeZone|string|null $timezone = null): ?self
     {
         if ($var instanceof DateTimeInterface) {
             return static::instance($var);

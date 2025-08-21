@@ -5,13 +5,10 @@ namespace Illuminate\Support\Facades;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Benchmark;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Js;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Illuminate\Support\Testing\Fakes\Fake;
-use Illuminate\Support\Uri;
 use Mockery;
 use Mockery\LegacyMockInterface;
 use RuntimeException;
@@ -272,12 +269,11 @@ abstract class Facade
      */
     public static function defaultAliases()
     {
-        return new Collection([
+        return collect([
             'App' => App::class,
             'Arr' => Arr::class,
             'Artisan' => Artisan::class,
             'Auth' => Auth::class,
-            'Benchmark' => Benchmark::class,
             'Blade' => Blade::class,
             'Broadcast' => Broadcast::class,
             'Bus' => Bus::class,
@@ -315,7 +311,6 @@ abstract class Facade
             'Storage' => Storage::class,
             'Str' => Str::class,
             'URL' => URL::class,
-            'Uri' => Uri::class,
             'Validator' => Validator::class,
             'View' => View::class,
             'Vite' => Vite::class,
