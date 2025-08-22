@@ -34,7 +34,7 @@ api.interceptors.response.use(
     if (response?.status === 401) {
       // Unauthorized - redirect to login
       localStorage.removeItem("token")
-      window.location.href = "/auth/login"
+      window.location.href = "/login"
       return Promise.reject(error)
     }
 

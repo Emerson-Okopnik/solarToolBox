@@ -28,7 +28,7 @@ export const useAuthStore = defineStore("auth", () => {
   const login = async (credentials) => {
     loading.value = true
     try {
-      const response = await api.post("/auth/login", credentials)
+      const response = await api.post("/login", credentials)
       const { user: userData, token: tokenValue } = response.data.data
 
       setAuth(userData, tokenValue)
@@ -46,7 +46,7 @@ export const useAuthStore = defineStore("auth", () => {
   const register = async (userData) => {
     loading.value = true
     try {
-      const response = await api.post("/auth/register", userData)
+      const response = await api.post("/register", userData)
       const { user: newUser, token: tokenValue } = response.data.data
 
       setAuth(newUser, tokenValue)
@@ -64,7 +64,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   const logout = async () => {
     try {
-      await api.post("/auth/logout")
+      await api.post("/logout")
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
     } finally {
