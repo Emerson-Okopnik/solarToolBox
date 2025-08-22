@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Arranjo;
 use App\Models\Projeto;
+use App\Controllers\AuthController;
+
 use Illuminate\Http\Request;
 
 class ArranjoController extends Controller
@@ -13,7 +15,7 @@ class ArranjoController extends Controller
     public function index(Projeto $projeto)
     {
         // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -36,7 +38,7 @@ class ArranjoController extends Controller
     public function store(Request $request, Projeto $projeto)
     {
         // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -77,7 +79,7 @@ class ArranjoController extends Controller
     public function show(Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -103,7 +105,7 @@ class ArranjoController extends Controller
     public function update(Request $request, Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -135,7 +137,7 @@ class ArranjoController extends Controller
     public function destroy(Arranjo $arranjo)
     {
         // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isAdmin()) {
+        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
