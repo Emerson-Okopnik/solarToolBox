@@ -4,18 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Arranjo;
 use App\Models\Projeto;
-use App\Controllers\AuthController;
-
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ArranjoController extends Controller
 {
-    //Lista arranjos de um projeto
-
+    // Lista arranjos de um projeto
     public function index(Projeto $projeto)
     {
-        // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isEngineer())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -23,9 +23,9 @@ class ArranjoController extends Controller
         }
 
         $arranjos = $projeto->arranjos()
-                            ->with(['modulo.fabricante', 'inversor.fabricante', 'strings'])
-                            ->orderBy('nome')
-                            ->get();
+            ->with(['modulo.fabricante', 'inversor.fabricante', 'strings'])
+            ->orderBy('nome')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -33,12 +33,13 @@ class ArranjoController extends Controller
         ]);
     }
 
-    //Cria novo arranjo
-
+    // Cria novo arranjo
     public function store(Request $request, Projeto $projeto)
     {
-        // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isEngineer())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -74,12 +75,16 @@ class ArranjoController extends Controller
         ], 201);
     }
 
-    //Exibe arranjo específico
-
+    // Exibe arranjo específico
     public function show(Arranjo $arranjo)
     {
-        // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($arranjo->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -100,12 +105,16 @@ class ArranjoController extends Controller
         ]);
     }
 
-    //Atualiza arranjo
-
+    // Atualiza arranjo
     public function update(Request $request, Arranjo $arranjo)
     {
-        // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($arranjo->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -132,19 +141,22 @@ class ArranjoController extends Controller
         ]);
     }
 
-    //Remove arranjo
-
+    // Remove arranjo
     public function destroy(Arranjo $arranjo)
     {
-        // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($arranjo->projeto->user_id !== $user->id && !$user->isAdmin())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
             ], 403);
         }
 
-        // Verificar se há strings
         if ($arranjo->strings()->exists()) {
             return response()->json([
                 'success' => false,

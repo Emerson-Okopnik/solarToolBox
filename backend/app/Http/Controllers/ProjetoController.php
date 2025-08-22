@@ -4,14 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Models\Projeto;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProjetoController extends Controller
 {
-    //Lista projetos do usuário
+    // Lista projetos do usuário
     public function index(Request $request)
     {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user(); // ou Auth::guard('api')->user()
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
+        }
+
         $query = Projeto::with(['clima', 'user'])
-                        ->where('user_id', auth()->id());
+            ->where('user_id', $user->id);
 
         // Filtros
         if ($request->filled('status')) {
@@ -26,7 +37,7 @@ class ProjetoController extends Controller
             });
         }
 
-        // Ordenação
+        // Ordenação (opcional: valide colunas/ordem para evitar valores inválidos)
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
@@ -41,9 +52,19 @@ class ProjetoController extends Controller
         ]);
     }
 
-    //Cria novo projeto
+    // Cria novo projeto
     public function store(Request $request)
     {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso negado',
+            ], 403);
+        }
+
         $request->validate([
             'nome' => 'required|string|max:255',
             'cliente' => 'required|string|max:255',
@@ -55,7 +76,7 @@ class ProjetoController extends Controller
         ]);
 
         $projeto = Projeto::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'nome' => $request->nome,
             'cliente' => $request->cliente,
             'clima_id' => $request->clima_id,
@@ -75,11 +96,14 @@ class ProjetoController extends Controller
         ], 201);
     }
 
-    //Exibe projeto específico
+    // Exibe projeto específico
     public function show(Projeto $projeto)
     {
-        // Verificar se o usuário tem acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        // Verificar acesso ao projeto
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isEngineer())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -100,12 +124,8 @@ class ProjetoController extends Controller
         // Estatísticas do projeto
         $estatisticas = [
             'total_arranjos' => $projeto->arranjos->count(),
-            'total_strings' => $projeto->arranjos->sum(function ($arranjo) {
-                return $arranjo->strings->count();
-            }),
-            'potencia_total' => $projeto->arranjos->sum(function ($arranjo) {
-                return $arranjo->strings->sum('potencia_total');
-            }),
+            'total_strings' => $projeto->arranjos->sum(fn ($arranjo) => $arranjo->strings->count()),
+            'potencia_total' => $projeto->arranjos->sum(fn ($arranjo) => $arranjo->strings->sum('potencia_total')),
             'ultima_execucao' => $projeto->execucoes->first()?->created_at,
         ];
 
@@ -118,11 +138,14 @@ class ProjetoController extends Controller
         ]);
     }
 
-    //Atualiza projeto
+    // Atualiza projeto
     public function update(Request $request, Projeto $projeto)
     {
-        // Verificar se o usuário tem acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        // Verificar acesso ao projeto
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isEngineer())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -150,11 +173,14 @@ class ProjetoController extends Controller
         ]);
     }
 
-    //Remove projeto
+    // Remove projeto
     public function destroy(Projeto $projeto)
     {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
         // Verificar se o usuário tem acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isAdmin()) {
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isAdmin())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',

@@ -5,14 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\StringModel;
 use App\Models\Arranjo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class StringController extends Controller
 {
-    //Lista strings de um arranjo
+    // Lista strings de um arranjo
     public function index(Arranjo $arranjo)
     {
-        // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($arranjo->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -20,9 +26,9 @@ class StringController extends Controller
         }
 
         $strings = $arranjo->strings()
-                           ->with('mppt')
-                           ->orderBy('nome')
-                           ->get();
+            ->with('mppt')
+            ->orderBy('nome')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -30,11 +36,16 @@ class StringController extends Controller
         ]);
     }
 
-    //Cria nova string
+    // Cria nova string
     public function store(Request $request, Arranjo $arranjo)
     {
-        // Verificar acesso ao projeto
-        if ($arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($arranjo->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -52,8 +63,9 @@ class StringController extends Controller
         // Validar se MPPT pertence ao inversor do arranjo
         if ($request->filled('mppt_id')) {
             $mpptValido = $arranjo->inversor->mppts()
-                                            ->where('id', $request->mppt_id)
-                                            ->exists();
+                ->where('id', $request->mppt_id)
+                ->exists();
+
             if (!$mpptValido) {
                 return response()->json([
                     'success' => false,
@@ -85,18 +97,27 @@ class StringController extends Controller
         ], 201);
     }
 
-    //Exibe string específica
+    // Exibe string específica
     public function show(StringModel $string)
     {
-        // Verificar acesso ao projeto
-        if ($string->arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($string->arranjo->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
             ], 403);
         }
 
-        $string->load(['arranjo.modulo.fabricante', 'arranjo.inversor.fabricante', 'mppt']);
+        $string->load([
+            'arranjo.modulo.fabricante',
+            'arranjo.inversor.fabricante',
+            'mppt',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -104,11 +125,16 @@ class StringController extends Controller
         ]);
     }
 
-    //Atualiza string
+    // Atualiza string
     public function update(Request $request, StringModel $string)
     {
-        // Verificar acesso ao projeto
-        if ($string->arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($string->arranjo->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -123,11 +149,11 @@ class StringController extends Controller
             'mppt_id' => 'nullable|exists:mppts,id',
         ]);
 
-        // Validar se MPPT pertence ao inversor do arranjo
         if ($request->filled('mppt_id')) {
             $mpptValido = $string->arranjo->inversor->mppts()
-                                                  ->where('id', $request->mppt_id)
-                                                  ->exists();
+                ->where('id', $request->mppt_id)
+                ->exists();
+
             if (!$mpptValido) {
                 return response()->json([
                     'success' => false,
@@ -159,11 +185,16 @@ class StringController extends Controller
         ]);
     }
 
-    //Remove string
+    // Remove string
     public function destroy(StringModel $string)
     {
-        // Verificar acesso ao projeto
-        if ($string->arranjo->projeto->user_id !== auth()->id() && !optional(auth()->user())->isAdmin()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($string->arranjo->projeto->user_id !== $user->id && !$user->isAdmin())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',

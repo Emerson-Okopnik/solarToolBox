@@ -6,21 +6,24 @@ use App\Models\Execucao;
 use App\Models\Projeto;
 use App\Services\CalculationEngineService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ExecucaoController extends Controller
 {
-    protected $calculationEngine;
+    protected CalculationEngineService $calculationEngine;
 
     public function __construct(CalculationEngineService $calculationEngine)
     {
         $this->calculationEngine = $calculationEngine;
     }
 
-    //Lista execuções de um projeto
+    // Lista execuções de um projeto
     public function index(Projeto $projeto)
     {
-        // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isEngineer())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -28,9 +31,9 @@ class ExecucaoController extends Controller
         }
 
         $execucoes = $projeto->execucoes()
-                             ->with('user')
-                             ->orderBy('created_at', 'desc')
-                             ->paginate(10);
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return response()->json([
             'success' => true,
@@ -38,11 +41,13 @@ class ExecucaoController extends Controller
         ]);
     }
 
-    //Executa análise do projeto
+    // Executa análise do projeto
     public function executar(Request $request, Projeto $projeto)
     {
-        // Verificar acesso ao projeto
-        if ($projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user || ($projeto->user_id !== $user->id && !$user->isEngineer())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -58,8 +63,8 @@ class ExecucaoController extends Controller
         }
 
         $temStrings = $projeto->arranjos()
-                              ->whereHas('strings')
-                              ->exists();
+            ->whereHas('strings')
+            ->exists();
 
         if (!$temStrings) {
             return response()->json([
@@ -80,15 +85,16 @@ class ExecucaoController extends Controller
         ]);
 
         try {
+            // Use null-safe para evitar erro quando $projeto->clima é null
             $configuracoes = array_merge([
-                'temp_min' => $projeto->clima->temp_min_historica ?? -5,
-                'temp_max' => $projeto->clima->temp_max_historica ?? 70,
-                'temp_ambiente' => $projeto->clima->temp_media_anual ?? 25,
+                'temp_min' => $projeto->clima?->temp_min_historica ?? -5,
+                'temp_max' => $projeto->clima?->temp_max_historica ?? 70,
+                'temp_ambiente' => $projeto->clima?->temp_media_anual ?? 25,
                 'irradiancia' => 800,
                 'noct' => 45,
                 'limite_compatibilidade' => $projeto->limite_compatibilidade_tensao ?? 5.0,
                 'permitir_orientacoes_mistas' => false,
-            ], $request->get('configuracoes', []));
+            ], $request->input('configuracoes', []));
 
             $execucao = $this->calculationEngine->executarAnalise($projeto, $configuracoes);
 
@@ -101,16 +107,21 @@ class ExecucaoController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro ao executar análise: ' . $e->getMessage()
+                'message' => 'Erro ao executar análise: ' . $e->getMessage(),
             ], 400);
         }
     }
 
-    //Exibe resultado de uma execução
+    // Exibe resultado de uma execução
     public function show(Execucao $execucao)
     {
-        // Verificar acesso ao projeto
-        if ($execucao->projeto->user_id !== auth()->id() && !optional(auth()->user())->isEngineer()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (
+            !$user ||
+            ($execucao->projeto->user_id !== $user->id && !$user->isEngineer())
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso negado',
@@ -128,7 +139,6 @@ class ExecucaoController extends Controller
             },
         ]);
 
-        // Estatísticas detalhadas
         $estatisticas = [
             'resumo_checagens' => [
                 'total' => $execucao->checagens->count(),

@@ -42,7 +42,7 @@ return [
         ],
 
         'api' => [
-            'driver' => 'jwt', // Defina o driver como jwt
+            'driver' => 'jwt', 
             'provider' => 'users',
             'hash' => false,
         ],
