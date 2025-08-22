@@ -183,7 +183,11 @@ const getActivityIcon = (type) => {
 }
 
 const formatDate = (date) => {
-  return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+  if (!date) return ''
+  const parsed = new Date(date)
+  return isNaN(parsed.getTime())
+    ? ''
+    : format(parsed, 'dd/MM/yyyy HH:mm', { locale: ptBR })
 }
 
 onMounted(() => {

@@ -88,7 +88,7 @@
             <label for="clima_id" class="form-label">Localização Climática *</label>
             <select
               id="clima_id"
-              v-model="form.clima_id"
+              v-model.number="form.clima_id"
               required
               class="form-input"
               :class="{ 'border-danger-300': errors.clima_id }"
@@ -183,11 +183,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, toRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import { useToast } from 'vue-toastification'
-import api from '@/services/api'
+import { catalogosService } from '@/services/catalogos'
+import { projetosService } from '@/services/projetos'
 
 const route = useRoute()
 const router = useRouter()
@@ -212,12 +213,7 @@ const form = reactive({
 
 const loadClimas = async () => {
   try {
-    // Simular dados de climas
-    climas.value = [
-      { id: 1, nome: 'São Paulo Capital', cidade: 'São Paulo', estado: 'SP' },
-      { id: 2, nome: 'Rio de Janeiro Capital', cidade: 'Rio de Janeiro', estado: 'RJ' },
-      { id: 3, nome: 'Belo Horizonte', cidade: 'Belo Horizonte', estado: 'MG' }
-    ]
+    climas.value = await catalogosService.listarClimas()
   } catch (error) {
     toast.error('Erro ao carregar climas')
   }
@@ -227,22 +223,14 @@ const loadProjeto = async () => {
   if (!isEditing.value) return
 
   try {
-    loading.value = true
-    // Simular carregamento do projeto
-    const projeto = {
-      id: route.params.id,
-      nome: 'Projeto Exemplo',
-      cliente: 'Cliente Exemplo',
-      descricao: 'Descrição do projeto',
-      endereco: 'Rua Exemplo, 123',
-      clima_id: 1,
-      limite_compatibilidade_tensao: 5.0,
-      limite_compatibilidade_corrente: 5.0
-    }
-
+    const response = await projetosService.buscar(route.params.id)
+    const projeto =
+      response.data?.data?.projeto ||
+      response.data?.projeto ||
+      response.data
     Object.assign(form, projeto)
   } catch (error) {
-    toast.error('Erro ao carregar projeto')
+    toast.error(error.response?.data?.message || 'Erro ao carregar projeto')
     router.push('/projetos')
   } finally {
     loading.value = false
@@ -253,12 +241,14 @@ const handleSubmit = async () => {
   loading.value = true
   errors.value = {}
 
+  const payload = { ...toRaw(form), clima_id: Number(form.clima_id) }
+
   try {
     if (isEditing.value) {
-      // await api.put(`/projetos/${route.params.id}`, form)
+      await projetosService.atualizar(route.params.id, payload)
       toast.success('Projeto atualizado com sucesso!')
     } else {
-      // await api.post('/projetos', form)
+      await projetosService.criar(payload)
       toast.success('Projeto criado com sucesso!')
     }
     
@@ -267,7 +257,7 @@ const handleSubmit = async () => {
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
     } else {
-      toast.error('Erro ao salvar projeto')
+      oast.error(error.response?.data?.message || 'Erro ao salvar projeto')
     }
   } finally {
     loading.value = false

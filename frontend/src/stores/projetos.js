@@ -10,12 +10,12 @@ export const useProjetosStore = defineStore("projetos", {
   }),
 
   actions: {
-    async listarProjetos() {
+    async listarProjetos(params) {
       this.loading = true
       this.error = null
       try {
-        const response = await projetosService.listar()
-        this.projetos = response.data
+        const data = await projetosService.listar(params)
+        this.projetos = data.data ?? data
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar projetos"
         throw error
@@ -28,9 +28,10 @@ export const useProjetosStore = defineStore("projetos", {
       this.loading = true
       this.error = null
       try {
-        const response = await projetosService.buscar(id)
-        this.projetoAtual = response.data
-        return response.data
+        const data = await projetosService.buscar(id)
+        const projeto = data.data ?? data
+        this.projetoAtual = projeto
+        return projeto
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar projeto"
         throw error
@@ -43,9 +44,10 @@ export const useProjetosStore = defineStore("projetos", {
       this.loading = true
       this.error = null
       try {
-        const response = await projetosService.criar(dados)
-        this.projetos.push(response.data)
-        return response.data
+        const data = await projetosService.criar(dados)
+        const projeto = data.data ?? data
+        this.projetos.push(projeto)
+        return projeto
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao criar projeto"
         throw error
@@ -58,8 +60,8 @@ export const useProjetosStore = defineStore("projetos", {
       this.loading = true
       this.error = null
       try {
-        const response = await projetosService.executar(id)
-        return response.data
+        const data = await projetosService.executar(id)
+        return data.data ?? data
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao executar análise"
         throw error
@@ -72,11 +74,12 @@ export const useProjetosStore = defineStore("projetos", {
       this.loading = true
       this.error = null
       try {
-        const response = await projetosService.criarArranjo(projetoId, dados)
+        const data = await projetosService.criarArranjo(projetoId, dados)
+        const arranjo = data.data ?? data
         if (this.projetoAtual && this.projetoAtual.id === projetoId) {
-          this.projetoAtual.arranjos.push(response.data)
+          this.projetoAtual.arranjos.push(arranjo)
         }
-        return response.data
+        return arranjo
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao criar arranjo"
         throw error

@@ -1,8 +1,8 @@
 import api from "./api"
 
 export const projetosService = {
-  async listar() {
-    const response = await api.get("/projetos")
+  async listar(params = {}) {
+    const response = await api.get("/projetos", { params })
     return response.data
   },
 

@@ -198,33 +198,20 @@ const filters = reactive({
 const loadProjetos = async () => {
   loading.value = true
   try {
-    // Simular dados para demonstração
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    projetos.value = [
-      {
-        id: 1,
-        nome: 'Projeto Residencial - Casa Silva',
-        cliente: 'João Silva',
-        descricao: 'Sistema residencial 5kWp',
-        status: 'aprovado',
-        created_at: new Date()
-      },
-      {
-        id: 2,
-        nome: 'Sistema Comercial - Loja ABC',
-        cliente: 'Empresa ABC Ltda',
-        descricao: 'Sistema comercial 20kWp',
-        status: 'em_analise',
-        created_at: new Date(Date.now() - 86400000)
-      }
-    ]
-    
-    totalItems.value = projetos.value.length
-    totalPages.value = Math.ceil(totalItems.value / perPage.value)
+    const params = {
+      page: currentPage.value,
+      per_page: perPage.value,
+      search: filters.search || undefined,
+      status: filters.status || undefined,
+      sort_by: filters.sortBy
+    }
+    const response = await api.get('/projetos', { params })
+    const paginated = response.data.data
+    projetos.value = paginated.data
+    totalItems.value = paginated.total
+    totalPages.value = paginated.last_page
   } catch (error) {
     toast.error('Erro ao carregar projetos')
-    console.error(error)
   } finally {
     loading.value = false
   }
@@ -244,7 +231,7 @@ const confirmDelete = (projeto) => {
 
 const deleteProjeto = async (id) => {
   try {
-    // await api.delete(`/projetos/${id}`)
+    await api.delete(`/projetos/${id}`)
     projetos.value = projetos.value.filter(p => p.id !== id)
     toast.success('Projeto excluído com sucesso')
   } catch (error) {
@@ -253,7 +240,11 @@ const deleteProjeto = async (id) => {
 }
 
 const formatDate = (date) => {
-  return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR })
+  if (!date) return ''
+  const parsed = new Date(date)
+  return isNaN(parsed.getTime())
+    ? ''
+    : format(parsed, 'dd/MM/yyyy', { locale: ptBR })
 }
 
 const getStatusLabel = (status) => {

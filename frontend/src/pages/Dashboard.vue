@@ -221,7 +221,11 @@ const loadDashboardData = async () => {
 }
 
 const formatDate = (date) => {
-  return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR })
+  if (!date) return ''
+  const parsed = new Date(date)
+  return isNaN(parsed.getTime())
+    ? ''
+    : format(parsed, 'dd/MM/yyyy', { locale: ptBR })
 }
 
 const getStatusLabel = (status) => {
