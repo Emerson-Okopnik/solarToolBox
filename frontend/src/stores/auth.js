@@ -29,14 +29,18 @@ export const useAuthStore = defineStore("auth", () => {
     loading.value = true
     try {
       const response = await api.post("/login", credentials)
-      const { user: userData, token: tokenValue } = response.data.data
+      const { token: tokenValue, user: userData } = response.data
 
-      setAuth(userData, tokenValue)
+      setAuth(userData ?? null, tokenValue)
+      if (!userData) {
+        await checkAuth()
+      }
       return { success: true }
     } catch (error) {
       return {
         success: false,
         message: error.response?.data?.message || "Erro ao fazer login",
+        errors: error.response?.data?.errors || {},
       }
     } finally {
       loading.value = false
@@ -47,7 +51,7 @@ export const useAuthStore = defineStore("auth", () => {
     loading.value = true
     try {
       const response = await api.post("/register", userData)
-      const { user: newUser, token: tokenValue } = response.data.data
+      const { user: newUser, token: tokenValue } = response.data
 
       setAuth(newUser, tokenValue)
       return { success: true }
@@ -78,7 +82,7 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       api.defaults.headers.common["Authorization"] = `Bearer ${token.value}`
       const response = await api.get("/user")
-      user.value = response.data.data
+      user.value = response.data
     } catch (error) {
       clearAuth()
     }

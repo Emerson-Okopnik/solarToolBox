@@ -3,7 +3,7 @@ import api from "./api"
 export const catalogosService = {
   // Fabricantes
   async listarFabricantes() {
-    const response = await api.get("/fabricantes")
+    const response = await api.get("/catalogos/fabricantes")
     return response.data
   },
 
@@ -24,7 +24,7 @@ export const catalogosService = {
 
   // Módulos
   async listarModulos() {
-    const response = await api.get("/modulos")
+    const response = await api.get("/catalogos/modulos")
     return response.data
   },
 
@@ -45,7 +45,7 @@ export const catalogosService = {
 
   // Inversores
   async listarInversores() {
-    const response = await api.get("/inversores")
+    const response = await api.get("/catalogos/inversores")
     return response.data
   },
 
@@ -55,7 +55,7 @@ export const catalogosService = {
   },
 
   async listarMppts(inversorId) {
-    const response = await api.get(`/inversores/${inversorId}/mppts`)
+    const response = await api.get(`catalogos/inversores/${inversorId}/mppts`)
     return response.data
   },
 
@@ -76,7 +76,7 @@ export const catalogosService = {
 
   // Climas
   async listarClimas() {
-    const response = await api.get("/climas")
+    const response = await api.get("catalogos/climas")
     return response.data
   },
 
