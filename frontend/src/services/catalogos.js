@@ -4,7 +4,7 @@ export const catalogosService = {
   // Fabricantes
   async listarFabricantes() {
     const response = await api.get("/catalogos/fabricantes")
-    return response.data
+    return response.data?.data?.data || []
   },
 
   async criarFabricante(dados) {
@@ -25,7 +25,7 @@ export const catalogosService = {
   // Módulos
   async listarModulos() {
     const response = await api.get("/catalogos/modulos")
-    return response.data
+    return response.data?.data?.data || []
   },
 
   async criarModulo(dados) {
@@ -46,7 +46,7 @@ export const catalogosService = {
   // Inversores
   async listarInversores() {
     const response = await api.get("/catalogos/inversores")
-    return response.data
+    return response.data?.data?.data || []
   },
 
   async buscarInversor(id) {
@@ -55,8 +55,8 @@ export const catalogosService = {
   },
 
   async listarMppts(inversorId) {
-    const response = await api.get(`catalogos/inversores/${inversorId}/mppts`)
-    return response.data
+    const response = await api.get(`/catalogos/inversores/${inversorId}/mppts`)
+    return response.data?.data || []
   },
 
   async criarInversor(dados) {
@@ -76,8 +76,8 @@ export const catalogosService = {
 
   // Climas
   async listarClimas() {
-    const response = await api.get("catalogos/climas")
-    return response.data
+    const response = await api.get("/catalogos/climas")
+    return response.data?.data?.data || []
   },
 
   async criarClima(dados) {

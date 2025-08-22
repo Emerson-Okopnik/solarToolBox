@@ -16,7 +16,7 @@ export const useCatalogosStore = defineStore("catalogos", {
       this.loading = true
       try {
         const response = await catalogosService.listarFabricantes()
-        this.fabricantes = response.data
+        this.fabricantes = response
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar fabricantes"
         throw error
@@ -29,7 +29,7 @@ export const useCatalogosStore = defineStore("catalogos", {
       this.loading = true
       try {
         const response = await catalogosService.listarModulos()
-        this.modulos = response.data
+        this.modulos = response
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar módulos"
         throw error
@@ -42,7 +42,7 @@ export const useCatalogosStore = defineStore("catalogos", {
       this.loading = true
       try {
         const response = await catalogosService.listarInversores()
-        this.inversores = response.data
+        this.inversores = response
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar inversores"
         throw error
@@ -55,7 +55,7 @@ export const useCatalogosStore = defineStore("catalogos", {
       this.loading = true
       try {
         const response = await catalogosService.listarClimas()
-        this.climas = response.data
+        this.climas = response
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar climas"
         throw error
