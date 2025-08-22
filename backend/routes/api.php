@@ -38,17 +38,17 @@ Route::middleware('jwt.auth')->group(function () {
 
     // Projetos
     Route::apiResource('projetos', ProjetoController::class);
-    Route::post('/projetos/{projeto}/arranjos', [ArranjoController::class, 'store']);
-    Route::get('/projetos/{projeto}/arranjos', [ArranjoController::class, 'index']);
+    Route::post('/projetos/{projeto:id}/arranjos', [ArranjoController::class, 'store']);
+    Route::get('/projetos/{projeto:id}/arranjos', [ArranjoController::class, 'index']);
     Route::apiResource('arranjos', ArranjoController::class)->except(['store', 'index']);
 
     // Strings
-    Route::post('/arranjos/{arranjo}/strings', [StringController::class, 'store']);
-    Route::get('/arranjos/{arranjo}/strings', [StringController::class, 'index']);
+    Route::post('/arranjos/{arranjo:id}/strings', [StringController::class, 'store']);
+    Route::get('/arranjos/{arranjo:id}/strings', [StringController::class, 'index']);
     Route::apiResource('strings', StringController::class)->except(['store', 'index']);
 
     // Execução e cálculos
-    Route::post('/projetos/{projeto}/executar', [ExecucaoController::class, 'executar']);
-    Route::get('/execucoes/{execucao}', [ExecucaoController::class, 'show']);
-    Route::get('/projetos/{projeto}/execucoes', [ExecucaoController::class, 'index']);
+    Route::post('/projetos/{projeto:id}/executar', [ExecucaoController::class, 'executar']);
+    Route::get('/execucoes/{execucao:id}', [ExecucaoController::class, 'show']);
+    Route::get('/projetos/{projeto:id}/execucoes', [ExecucaoController::class, 'index']);
 });
