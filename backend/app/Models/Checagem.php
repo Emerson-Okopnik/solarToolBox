@@ -43,9 +43,4 @@ class Checagem extends Model
     {
         return $this->belongsTo(Arranjo::class);
     }
-
-    public function recomendacoes()
-    {
-        return $this->hasMany(Recomendacao::class);
-    }
 }

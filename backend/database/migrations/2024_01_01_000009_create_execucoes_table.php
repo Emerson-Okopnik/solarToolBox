@@ -21,7 +21,6 @@ return new class extends Migration
             $table->integer('total_checagens')->default(0);
             $table->integer('checagens_aprovadas')->default(0);
             $table->integer('checagens_reprovadas')->default(0);
-            $table->integer('total_recomendacoes')->default(0);
             
             // Configurações usadas na execução
             $table->json('configuracoes')->nullable();

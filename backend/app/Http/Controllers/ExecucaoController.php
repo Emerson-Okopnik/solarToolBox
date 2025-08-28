@@ -91,7 +91,7 @@ class ExecucaoController extends Controller
                 'temp_max' => $projeto->clima?->temp_max_historica ?? 70,
                 'temp_ambiente' => $projeto->clima?->temp_media_anual ?? 25,
                 'irradiancia' => 800,
-                'noct' => 45,
+                'noct' => 45, //Temperatura Nominal de Operação da Célula (°C)
                 'limite_compatibilidade' => $projeto->limite_compatibilidade_tensao ?? 5.0,
                 'permitir_orientacoes_mistas' => false,
             ], $request->input('configuracoes', []));
@@ -134,9 +134,6 @@ class ExecucaoController extends Controller
             'checagens' => function ($query) {
                 $query->orderBy('tipo')->orderBy('resultado', 'desc');
             },
-            'recomendacoes' => function ($query) {
-                $query->orderBy('prioridade')->orderBy('categoria');
-            },
         ]);
 
         $estatisticas = [
@@ -147,8 +144,6 @@ class ExecucaoController extends Controller
                 'avisos' => $execucao->checagens->where('resultado', 'aviso')->count(),
             ],
             'checagens_por_tipo' => $execucao->checagens->groupBy('tipo')->map->count(),
-            'recomendacoes_por_prioridade' => $execucao->recomendacoes->groupBy('prioridade')->map->count(),
-            'recomendacoes_por_categoria' => $execucao->recomendacoes->groupBy('categoria')->map->count(),
             'tempo_execucao' => $execucao->concluida_em
                 ? $execucao->concluida_em->diffInSeconds($execucao->iniciada_em)
                 : null,

@@ -114,21 +114,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Recomendações -->
-        <div v-if="recomendacoesList.length > 0" class="mb-6">
-          <h3 class="font-semibold text-gray-900 mb-3">Recomendações:</h3>
-          <div class="space-y-2">
-            <div
-              v-for="recomendacao in recomendacoesList"
-              :key="recomendacao.id"
-              class="p-3 bg-blue-50 rounded-lg"
-            >
-              <p class="font-medium text-blue-900">{{ recomendacao.tipo }}</p>
-              <p class="text-sm text-blue-700">{{ recomendacao.descricao }}</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -241,7 +226,6 @@ const projetoData = ref({
 })
 const execucaoData = ref(null)
 const checagensList = ref([])
-const recomendacoesList = ref([])
 const arranjosList = ref([])
 const modulosList = ref([])
 const inversoresList = ref([])
@@ -314,13 +298,9 @@ async function handleExecutarAnalise() {
     const execucao = await projetosStore.executarAnalise(route.params.id)
     execucaoData.value = execucao.data
     
-    const [checagensRes, recomendacoesRes] = await Promise.all([
-      execucoesService.listarChecagens(execucao.data.id),
-      execucoesService.listarRecomendacoes(execucao.data.id)
-    ])
-    
+
+    const checagensRes = await execucoesService.listarChecagens(execucao.data.id)
     checagensList.value = checagensRes.data || []
-    recomendacoesList.value = recomendacoesRes.data || []
   } catch (error) {
     console.error('Erro ao executar análise:', error)
   } finally {

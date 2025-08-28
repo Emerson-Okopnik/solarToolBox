@@ -20,7 +20,6 @@ class Execucao extends Model
         'total_checagens',
         'checagens_aprovadas',
         'checagens_reprovadas',
-        'total_recomendacoes',
         'configuracoes',
     ];
 
@@ -44,15 +43,5 @@ class Execucao extends Model
     public function checagens()
     {
         return $this->hasMany(Checagem::class);
-    }
-
-    public function recomendacoes()
-    {
-        return $this->hasMany(Recomendacao::class);
-    }
-
-    public function relatorios()
-    {
-        return $this->hasMany(Relatorio::class);
     }
 }

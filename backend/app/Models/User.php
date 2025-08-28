@@ -41,11 +41,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Execucao::class);
     }
 
-    public function relatorios()
-    {
-        return $this->hasMany(Relatorio::class);
-    }
-
     // Scopes
     public function scopeEngineers($query)
     {

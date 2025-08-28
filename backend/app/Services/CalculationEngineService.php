@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Projeto;
 use App\Models\Execucao;
 use App\Models\Checagem;
-use App\Models\Recomendacao;
 use App\Exceptions\SolarCalculationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -49,15 +48,15 @@ class CalculationEngineService
             // 3. Validar capacidade dos inversores
             $this->validarCapacidadeInversores($execucao, $configuracoes);
 
-            // 4. Gerar checagens e recomendações
-            $this->gerarChecagensERecomendacoes($execucao, $configuracoes);
+            // 4. Gerar checagens
+            $this->gerarChecagens($execucao, $configuracoes);
 
             // Finalizar execução
             $this->finalizarExecucao($execucao, 'concluida');
 
             DB::commit();
 
-            return $execucao->fresh(['checagens', 'recomendacoes']);
+            return $execucao->fresh('checagens');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -177,22 +176,18 @@ class CalculationEngineService
     }
 
     /**
-     * Gera checagens e recomendações finais
+     * Atualiza estatísticas de checagens
      */
-    private function gerarChecagensERecomendacoes(Execucao $execucao, array $configuracoes)
+    private function gerarChecagens(Execucao $execucao, array $configuracoes)
     {
-        // Contar checagens
         $totalChecagens = $execucao->checagens()->count();
         $checagensAprovadas = $execucao->checagens()->where('resultado', 'aprovado')->count();
         $checagensReprovadas = $execucao->checagens()->where('resultado', 'reprovado')->count();
-        $totalRecomendacoes = $execucao->recomendacoes()->count();
 
-        // Atualizar estatísticas da execução
         $execucao->update([
             'total_checagens' => $totalChecagens,
             'checagens_aprovadas' => $checagensAprovadas,
             'checagens_reprovadas' => $checagensReprovadas,
-            'total_recomendacoes' => $totalRecomendacoes
         ]);
     }
 
@@ -223,7 +218,7 @@ class CalculationEngineService
     {
         $tipo = $tipo ?? 'compatibilidade_modulos';
         
-        $checagem = Checagem::create([
+        Checagem::create([
             'execucao_id' => $execucao->id,
             'string_id' => $string?->id,
             'arranjo_id' => $string?->arranjo_id,
@@ -233,18 +228,6 @@ class CalculationEngineService
             'descricao' => $e->getMessage(),
             'valores_calculados' => $e->getDetails(),
             'limites_referencia' => []
-        ]);
-
-        // Criar recomendação
-        Recomendacao::create([
-            'execucao_id' => $execucao->id,
-            'checagem_id' => $checagem->id,
-            'prioridade' => 'alta',
-            'categoria' => 'configuracao_string',
-            'titulo' => 'Corrigir Incompatibilidade',
-            'descricao' => $e->getMessage(),
-            'solucao_sugerida' => 'Ajuste a configuração da string ou selecione módulos compatíveis',
-            'impacto_estimado' => $e->getDetails()
         ]);
     }
 
@@ -267,18 +250,6 @@ class CalculationEngineService
             ]
         ]);
 
-        // Criar recomendações para avisos
-        foreach ($distribuicao['avisos'] as $aviso) {
-            Recomendacao::create([
-                'execucao_id' => $execucao->id,
-                'prioridade' => 'media',
-                'categoria' => 'distribuicao_mppt',
-                'titulo' => $aviso['mensagem'],
-                'descricao' => $aviso['mensagem'],
-                'solucao_sugerida' => $aviso['recomendacao'],
-                'impacto_estimado' => ['tipo' => 'performance', 'severidade' => 'media']
-            ]);
-        }
     }
 
     /**

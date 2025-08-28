@@ -113,33 +113,6 @@
                 <div class="text-sm text-gray-500">Erros</div>
               </div>
             </div>
-
-            <!-- Recomendações -->
-            <div v-if="ultimaExecucao.recomendacoes?.length > 0">
-              <h4 class="font-medium text-gray-900 mb-3">Recomendações</h4>
-              <div class="space-y-2">
-                <div
-                  v-for="rec in ultimaExecucao.recomendacoes"
-                  :key="rec.id"
-                  class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
-                >
-                  <div class="flex-shrink-0">
-                    <ExclamationTriangleIcon
-                      class="h-5 w-5"
-                      :class="{
-                        'text-danger-500': rec.tipo === 'erro',
-                        'text-solar-500': rec.tipo === 'aviso',
-                        'text-primary-500': rec.tipo === 'info'
-                      }"
-                    />
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-gray-900">{{ rec.titulo }}</p>
-                    <p class="text-sm text-gray-600">{{ rec.descricao }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -212,8 +185,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   ChevronRightIcon,
   PlusIcon,
-  CpuChipIcon,
-  ExclamationTriangleIcon
+  CpuChipIcon
 } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import { useProjetosStore } from '@/stores/projetos'
