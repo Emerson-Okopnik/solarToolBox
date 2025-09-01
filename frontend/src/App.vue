@@ -1,16 +1,28 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
+  <div id="app" class="min-vh-100 bg-light">
     <router-view />
   </div>
 </template>
 
-<script setup>
+<script>
+import { defineComponent } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { onMounted } from 'vue'
 
-const authStore = useAuthStore()
-
-onMounted(() => {
-  authStore.checkAuth()
+export default defineComponent({
+  name: 'App',
+  setup() {
+    const authStore = useAuthStore()
+    
+    return {
+      authStore
+    }
+  },
+  async mounted() {
+    try {
+      await this.authStore.checkAuth()
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error)
+    }
+  }
 })
 </script>

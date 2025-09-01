@@ -1,37 +1,44 @@
 <template>
-  <div class="flex items-center justify-center" :class="containerClass">
+  <div class="d-flex align-items-center justify-content-center" :class="containerClass">
     <div class="loading-spinner" :class="spinnerClass"></div>
-    <span v-if="text" class="ml-2 text-sm text-gray-600">{{ text }}</span>
+    <span v-if="text" class="ms-2 small text-muted">{{ text }}</span>
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script>
+import { defineComponent } from 'vue'
 
-const props = defineProps({
-  size: {
-    type: String,
-    default: 'md',
-    validator: (value) => ['sm', 'md', 'lg'].includes(value)
+export default defineComponent({
+  name: 'LoadingSpinner',
+  props: {
+    size: {
+      type: String,
+      default: 'md',
+      validator: (value) => ['sm', 'md', 'lg'].includes(value)
+    },
+    text: {
+      type: String,
+      default: ''
+    },
+    center: {
+      type: Boolean,
+      default: false
+    }
   },
-  text: {
-    type: String,
-    default: ''
-  },
-  center: {
-    type: Boolean,
-    default: false
+  computed: {
+    containerClass() {
+      return {
+        'py-5': this.center,
+        'py-3': !this.center
+      }
+    },
+    spinnerClass() {
+      return {
+        'loading-spinner-sm': this.size === 'sm',
+        'loading-spinner': this.size === 'md',
+        'loading-spinner-lg': this.size === 'lg'
+      }
+    }
   }
 })
-
-const containerClass = computed(() => ({
-  'py-8': props.center,
-  'py-4': !props.center
-}))
-
-const spinnerClass = computed(() => ({
-  'h-4 w-4': props.size === 'sm',
-  'h-6 w-6': props.size === 'md',
-  'h-8 w-8': props.size === 'lg'
-}))
 </script>
