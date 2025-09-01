@@ -1,9 +1,9 @@
 <template>
-  <div class="min-vh-100" style="background-color: var(--gray-50);">
-    <!-- Sidebar simplificado -->
-    <div class="sidebar" :class="{ 'show': sidebarOpen }">
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <div class="sidebar" :class="{ 'open': sidebarOpen }">
       <div class="sidebar-header">
-        <h1 class="h5 fw-bold mb-0">Solar Toolbox</h1>
+        <h1 class="heading-5">Solar Toolbox</h1>
       </div>
       
       <nav class="sidebar-nav">
@@ -14,7 +14,7 @@
           class="nav-link"
           :class="{ 'active': $route.name === item.name || $route.path.startsWith(item.to) }"
         >
-          <component :is="item.icon" />
+          <component :is="item.icon" class="nav-icon" />
           {{ item.label }}
         </router-link>
       </nav>
@@ -23,49 +23,45 @@
     <!-- Mobile overlay -->
     <div 
       v-if="sidebarOpen" 
-      class="position-fixed top-0 start-0 w-100 h-100 d-lg-none" 
-      style="z-index: 1040; background-color: rgba(0,0,0,0.5);" 
+      class="mobile-overlay" 
       @click="toggleSidebar"
     ></div>
 
-    <!-- Conteúdo principal simplificado -->
+    <!-- Conteúdo principal -->
     <div class="main-content">
-      <div class="top-bar d-flex align-items-center justify-content-between px-4">
+      <div class="top-bar">
         <button
           @click="toggleSidebar"
-          class="btn btn-link d-lg-none p-2"
+          class="btn btn-secondary mobile-menu-btn"
           type="button"
         >
-          <Bars3Icon style="width: 1.5rem; height: 1.5rem;" />
+          <Bars3Icon class="nav-icon" />
         </button>
 
-        <div class="dropdown">
+        <div class="user-menu">
           <button
-            class="btn btn-link d-flex align-items-center dropdown-toggle"
+            class="btn btn-secondary user-btn"
             type="button"
-            data-bs-toggle="dropdown"
+            @click="toggleUserMenu"
           >
-            <div class="rounded-circle d-flex align-items-center justify-content-center me-2" 
-                 style="width: 2rem; height: 2rem; background-color: var(--primary-color);">
-              <span class="text-white fw-medium small">{{ userInitials }}</span>
+            <div class="user-avatar">
+              <span class="font-medium text-sm">{{ userInitials }}</span>
             </div>
-            <span class="d-none d-md-block fw-medium">{{ userName }}</span>
+            <span class="user-name">{{ userName }}</span>
           </button>
 
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#">Perfil</a></li>
-            <li><a class="dropdown-item" href="#">Configurações</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <button @click="handleLogout" class="dropdown-item" type="button">
-                Sair
-              </button>
-            </li>
-          </ul>
+          <div v-if="userMenuOpen" class="user-dropdown">
+            <a href="#" class="dropdown-item">Perfil</a>
+            <a href="#" class="dropdown-item">Configurações</a>
+            <div class="dropdown-divider"></div>
+            <button @click="handleLogout" class="dropdown-item" type="button">
+              Sair
+            </button>
+          </div>
         </div>
       </div>
 
-      <main class="p-4">
+      <main class="page-content">
         <router-view />
       </main>
     </div>
@@ -103,6 +99,7 @@ export default defineComponent({
   data() {
     return {
       sidebarOpen: false,
+      userMenuOpen: false,
       navigation: [
         { name: 'dashboard', label: 'Dashboard', to: '/', icon: 'HomeIcon' },
         { name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' },
@@ -131,22 +128,100 @@ export default defineComponent({
     toggleSidebar() {
       this.sidebarOpen = !this.sidebarOpen
     },
-    async initializeBootstrap() {
-      try {
-        await this.$nextTick()
-        
-        const { Dropdown } = await import('bootstrap')
-        const dropdownElementList = document.querySelectorAll('.dropdown-toggle')
-        dropdownElementList.forEach(dropdownToggleEl => {
-          new Dropdown(dropdownToggleEl)
-        })
-      } catch (error) {
-        console.error('Erro ao inicializar componentes Bootstrap:', error)
-      }
-    }
+    toggleUserMenu() {
+      this.userMenuOpen = !this.userMenuOpen
+    },
   },
-  async mounted() {
-    await this.initializeBootstrap()
-  }
 })
 </script>
+
+<style scoped>
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: transparent;
+  border: none;
+  color: var(--gray-700);
+}
+
+.user-avatar {
+  width: 2rem;
+  height: 2rem;
+  background-color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-2);
+  background-color: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 12rem;
+  z-index: 1000;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  color: var(--gray-700);
+  text-decoration: none;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--gray-50);
+  color: var(--gray-900);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--gray-200);
+  margin: var(--space-2) 0;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
+  .user-name {
+    display: none;
+  }
+}
+</style>

@@ -1,174 +1,153 @@
 <template>
-  <div class="container-fluid">
-    <!-- Header simplificado -->
-    <div class="row mb-4">
-      <div class="col">
-        <h1 class="h2 fw-bold text-dark mb-1">Dashboard</h1>
-        <p class="text-muted">Visão geral dos seus projetos</p>
-      </div>
+  <div class="container">
+     Header simplificado com CSS puro 
+    <div class="mb-6">
+      <h1 class="heading-1 mb-2">Dashboard</h1>
+      <p class="text-muted">Visão geral dos seus projetos</p>
     </div>
 
-    <!-- Stats -->
-    <div class="row g-3 mb-4">
-      <div class="col-12 col-md-6 col-lg-3">
-        <div class="card card-custom h-100">
-          <div class="card-body-custom">
-            <div class="d-flex align-items-center">
-              <div class="rounded-2 d-flex align-items-center justify-content-center me-3" 
-                   style="width: 2.5rem; height: 2.5rem; background-color: var(--primary-color); color: white;">
-                <FolderIcon style="width: 1.25rem; height: 1.25rem;" />
-              </div>
-              <div>
-                <p class="small text-muted mb-1">Projetos</p>
-                <p class="h4 fw-bold text-dark mb-0">{{ stats.projetos || 0 }}</p>
-              </div>
+     Stats cards com grid CSS puro 
+    <div class="grid grid-cols-4 gap-4 mb-8">
+      <div class="card card-hover">
+        <div class="card-body">
+          <div class="flex items-center">
+            <div class="stat-icon bg-primary">
+              <FolderIcon class="nav-icon" />
+            </div>
+            <div>
+              <p class="text-sm text-muted mb-1">Projetos</p>
+              <p class="heading-4">{{ stats.projetos || 0 }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="col-12 col-md-6 col-lg-3">
-        <div class="card card-custom h-100">
-          <div class="card-body-custom">
-            <div class="d-flex align-items-center">
-              <div class="rounded-2 d-flex align-items-center justify-content-center me-3" 
-                   style="width: 2.5rem; height: 2.5rem; background-color: var(--solar-color); color: white;">
-                <CpuChipIcon style="width: 1.25rem; height: 1.25rem;" />
-              </div>
-              <div>
-                <p class="small text-muted mb-1">Arranjos</p>
-                <p class="h4 fw-bold text-dark mb-0">{{ stats.arranjos || 0 }}</p>
-              </div>
+      <div class="card card-hover">
+        <div class="card-body">
+          <div class="flex items-center">
+            <div class="stat-icon bg-warning">
+              <CpuChipIcon class="nav-icon" />
+            </div>
+            <div>
+              <p class="text-sm text-muted mb-1">Arranjos</p>
+              <p class="heading-4">{{ stats.arranjos || 0 }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="col-12 col-md-6 col-lg-3">
-        <div class="card card-custom h-100">
-          <div class="card-body-custom">
-            <div class="d-flex align-items-center">
-              <div class="rounded-2 d-flex align-items-center justify-content-center me-3" 
-                   style="width: 2.5rem; height: 2.5rem; background-color: var(--success-color); color: white;">
-                <CheckCircleIcon style="width: 1.25rem; height: 1.25rem;" />
-              </div>
-              <div>
-                <p class="small text-muted mb-1">Análises</p>
-                <p class="h4 fw-bold text-dark mb-0">{{ stats.execucoes || 0 }}</p>
-              </div>
+      <div class="card card-hover">
+        <div class="card-body">
+          <div class="flex items-center">
+            <div class="stat-icon bg-success">
+              <CheckCircleIcon class="nav-icon" />
+            </div>
+            <div>
+              <p class="text-sm text-muted mb-1">Análises</p>
+              <p class="heading-4">{{ stats.execucoes || 0 }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="col-12 col-md-6 col-lg-3">
-        <div class="card card-custom h-100">
-          <div class="card-body-custom">
-            <div class="d-flex align-items-center">
-              <div class="rounded-2 d-flex align-items-center justify-content-center me-3" 
-                   style="width: 2.5rem; height: 2.5rem; background-color: var(--danger-color); color: white;">
-                <ExclamationTriangleIcon style="width: 1.25rem; height: 1.25rem;" />
-              </div>
-              <div>
-                <p class="small text-muted mb-1">Problemas</p>
-                <p class="h4 fw-bold text-dark mb-0">{{ stats.problemas || 0 }}</p>
-              </div>
+      <div class="card card-hover">
+        <div class="card-body">
+          <div class="flex items-center">
+            <div class="stat-icon bg-danger">
+              <ExclamationTriangleIcon class="nav-icon" />
+            </div>
+            <div>
+              <p class="text-sm text-muted mb-1">Problemas</p>
+              <p class="heading-4">{{ stats.problemas || 0 }}</p>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Recent Projects -->
-    <div class="row g-4">
-      <div class="col-12 col-lg-6">
-        <div class="card card-custom h-100">
-          <div class="card-header-custom">
-            <div class="d-flex align-items-center justify-content-between">
-              <h5 class="fw-semibold mb-0">Projetos Recentes</h5>
-              <router-link to="/projetos" class="btn btn-link btn-sm p-0">
-                Ver todos
-              </router-link>
-            </div>
+     Layout principal com grid CSS puro 
+    <div class="grid grid-cols-2 gap-6">
+       Recent Projects 
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center justify-between">
+            <h5 class="heading-5">Projetos Recentes</h5>
+            <router-link to="/projetos" class="text-primary text-sm font-medium">
+              Ver todos
+            </router-link>
           </div>
-          <div class="card-body-custom">
-            <div v-if="loading" class="text-center py-4">
-              <LoadingSpinner />
-            </div>
-            <div v-else-if="recentProjects.length === 0" class="text-center py-4">
-              <FolderIcon class="mx-auto text-muted mb-3" style="width: 3rem; height: 3rem; opacity: 0.5;" />
-              <h6 class="fw-semibold mb-2">Nenhum projeto</h6>
-              <p class="text-muted small mb-3">Comece criando seu primeiro projeto</p>
-              <router-link to="/projetos/novo" class="btn btn-primary btn-sm">
-                Novo Projeto
-              </router-link>
-            </div>
-            <div v-else class="d-flex flex-column gap-3">
-              <div
-                v-for="projeto in recentProjects"
-                :key="projeto.id"
-                class="d-flex align-items-center justify-content-between p-3 border rounded-2"
-              >
-                <div>
-                  <h6 class="fw-semibold mb-1">{{ projeto.nome }}</h6>
-                  <p class="text-muted small mb-1">{{ projeto.cliente }}</p>
-                  <p class="text-muted" style="font-size: 0.75rem;">{{ formatDate(projeto.created_at) }}</p>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge" :class="getStatusBadgeClass(projeto.status)">
-                    {{ getStatusLabel(projeto.status) }}
-                  </span>
-                  <router-link
-                    :to="`/projetos/${projeto.id}`"
-                    class="btn btn-link btn-sm p-1"
-                  >
-                    <ArrowRightIcon style="width: 1rem; height: 1rem;" />
-                  </router-link>
-                </div>
+        </div>
+        <div class="card-body">
+          <div v-if="loading" class="text-center py-8">
+            <LoadingSpinner />
+          </div>
+          <div v-else-if="recentProjects.length === 0" class="empty-state">
+            <FolderIcon class="empty-icon" />
+            <h6 class="heading-5 mb-2">Nenhum projeto</h6>
+            <p class="text-muted text-sm mb-4">Comece criando seu primeiro projeto</p>
+            <router-link to="/projetos/novo" class="btn btn-primary btn-sm">
+              Novo Projeto
+            </router-link>
+          </div>
+          <div v-else class="project-list">
+            <div
+              v-for="projeto in recentProjects"
+              :key="projeto.id"
+              class="project-item"
+            >
+              <div>
+                <h6 class="heading-5 mb-1">{{ projeto.nome }}</h6>
+                <p class="text-muted text-sm mb-1">{{ projeto.cliente }}</p>
+                <p class="text-muted text-sm">{{ formatDate(projeto.created_at) }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="badge" :class="getStatusBadgeClass(projeto.status)">
+                  {{ getStatusLabel(projeto.status) }}
+                </span>
+                <router-link
+                  :to="`/projetos/${projeto.id}`"
+                  class="btn btn-secondary btn-sm"
+                >
+                  <ArrowRightIcon class="nav-icon" />
+                </router-link>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="col-12 col-lg-6">
-        <div class="card card-custom h-100">
-          <div class="card-header-custom">
-            <h5 class="fw-semibold mb-0">Ações Rápidas</h5>
-          </div>
-          <div class="card-body-custom">
-            <div class="d-flex flex-column gap-3">
-              <router-link
-                to="/projetos/novo"
-                class="d-flex align-items-center p-3 border-2 border-dashed rounded-2 text-decoration-none"
-                style="border-color: var(--gray-300);"
-              >
-                <div class="rounded-2 d-flex align-items-center justify-content-center me-3" 
-                     style="width: 2.5rem; height: 2.5rem; background-color: var(--primary-color); color: white;">
-                  <PlusIcon style="width: 1.25rem; height: 1.25rem;" />
-                </div>
-                <div>
-                  <p class="fw-semibold text-dark mb-1">Novo Projeto</p>
-                  <p class="text-muted small mb-0">Criar um novo projeto de análise</p>
-                </div>
-              </router-link>
+       Quick Actions 
+      <div class="card">
+        <div class="card-header">
+          <h5 class="heading-5">Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <router-link
+              to="/projetos/novo"
+              class="quick-action-item"
+            >
+              <div class="stat-icon bg-primary">
+                <PlusIcon class="nav-icon" />
+              </div>
+              <div>
+                <p class="font-semibold text-dark mb-1">Novo Projeto</p>
+                <p class="text-muted text-sm">Criar um novo projeto de análise</p>
+              </div>
+            </router-link>
 
-              <router-link
-                to="/catalogos"
-                class="d-flex align-items-center p-3 border-2 border-dashed rounded-2 text-decoration-none"
-                style="border-color: var(--gray-300);"
-              >
-                <div class="rounded-2 d-flex align-items-center justify-content-center me-3" 
-                     style="width: 2.5rem; height: 2.5rem; background-color: var(--solar-color); color: white;">
-                  <BookOpenIcon style="width: 1.25rem; height: 1.25rem;" />
-                </div>
-                <div>
-                  <p class="fw-semibold text-dark mb-2">Gerenciar Catálogos</p>
-                  <p class="text-muted small mb-0">Módulos, inversores e fabricantes</p>
-                </div>
-              </router-link>
-            </div>
+            <router-link
+              to="/catalogos"
+              class="quick-action-item"
+            >
+              <div class="stat-icon bg-warning">
+                <BookOpenIcon class="nav-icon" />
+              </div>
+              <div>
+                <p class="font-semibold text-dark mb-1">Gerenciar Catálogos</p>
+                <p class="text-muted text-sm">Módulos, inversores e fabricantes</p>
+              </div>
+            </router-link>
           </div>
         </div>
       </div>
@@ -264,12 +243,12 @@ export default defineComponent({
     },
     getStatusBadgeClass(status) {
       const classes = {
-        rascunho: 'bg-secondary text-white',
-        em_analise: 'badge-solar',
-        aprovado: 'bg-success text-white',
-        rejeitado: 'bg-danger text-white'
+        rascunho: 'badge-secondary',
+        em_analise: 'badge-warning',
+        aprovado: 'badge-success',
+        rejeitado: 'badge-danger'
       }
-      return classes[status] || 'bg-secondary text-white'
+      return classes[status] || 'badge-secondary'
     }
   },
   async mounted() {
@@ -277,3 +256,69 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+.stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--space-3);
+  color: var(--white);
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.project-item:hover {
+  background-color: var(--gray-50);
+}
+
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.quick-action-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3);
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.quick-action-item:hover {
+  border-color: var(--primary);
+  background-color: var(--gray-50);
+  color: inherit;
+}
+
+@media (max-width: 768px) {
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

@@ -1,13 +1,13 @@
 <template>
-  <div class="space-y-6">
+  <div class="d-flex flex-column gap-4">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="d-flex align-items-center justify-content-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Projetos</h1>
-        <p class="mt-2 text-gray-600">Gerencie seus projetos de análise solar</p>
+        <h1 class="h3 fw-bold mb-0">Projetos</h1>
+        <p class="text-muted mb-0">Gerencie seus projetos de análise solar</p>
       </div>
-      <router-link to="/projetos/novo" class="btn-primary">
-        <PlusIcon class="h-4 w-4 mr-2" />
+      <router-link to="/projetos/novo" class="btn btn-primary d-flex align-items-center">
+        <PlusIcon class="me-2" style="width:1rem;height:1rem" />
         Novo Projeto
       </router-link>
     </div>
@@ -15,19 +15,19 @@
     <!-- Filters -->
     <div class="card">
       <div class="card-body">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
+        <div class="row g-3">
+          <div class="col-md-3">
             <label class="form-label">Buscar</label>
             <input
               v-model="filters.search"
               type="text"
-              class="form-input"
+              class="form-control"
               placeholder="Nome ou cliente..."
             />
           </div>
-          <div>
+          <div class="col-md-3">
             <label class="form-label">Status</label>
-            <select v-model="filters.status" class="form-input">
+            <select v-model="filters.status" class="form-select">
               <option value="">Todos</option>
               <option value="rascunho">Rascunho</option>
               <option value="em_analise">Em Análise</option>
@@ -35,16 +35,16 @@
               <option value="rejeitado">Rejeitado</option>
             </select>
           </div>
-          <div>
+          <div class="col-md-3">
             <label class="form-label">Ordenar por</label>
-            <select v-model="filters.sortBy" class="form-input">
+            <select v-model="filters.sortBy" class="form-select">
               <option value="created_at">Data de criação</option>
               <option value="nome">Nome</option>
               <option value="cliente">Cliente</option>
             </select>
           </div>
-          <div class="flex items-end">
-            <button @click="clearFilters" class="btn-outline w-full">
+          <div class="col-md-3 d-flex align-items-end">
+            <button @click="clearFilters" class="btn btn-outline-secondary w-100">
               Limpar Filtros
             </button>
           </div>
@@ -65,8 +65,8 @@
           :icon="FolderIcon"
         >
           <template #action>
-            <router-link to="/projetos/novo" class="btn-primary">
-              <PlusIcon class="h-4 w-4 mr-2" />
+            <router-link to="/projetos/novo" class="btn btn-primary d-inline-flex align-items-center">
+              <PlusIcon class="me-2" style="width:1rem;height:1rem" />
               Criar Primeiro Projeto
             </router-link>
           </template>
@@ -74,62 +74,48 @@
       </div>
 
       <div v-else>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Projeto
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Criado em
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
+                <th>Projeto</th>
+                <th>Cliente</th>
+                <th>Status</th>
+                <th>Criado em</th>
+                <th>Ações</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="projeto in projetos" :key="projeto.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
+            <tbody>
+              <tr v-for="projeto in projetos" :key="projeto.id">
+                <td>
                   <div>
-                    <div class="text-sm font-medium text-gray-900">{{ projeto.nome }}</div>
-                    <div class="text-sm text-gray-500">{{ projeto.descricao }}</div>
+                    <div class="fw-medium">{{ projeto.nome }}</div>
+                    <div class="text-muted small">{{ projeto.descricao }}</div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ projeto.cliente }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td>{{ projeto.cliente }}</td>
+                <td>
                   <span class="badge" :class="getStatusBadgeClass(projeto.status)">
                     {{ getStatusLabel(projeto.status) }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(projeto.created_at) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                <td class="text-muted">{{ formatDate(projeto.created_at) }}</td>
+                <td class="d-flex gap-2">
                   <router-link
                     :to="`/projetos/${projeto.id}`"
-                    class="text-primary-600 hover:text-primary-900"
+                    class="btn btn-link p-0"
                   >
                     Ver
                   </router-link>
                   <router-link
                     :to="`/projetos/${projeto.id}/editar`"
-                    class="text-gray-600 hover:text-gray-900"
+                    class="btn btn-link p-0"
                   >
                     Editar
                   </router-link>
                   <button
                     @click="confirmDelete(projeto)"
-                    class="text-danger-600 hover:text-danger-900"
+                    class="btn btn-link text-danger p-0"
                   >
                     Excluir
                   </button>
@@ -140,29 +126,25 @@
         </div>
 
         <!-- Pagination -->
-        <div class="px-6 py-4 border-t border-gray-200">
-          <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-700">
-              Mostrando {{ (currentPage - 1) * perPage + 1 }} a {{ Math.min(currentPage * perPage, totalItems) }} de {{ totalItems }} resultados
-            </div>
-            <div class="flex space-x-2">
-              <button
-                @click="previousPage"
-                :disabled="currentPage === 1"
-                class="btn-outline"
-                :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
-              >
-                Anterior
-              </button>
-              <button
-                @click="nextPage"
-                :disabled="currentPage === totalPages"
-                class="btn-outline"
-                :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }"
-              >
-                Próximo
-              </button>
-            </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+          <div class="small text-muted">
+            Mostrando {{ (currentPage - 1) * perPage + 1 }} a {{ Math.min(currentPage * perPage, totalItems) }} de {{ totalItems }} resultados
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              @click="previousPage"
+              :disabled="currentPage === 1"
+              class="btn btn-outline-secondary"
+            >
+              Anterior
+            </button>
+            <button
+              @click="nextPage"
+              :disabled="currentPage === totalPages"
+              class="btn btn-outline-secondary"
+            >
+              Próximo
+            </button>
           </div>
         </div>
       </div>
@@ -259,12 +241,12 @@ const getStatusLabel = (status) => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    rascunho: 'badge-info',
-    em_analise: 'badge-warning',
-    aprovado: 'badge-success',
-    rejeitado: 'badge-danger'
+    rascunho: 'bg-info text-dark',
+    em_analise: 'bg-warning text-dark',
+    aprovado: 'bg-success',
+    rejeitado: 'bg-danger'
   }
-  return classes[status] || 'badge-info'
+   return classes[status] || 'bg-secondary'
 }
 
 const previousPage = () => {
