@@ -39,5 +39,5 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: ["dist/", "node_modules/", ".next/", "out/", "build/"],
+  ignorePatterns: ["dist/", "node_modules/"],
 }

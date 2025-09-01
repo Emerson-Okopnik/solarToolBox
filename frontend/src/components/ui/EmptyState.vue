@@ -1,11 +1,12 @@
 <template>
   <div class="text-center py-5">
-    <div class="mx-auto text-muted mb-3" style="width: 3rem; height: 3rem;">
+    <!-- Estado vazio simplificado -->
+    <div class="mx-auto text-muted mb-3" style="width: 3rem; height: 3rem; opacity: 0.5;">
       <component :is="icon" />
     </div>
-    <h6 class="fw-medium text-dark">{{ title }}</h6>
-    <p class="text-muted small">{{ description }}</p>
-    <div v-if="$slots.action" class="mt-3">
+    <h6 class="fw-semibold text-dark mb-2">{{ title }}</h6>
+    <p class="text-muted mb-3">{{ description }}</p>
+    <div v-if="$slots.action">
       <slot name="action" />
     </div>
   </div>

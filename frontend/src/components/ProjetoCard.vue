@@ -3,15 +3,14 @@
     data-testid="projeto-card"
     @click="$emit('click', projeto)"
     class="card card-custom h-100"
-    style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
-    @mouseenter="$event.target.style.transform = 'translateY(-2px)'; $event.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'"
-    @mouseleave="$event.target.style.transform = 'translateY(0)'; $event.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'"
+    style="cursor: pointer;"
   >
     <div class="card-body-custom">
-      <h6 class="fw-medium text-dark">{{ projeto.nome }}</h6>
-      <p class="text-muted small">{{ projeto.cliente }}</p>
-      <p class="text-muted small">{{ projeto.arranjos.length }} arranjos</p>
-      <div v-if="projeto.ultima_execucao" data-testid="status-badge" class="mt-2">
+      <h6 class="fw-semibold text-dark mb-2">{{ projeto.nome }}</h6>
+      <p class="text-muted small mb-2">{{ projeto.cliente }}</p>
+      <p class="text-muted small mb-3">{{ projeto.arranjos.length }} arranjos</p>
+      
+      <div v-if="projeto.ultima_execucao" data-testid="status-badge">
         <span class="badge" :class="getStatusBadgeClass(projeto.ultima_execucao.status)">
           {{ statusLabel(projeto.ultima_execucao.status) }}
         </span>
@@ -40,11 +39,11 @@ const statusLabel = (status) => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    rascunho: 'bg-info text-dark',
+    rascunho: 'bg-secondary text-white',
     em_analise: 'badge-solar',
-    aprovado: 'bg-success',
-    rejeitado: 'bg-danger'
+    aprovado: 'bg-success text-white',
+    rejeitado: 'bg-danger text-white'
   }
-  return classes[status] || 'bg-info text-dark'
+  return classes[status] || 'bg-secondary text-white'
 }
 </script>
