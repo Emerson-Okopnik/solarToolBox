@@ -15,8 +15,8 @@
     <!-- Filters -->
     <div class="card">
       <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-3">
+        <div class="filters-grid">
+          <div class="form-group">
             <label class="form-label">Buscar</label>
             <input
               v-model="filters.search"
@@ -25,7 +25,8 @@
               placeholder="Nome ou cliente..."
             />
           </div>
-          <div class="col-md-3">
+
+          <div class="form-group">
             <label class="form-label">Status</label>
             <select v-model="filters.status" class="form-select">
               <option value="">Todos</option>
@@ -35,7 +36,8 @@
               <option value="rejeitado">Rejeitado</option>
             </select>
           </div>
-          <div class="col-md-3">
+
+          <div class="form-group">
             <label class="form-label">Ordenar por</label>
             <select v-model="filters.sortBy" class="form-select">
               <option value="created_at">Data de criação</option>
@@ -43,9 +45,10 @@
               <option value="cliente">Cliente</option>
             </select>
           </div>
-          <div class="col-md-3 d-flex align-items-end">
-            <button @click="clearFilters" class="btn btn-outline-secondary w-100">
-              Limpar Filtros
+
+          <div class="form-actions">
+            <button @click="clearFilters" type="button" class="btn-link-clear">
+              Limpar filtros
             </button>
           </div>
         </div>
@@ -74,8 +77,15 @@
       </div>
 
       <div v-else>
-        <div class="table-responsive">
-          <table class="table">
+        <div class="table-responsive projects-table-wrap">
+          <table class="table table-hover align-middle projects-table">
+            <colgroup>
+              <col class="col-projeto" />
+              <col class="col-cliente" />
+              <col class="col-status" />
+              <col class="col-created" />
+              <col class="col-actions" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Projeto</th>
@@ -88,37 +98,22 @@
             <tbody>
               <tr v-for="projeto in projetos" :key="projeto.id">
                 <td>
-                  <div>
-                    <div class="fw-medium">{{ projeto.nome }}</div>
-                    <div class="text-muted small">{{ projeto.descricao }}</div>
+                  <div class="cell-projeto">
+                    <div class="name">{{ projeto.nome }}</div>
+                    <div class="desc text-truncate-2">{{ projeto.descricao }}</div>
                   </div>
                 </td>
-                <td>{{ projeto.cliente }}</td>
+                <td class="text-truncate">{{ projeto.cliente }}</td>
                 <td>
-                  <span class="badge" :class="getStatusBadgeClass(projeto.status)">
+                  <span class="badge rounded-pill" :class="getStatusBadgeClass(projeto.status)">
                     {{ getStatusLabel(projeto.status) }}
                   </span>
                 </td>
-                <td class="text-muted">{{ formatDate(projeto.created_at) }}</td>
-                <td class="d-flex gap-2">
-                  <router-link
-                    :to="`/projetos/${projeto.id}`"
-                    class="btn btn-link p-0"
-                  >
-                    Ver
-                  </router-link>
-                  <router-link
-                    :to="`/projetos/${projeto.id}/editar`"
-                    class="btn btn-link p-0"
-                  >
-                    Editar
-                  </router-link>
-                  <button
-                    @click="confirmDelete(projeto)"
-                    class="btn btn-link text-danger p-0"
-                  >
-                    Excluir
-                  </button>
+                <td class="text-muted text-nowrap">{{ formatDate(projeto.created_at) }}</td>
+                <td class="actions">
+                  <router-link :to="`/projetos/${projeto.id}`" class="action-link view">Ver</router-link>
+                  <router-link :to="`/projetos/${projeto.id}/editar`" class="action-link edit">Editar</router-link>
+                  <button @click="confirmDelete(projeto)" class="action-link delete" type="button">Excluir</button>
                 </td>
               </tr>
             </tbody>
@@ -241,12 +236,12 @@ const getStatusLabel = (status) => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    rascunho: 'bg-info text-dark',
-    em_analise: 'bg-warning text-dark',
-    aprovado: 'bg-success',
-    rejeitado: 'bg-danger'
+    rascunho: 'text-bg-info',
+    em_analise: 'text-bg-warning',
+    aprovado: 'text-bg-success',
+    rejeitado: 'text-bg-danger'
   }
-   return classes[status] || 'bg-secondary'
+  return classes[status] || 'text-bg-secondary'
 }
 
 const previousPage = () => {
@@ -273,3 +268,94 @@ onMounted(() => {
   loadProjetos()
 })
 </script>
+
+<style scoped>
+/* Grid dos filtros */
+.filters-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr auto; /* buscar um pouco maior */
+  column-gap: 16px;
+  row-gap: 12px;
+  align-items: end; /* alinha todos pela base */
+}
+
+/* Responsivo: 2 colunas em tablets, 1 no mobile */
+@media (max-width: 992px) {
+  .filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filters-grid .form-actions {
+    justify-self: end;
+  }
+}
+@media (max-width: 576px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Força altura igual em inputs/selects */
+.filters-grid .form-control,
+.filters-grid .form-select {
+  height: 42px;
+}
+
+/* Rótulos com hierarquia sutil */
+.filters-grid .form-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Ação de limpar como link, sem “puxar” layout */
+.btn-link-clear {
+  background: none;
+  border: 0;
+  color: #0d6efd;           /* azul Bootstrap */
+  font-weight: 500;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;       /* mantém em uma linha */
+}
+.btn-link-clear:hover {
+  text-decoration: underline;
+}
+
+/* Garante alinhamento vertical perfeito do bloco de ações */
+.form-actions {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+}
+
+/* Deixe a coluna de ações mais estreita e previsível */
+.projects-table col.col-actions { width: 160px; } /* ajuste fino: 140–180px */
+
+/* Centralizar header e conteúdo da coluna Ações */
+.projects-table th:last-child,
+.projects-table td.actions {
+  text-align: center;
+}
+
+/* Não permitir quebra de linha dentro das ações */
+.projects-table td.actions {
+  white-space: nowrap;
+}
+
+/* Links de ação enxutos (sem estilos de botão) */
+.action-link {
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0 6px;
+  cursor: pointer;
+}
+
+/* Cores */
+.action-link.view,
+.action-link.edit { color: #0d6efd; }
+.action-link.delete { color: #dc3545; }
+</style>

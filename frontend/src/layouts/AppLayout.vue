@@ -12,11 +12,7 @@
         :key="item.name"
         :to="item.to"
         class="nav-link d-flex align-items-center gap-1"
-        :class="{
-          active: item.name === 'dashboard'
-            ? $route.path === item.to
-            : $route.path.startsWith(item.to)
-        }"
+        :class="{ active: $route.path.startsWith(item.to) }"
       >
         <component :is="item.icon" class="nav-icon" />
         {{ item.label }}
@@ -105,9 +101,8 @@ export default defineComponent({
       sidebarOpen: false,
       userMenuOpen: false,
       navigation: [
-        { name: 'dashboard', label: 'Dashboard', to: '/', icon: 'HomeIcon' },
-        { name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' },
         { name: 'catalogos', label: 'Catálogos', to: '/catalogos', icon: 'BookOpenIcon' },
+        { name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' },
       ]
     }
   },

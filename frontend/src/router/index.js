@@ -8,7 +8,6 @@ import AppLayout from "@/layouts/AppLayout.vue"
 // Pages
 import Login from "@/pages/auth/Login.vue"
 import Register from "@/pages/auth/Register.vue"
-import Dashboard from "@/pages/Dashboard.vue"
 import Projetos from "@/pages/projetos/Index.vue"
 import ProjetoDetalhes from "@/pages/projetos/Show.vue"
 import ProjetoForm from "@/pages/projetos/Form.vue"
@@ -45,9 +44,7 @@ const routes = [
     children: [
       {
         path: "",
-        name: "dashboard",
-        component: Dashboard,
-        meta: { title: "Dashboard" },
+        redirect: "/catalogos"
       },
       {
         path: "projetos",
@@ -136,7 +133,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: "login" })
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next({ name: "dashboard" })
+    next({ name: "catalogos" })
   } else {
     next()
   }

@@ -1,129 +1,120 @@
 <template>
-  <div class="space-y-6">
+  <div class="d-flex flex-column gap-4">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="d-flex align-items-center justify-content-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">
-          {{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}
-        </h1>
-        <p class="mt-2 text-gray-600">
+        <h1 class="h3 fw-bold mb-1">{{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}</h1>
+        <p class="text-muted mb-0">
           {{ isEditing ? 'Atualize as informações do projeto' : 'Crie um novo projeto de análise solar' }}
         </p>
       </div>
-      <router-link to="/projetos" class="btn-outline">
-        <ArrowLeftIcon class="h-4 w-4 mr-2" />
+      <router-link to="/projetos" class="btn btn-outline-secondary d-inline-flex align-items-center">
+        <ArrowLeftIcon class="me-2" style="width:1rem;height:1rem" />
         Voltar
       </router-link>
     </div>
 
     <!-- Form -->
-    <form @submit.prevent="handleSubmit" class="space-y-8">
-      <!-- Basic Information -->
+    <form @submit.prevent="handleSubmit" novalidate class="d-flex flex-column gap-4">
+      <!-- Informações Básicas -->
       <div class="card">
-        <div class="card-header">
-          <h3 class="text-lg font-medium text-gray-900">Informações Básicas</h3>
+        <div class="card-header section-header">
+          <h3 class="h6 mb-0">Informações Básicas</h3>
         </div>
-        <div class="card-body space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
               <label for="nome" class="form-label">Nome do Projeto *</label>
               <input
                 id="nome"
                 v-model="form.nome"
                 type="text"
                 required
-                class="form-input"
-                :class="{ 'border-danger-300': errors.nome }"
+                class="form-control"
+                :class="{ 'is-invalid': errors.nome }"
                 placeholder="Ex: Sistema Residencial - Casa Silva"
               />
-              <p v-if="errors.nome" class="form-error">{{ errors.nome[0] }}</p>
+              <div v-if="errors.nome" class="invalid-feedback">{{ errors.nome[0] }}</div>
             </div>
 
-            <div>
+            <div class="col-md-6">
               <label for="cliente" class="form-label">Cliente *</label>
               <input
                 id="cliente"
                 v-model="form.cliente"
                 type="text"
                 required
-                class="form-input"
-                :class="{ 'border-danger-300': errors.cliente }"
+                class="form-control"
+                :class="{ 'is-invalid': errors.cliente }"
                 placeholder="Nome do cliente"
               />
-              <p v-if="errors.cliente" class="form-error">{{ errors.cliente[0] }}</p>
+              <div v-if="errors.cliente" class="invalid-feedback">{{ errors.cliente[0] }}</div>
+            </div>
+
+            <div class="col-12">
+              <label for="descricao" class="form-label">Descrição</label>
+              <textarea
+                id="descricao"
+                v-model="form.descricao"
+                rows="3"
+                class="form-control"
+                placeholder="Descrição detalhada do projeto..."
+              ></textarea>
+            </div>
+
+            <div class="col-12">
+              <label for="endereco" class="form-label">Endereço</label>
+              <input
+                id="endereco"
+                v-model="form.endereco"
+                type="text"
+                class="form-control"
+                placeholder="Endereço da instalação"
+              />
             </div>
           </div>
-
-          <div>
-            <label for="descricao" class="form-label">Descrição</label>
-            <textarea
-              id="descricao"
-              v-model="form.descricao"
-              rows="3"
-              class="form-input"
-              placeholder="Descrição detalhada do projeto..."
-            ></textarea>
-          </div>
-
-          <div>
-            <label for="endereco" class="form-label">Endereço</label>
-            <input
-              id="endereco"
-              v-model="form.endereco"
-              type="text"
-              class="form-input"
-              placeholder="Endereço da instalação"
-            />
-          </div>
         </div>
       </div>
 
-      <!-- Climate Configuration -->
+      <!-- Configuração Climática -->
       <div class="card">
-        <div class="card-header">
-          <h3 class="text-lg font-medium text-gray-900">Configuração Climática</h3>
+        <div class="card-header section-header">
+          <h3 class="h6 mb-0">Configuração Climática</h3>
         </div>
-        <div class="card-body space-y-6">
-          <div>
-            <label for="clima_id" class="form-label">Localização Climática *</label>
-            <select
-              id="clima_id"
-              v-model.number="form.clima_id"
-              required
-              class="form-input"
-              :class="{ 'border-danger-300': errors.clima_id }"
-            >
-              <option value="">Selecione uma localização</option>
-              <option
-                v-for="clima in climas"
-                :key="clima.id"
-                :value="clima.id"
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6 col-lg-4">
+              <label for="clima_id" class="form-label">Localização Climática *</label>
+              <select
+                id="clima_id"
+                v-model.number="form.clima_id"
+                required
+                class="form-control"
+                :class="{ 'is-invalid': errors.clima_id }"
               >
-                {{ clima.nome }} - {{ clima.cidade }}/{{ clima.estado }}
-              </option>
-            </select>
-            <p v-if="errors.clima_id" class="form-error">{{ errors.clima_id[0] }}</p>
+                <option value="">Selecione uma localização</option>
+                <option v-for="clima in climas" :key="clima.id" :value="clima.id">
+                  {{ clima.nome }} - {{ clima.cidade }}/{{ clima.estado }}
+                </option>
+              </select>
+              <div v-if="errors.clima_id" class="invalid-feedback">{{ errors.clima_id[0] }}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Advanced Settings -->
+      <!-- Configurações Avançadas -->
       <div class="card">
-        <div class="card-header">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">Configurações Avançadas</h3>
-            <button
-              type="button"
-              @click="showAdvanced = !showAdvanced"
-              class="text-sm text-primary-600 hover:text-primary-500"
-            >
-              {{ showAdvanced ? 'Ocultar' : 'Mostrar' }}
-            </button>
-          </div>
+        <div class="card-header section-header d-flex align-items-center justify-content-between">
+          <h3 class="h6 mb-0">Configurações Avançadas</h3>
+          <button type="button" class="btn btn-link btn-sm p-0 section-toggle" @click="showAdvanced = !showAdvanced">
+            {{ showAdvanced ? 'Ocultar' : 'Mostrar' }}
+          </button>
         </div>
-        <div v-if="showAdvanced" class="card-body space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+
+        <div v-if="showAdvanced" class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
               <label for="limite_compatibilidade_tensao" class="form-label">
                 Limite de Compatibilidade - Tensão (%)
               </label>
@@ -134,15 +125,15 @@
                 min="1"
                 max="20"
                 step="0.1"
-                class="form-input"
+                class="form-control"
                 placeholder="5.0"
               />
-              <p class="text-xs text-gray-500 mt-1">
+              <small class="text-muted d-block mt-1">
                 Diferença máxima permitida entre tensões de módulos (padrão: 5%)
-              </p>
+              </small>
             </div>
 
-            <div>
+            <div class="col-md-6">
               <label for="limite_compatibilidade_corrente" class="form-label">
                 Limite de Compatibilidade - Corrente (%)
               </label>
@@ -153,28 +144,22 @@
                 min="1"
                 max="20"
                 step="0.1"
-                class="form-input"
+                class="form-control"
                 placeholder="5.0"
               />
-              <p class="text-xs text-gray-500 mt-1">
+              <small class="text-muted d-block mt-1">
                 Diferença máxima permitida entre correntes de módulos (padrão: 5%)
-              </p>
+              </small>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex items-center justify-end space-x-4">
-        <router-link to="/projetos" class="btn-outline">
-          Cancelar
-        </router-link>
-        <button
-          type="submit"
-          :disabled="loading"
-          class="btn-primary"
-        >
-          <div v-if="loading" class="loading-spinner mr-2"></div>
+      <!-- Ações -->
+      <div class="d-flex justify-content-end gap-2">
+        <router-link to="/projetos" class="btn btn-outline-secondary">Cancelar</router-link>
+        <button type="submit" :disabled="loading" class="btn btn-primary d-inline-flex align-items-center">
+          <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
           {{ loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar Projeto') }}
         </button>
       </div>
@@ -269,3 +254,20 @@ onMounted(() => {
   loadProjeto()
 })
 </script>
+
+<style scoped>
+.section-header {
+  background: #f8fbff;
+  border-bottom: 1px solid #e9eef6;
+}
+.section-toggle {
+  color: #0d6efd;
+  text-decoration: none;
+}
+.section-toggle:hover { text-decoration: underline; }
+
+.form-control {
+  height: 42px;
+}
+textarea.form-control { height: auto; }
+</style>

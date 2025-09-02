@@ -1,85 +1,90 @@
 <template>
-  <div v-if="loading" class="flex justify-center py-12">
+  <div v-if="loading" class="d-flex justify-content-center py-5">
     <LoadingSpinner />
   </div>
-  <div v-else-if="projeto" class="space-y-8">
+
+  <div v-else-if="projeto" class="d-flex flex-column gap-4">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="d-flex align-items-start justify-content-between">
       <div>
-        <nav class="flex" aria-label="Breadcrumb">
-          <ol class="flex items-center space-x-4">
-            <li>
-              <router-link to="/projetos" class="text-gray-400 hover:text-gray-500">
-                Projetos
-              </router-link>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item">
+              <router-link to="/projetos">Projetos</router-link>
             </li>
-            <li>
-              <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-            </li>
-            <li>
-              <span class="text-gray-900 font-medium">{{ projeto.nome }}</span>
-            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ projeto.nome }}</li>
           </ol>
         </nav>
-        <h1 class="mt-2 text-3xl font-bold text-gray-900">{{ projeto.nome }}</h1>
-        <p class="mt-1 text-gray-600">{{ projeto.cliente }}</p>
+        <h1 class="h3 fw-bold mb-1">{{ projeto.nome }}</h1>
+        <p class="text-muted mb-0">{{ projeto.cliente }}</p>
       </div>
-      <div class="flex items-center space-x-3">
+
+      <div class="page-actions">
         <button
           @click="executarAnalise"
           :disabled="executando"
-          class="btn-primary"
+          class="btn btn-primary d-inline-flex align-items-center"
         >
-          <div v-if="executando" class="loading-spinner mr-2"></div>
+          <span
+            v-if="executando"
+            class="spinner-border spinner-border-sm me-2"
+            role="status" aria-hidden="true"
+          ></span>
           {{ executando ? 'Executando...' : 'Executar Análise' }}
         </button>
-        <router-link :to="`/projetos/${projeto.id}/editar`" class="btn-outline">
+        <router-link
+          :to="`/projetos/${projeto.id}/editar`"
+          class="btn btn-outline-secondary"
+        >
           Editar
         </router-link>
       </div>
     </div>
 
-    <!-- Project Info -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2 space-y-6">
+    <!-- Conteúdo -->
+    <div class="row g-4">
+      <div class="col-lg-8 col-xl-9 d-flex flex-column gap-4">
         <!-- Arranjos -->
         <div class="card">
-          <div class="card-header">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900">Arranjos Fotovoltaicos</h3>
-              <button class="btn-outline btn-sm">
-                <PlusIcon class="h-4 w-4 mr-1" />
-                Adicionar Arranjo
+          <div class="card-header d-flex align-items-center justify-content-between section-header">
+            <h3 class="h6 mb-0">Arranjos Fotovoltaicos</h3>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">
+              <PlusIcon style="width:1rem;height:1rem" class="me-1" />
+              Adicionar Arranjo
+            </button>
+          </div>
+
+          <div class="card-body">
+            <div v-if="!projeto.arranjos || projeto.arranjos.length === 0" class="empty-state">
+              <CpuChipIcon style="width:3rem;height:3rem" class="mb-2 text-muted" />
+              <h6 class="mb-1">Nenhum arranjo</h6>
+              <p class="text-muted mb-3">Adicione arranjos para começar a análise</p>
+              <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">
+                <PlusIcon style="width:1rem;height:1rem" class="me-1" /> Adicionar Arranjo
               </button>
             </div>
-          </div>
-          <div class="card-body">
-            <div v-if="projeto.arranjos?.length === 0" class="text-center py-8">
-              <CpuChipIcon class="mx-auto h-12 w-12 text-gray-400" />
-              <h3 class="mt-2 text-sm font-medium text-gray-900">Nenhum arranjo</h3>
-              <p class="mt-1 text-sm text-gray-500">Adicione arranjos para começar a análise</p>
-            </div>
-            <div v-else class="space-y-4">
+
+            <div v-else class="d-flex flex-column gap-3">
               <div
                 v-for="arranjo in projeto.arranjos"
                 :key="arranjo.id"
-                class="border border-gray-200 rounded-lg p-4"
+                class="arranjo-item"
               >
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h4 class="font-medium text-gray-900">{{ arranjo.nome }}</h4>
-                    <p class="text-sm text-gray-500">
+                <div class="d-flex align-items-start justify-content-between">
+                  <div class="me-3">
+                    <div class="fw-semibold text-dark">{{ arranjo.nome }}</div>
+                    <div class="text-muted small">
                       {{ arranjo.modulo?.nome }} | {{ arranjo.inversor?.nome }}
-                    </p>
-                    <p class="text-sm text-gray-500">
+                    </div>
+                    <div class="text-muted small">
                       Azimute: {{ arranjo.azimute }}° | Inclinação: {{ arranjo.inclinacao }}°
-                    </p>
+                    </div>
                   </div>
-                  <div class="text-right">
-                    <p class="text-sm font-medium text-gray-900">
+                  <div class="text-end">
+                    <div class="small fw-semibold text-dark">
                       {{ arranjo.strings?.length || 0 }} strings
-                    </p>
-                    <span class="badge badge-info">{{ arranjo.status }}</span>
+                    </div>
+                    <span class="badge text-bg-info">{{ arranjo.status }}</span>
                   </div>
                 </div>
               </div>
@@ -89,28 +94,28 @@
 
         <!-- Resultados da Análise -->
         <div v-if="ultimaExecucao" class="card">
-          <div class="card-header">
-            <h3 class="text-lg font-medium text-gray-900">Resultados da Análise</h3>
+          <div class="card-header section-header">
+            <h3 class="h6 mb-0">Resultados da Análise</h3>
           </div>
           <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div class="text-center">
-                <div class="text-2xl font-bold text-success-600">
-                  {{ ultimaExecucao.checagens_aprovadas || 0 }}
+            <div class="row text-center g-3">
+              <div class="col-4">
+                <div class="kpi">
+                  <div class="value text-success">{{ ultimaExecucao.checagens_aprovadas || 0 }}</div>
+                  <div class="label">Checagens Aprovadas</div>
                 </div>
-                <div class="text-sm text-gray-500">Checagens Aprovadas</div>
               </div>
-              <div class="text-center">
-                <div class="text-2xl font-bold text-solar-600">
-                  {{ ultimaExecucao.checagens_aviso || 0 }}
+              <div class="col-4">
+                <div class="kpi">
+                  <div class="value" style="color:#f59e0b">{{ ultimaExecucao.checagens_aviso || 0 }}</div>
+                  <div class="label">Avisos</div>
                 </div>
-                <div class="text-sm text-gray-500">Avisos</div>
               </div>
-              <div class="text-center">
-                <div class="text-2xl font-bold text-danger-600">
-                  {{ ultimaExecucao.checagens_erro || 0 }}
+              <div class="col-4">
+                <div class="kpi">
+                  <div class="value text-danger">{{ ultimaExecucao.checagens_erro || 0 }}</div>
+                  <div class="label">Erros</div>
                 </div>
-                <div class="text-sm text-gray-500">Erros</div>
               </div>
             </div>
           </div>
@@ -118,57 +123,53 @@
       </div>
 
       <!-- Sidebar -->
-      <div class="space-y-6">
-        <!-- Project Details -->
+      <div class="col-lg-4 col-xl-3 d-flex flex-column gap-4">
         <div class="card">
-          <div class="card-header">
-            <h3 class="text-lg font-medium text-gray-900">Detalhes do Projeto</h3>
+          <div class="card-header section-header">
+            <h3 class="h6 mb-0">Detalhes do Projeto</h3>
           </div>
-          <div class="card-body space-y-4">
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Status</dt>
-              <dd class="mt-1">
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-5 text-muted small">Status</dt>
+              <dd class="col-7">
                 <span class="badge" :class="getStatusBadgeClass(projeto.status)">
                   {{ getStatusLabel(projeto.status) }}
                 </span>
               </dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Cliente</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ projeto.cliente }}</dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Clima</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ projeto.clima?.nome }}</dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Criado em</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ formatDate(projeto.created_at) }}</dd>
-            </div>
-            <div v-if="projeto.descricao">
-              <dt class="text-sm font-medium text-gray-500">Descrição</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ projeto.descricao }}</dd>
-            </div>
+
+              <dt class="col-5 text-muted small">Cliente</dt>
+              <dd class="col-7 small">{{ projeto.cliente }}</dd>
+
+              <dt class="col-5 text-muted small">Clima</dt>
+              <dd class="col-7 small">{{ projeto.clima?.nome }}</dd>
+
+              <dt class="col-5 text-muted small">Criado em</dt>
+              <dd class="col-7 small">{{ formatDate(projeto.created_at) }}</dd>
+
+              <template v-if="projeto.descricao">
+                <dt class="col-5 text-muted small">Descrição</dt>
+                <dd class="col-7 small">{{ projeto.descricao }}</dd>
+              </template>
+            </dl>
           </div>
         </div>
 
-        <!-- Quick Stats -->
         <div class="card">
-          <div class="card-header">
-            <h3 class="text-lg font-medium text-gray-900">Estatísticas</h3>
+          <div class="card-header section-header">
+            <h3 class="h6 mb-0">Estatísticas</h3>
           </div>
-          <div class="card-body space-y-3">
-            <div class="flex justify-between">
-              <span class="text-sm text-gray-500">Arranjos</span>
-              <span class="text-sm font-medium text-gray-900">{{ projeto.arranjos?.length || 0 }}</span>
+          <div class="card-body">
+            <div class="d-flex justify-content-between small mb-2">
+              <span class="text-muted">Arranjos</span>
+              <span class="fw-semibold">{{ projeto.arranjos?.length || 0 }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-sm text-gray-500">Strings</span>
-              <span class="text-sm font-medium text-gray-900">{{ totalStrings }}</span>
+            <div class="d-flex justify-content-between small mb-2">
+              <span class="text-muted">Strings</span>
+              <span class="fw-semibold">{{ totalStrings }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-sm text-gray-500">Execuções</span>
-              <span class="text-sm font-medium text-gray-900">{{ projeto.execucoes?.length || 0 }}</span>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Execuções</span>
+              <span class="fw-semibold">{{ projeto.execucoes?.length || 0 }}</span>
             </div>
           </div>
         </div>
@@ -176,6 +177,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
@@ -226,12 +228,12 @@ const getStatusLabel = (status) => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    rascunho: 'badge-info',
-    em_analise: 'badge-warning',
-    aprovado: 'badge-success',
-    rejeitado: 'badge-danger'
+    rascunho: 'text-bg-info',
+    em_analise: 'text-bg-warning',
+    aprovado: 'text-bg-success',
+    rejeitado: 'text-bg-danger'
   }
-  return classes[status] || 'badge-info'
+  return classes[status] || 'text-bg-secondary'
 }
 
 const executarAnalise = async () => {
@@ -257,3 +259,49 @@ onMounted(async () => {
   }
 })
 </script>
+<style scoped>
+/* Cabeçalhos dos cards */
+.section-header {
+  background: #f8fbff;
+  border-bottom: 1px solid #e9eef6;
+}
+
+/* Ações no topo (mantém alinhadas e sem sobrepor breadcrumb) */
+.page-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+/* Estado vazio do bloco de arranjos */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* Item de arranjo */
+.arranjo-item {
+  border: 1px solid #e9ecef;
+  border-radius: .5rem;
+  padding: .875rem;
+}
+
+/* KPIs */
+.kpi .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.kpi .label {
+  font-size: .875rem;
+  color: #6c757d;
+}
+
+/* Breadcrumb sutil */
+.breadcrumb {
+  --bs-breadcrumb-divider: "›";
+  margin-bottom: .25rem;
+}
+
+</style>

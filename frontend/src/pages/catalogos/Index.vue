@@ -1,111 +1,125 @@
 <template>
   <div class="space-y-8">
-    <!-- Header -->
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900">Catálogos</h1>
-      <p class="mt-2 text-gray-600">Gerencie fabricantes, módulos, inversores e dados climáticos</p>
-    </div>
-
-    <!-- Catalog Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <router-link
-        to="/catalogos/fabricantes"
-        class="card hover:shadow-lg transition-shadow duration-200 group"
-      >
-        <div class="card-body text-center">
-          <div class="mx-auto h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200 transition-colors">
-            <BuildingOfficeIcon class="h-6 w-6 text-primary-600" />
-          </div>
-          <h3 class="mt-4 text-lg font-medium text-gray-900">Fabricantes</h3>
-          <p class="mt-2 text-sm text-gray-500">Gerencie fabricantes de módulos e inversores</p>
-          <div class="mt-4 flex items-center justify-center text-sm text-primary-600">
-            <span>{{ stats.fabricantes || 0 }} fabricantes</span>
-            <ArrowRightIcon class="ml-2 h-4 w-4" />
-          </div>
-        </div>
-      </router-link>
-
-      <router-link
-        to="/catalogos/modulos"
-        class="card hover:shadow-lg transition-shadow duration-200 group"
-      >
-        <div class="card-body text-center">
-          <div class="mx-auto h-12 w-12 bg-solar-100 rounded-lg flex items-center justify-center group-hover:bg-solar-200 transition-colors">
-            <RectangleStackIcon class="h-6 w-6 text-solar-600" />
-          </div>
-          <h3 class="mt-4 text-lg font-medium text-gray-900">Módulos</h3>
-          <p class="mt-2 text-sm text-gray-500">Catálogo de módulos fotovoltaicos</p>
-          <div class="mt-4 flex items-center justify-center text-sm text-primary-600">
-            <span>{{ stats.modulos || 0 }} módulos</span>
-            <ArrowRightIcon class="ml-2 h-4 w-4" />
-          </div>
-        </div>
-      </router-link>
-
-      <router-link
-        to="/catalogos/inversores"
-        class="card hover:shadow-lg transition-shadow duration-200 group"
-      >
-        <div class="card-body text-center">
-          <div class="mx-auto h-12 w-12 bg-success-100 rounded-lg flex items-center justify-center group-hover:bg-success-200 transition-colors">
-            <CpuChipIcon class="h-6 w-6 text-success-600" />
-          </div>
-          <h3 class="mt-4 text-lg font-medium text-gray-900">Inversores</h3>
-          <p class="mt-2 text-sm text-gray-500">Catálogo de inversores solares</p>
-          <div class="mt-4 flex items-center justify-center text-sm text-primary-600">
-            <span>{{ stats.inversores || 0 }} inversores</span>
-            <ArrowRightIcon class="ml-2 h-4 w-4" />
-          </div>
-        </div>
-      </router-link>
-
-      <router-link
-        to="/catalogos/climas"
-        class="card hover:shadow-lg transition-shadow duration-200 group"
-      >
-        <div class="card-body text-center">
-          <div class="mx-auto h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200 transition-colors">
-            <CloudIcon class="h-6 w-6 text-primary-600" />
-          </div>
-          <h3 class="mt-4 text-lg font-medium text-gray-900">Climas</h3>
-          <p class="mt-2 text-sm text-gray-500">Dados climáticos por localização</p>
-          <div class="mt-4 flex items-center justify-center text-sm text-primary-600">
-            <span>{{ stats.climas || 0 }} localizações</span>
-            <ArrowRightIcon class="ml-2 h-4 w-4" />
-          </div>
-        </div>
-      </router-link>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="text-lg font-medium text-gray-900">Atividade Recente</h3>
+    <div class="catalog-page">
+      <!-- Header -->
+      <div class="catalog-header">
+        <h1>Catálogos</h1>
+        <p>Gerencie fabricantes, módulos, inversores e dados climáticos</p>
       </div>
-      <div class="card-body">
-        <div v-if="loading" class="flex justify-center py-4">
-          <LoadingSpinner />
+
+      <!-- Grid de cards -->
+      <div class="catalog-grid">
+        <router-link to="/catalogos/fabricantes" class="catalog-card">
+          <div class="card-icon">
+            <BuildingOfficeIcon />
+          </div>
+          <h3>Fabricantes</h3>
+          <p>Fabricantes de módulos e inversores</p>
+          <span class="card-footer">{{ stats.fabricantes || 0 }} fabricantes →</span>
+        </router-link>
+
+        <router-link to="/catalogos/modulos" class="catalog-card">
+          <div class="card-icon">
+            <RectangleStackIcon />
+          </div>
+          <h3>Módulos</h3>
+          <p>Catálogo de módulos fotovoltaicos</p>
+          <span class="card-footer">{{ stats.modulos || 0 }} módulos →</span>
+        </router-link>
+
+        <router-link to="/catalogos/inversores" class="catalog-card">
+          <div class="card-icon">
+            <CpuChipIcon />
+          </div>
+          <h3>Inversores</h3>
+          <p>Catálogo de inversores solares</p>
+          <span class="card-footer">{{ stats.inversores || 0 }} inversores →</span>
+        </router-link>
+
+        <router-link to="/catalogos/climas" class="catalog-card">
+          <div class="card-icon">
+            <CloudIcon />
+          </div>
+          <h3>Climas</h3>
+          <p>Dados climáticos por localização</p>
+          <span class="card-footer">{{ stats.climas || 0 }} localizações →</span>
+        </router-link>
+      </div>
+    </div>
+    
+    <!-- Recent Projects and Quick Actions -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div class="header-row">
+            <h5 class="heading-5">Projetos Recentes</h5>
+            <router-link to="/projetos" class="link-small-primary">Ver todos</router-link>
+          </div>
         </div>
-        <div v-else-if="recentActivity.length === 0" class="text-center py-8">
-          <ClockIcon class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-medium text-gray-900">Nenhuma atividade recente</h3>
-          <p class="mt-1 text-sm text-gray-500">As alterações nos catálogos aparecerão aqui</p>
-        </div>
-        <div v-else class="space-y-4">
-          <div
-            v-for="activity in recentActivity"
-            :key="activity.id"
-            class="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
-          >
-            <div class="flex-shrink-0">
-              <div class="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <component :is="getActivityIcon(activity.type)" class="h-4 w-4 text-gray-600" />
+        <div class="card-body">
+          <div v-if="loadingProjects" class="text-center py-8">
+            <LoadingSpinner />
+          </div>
+          <div v-else-if="recentProjects.length === 0" class="empty-state">
+            <FolderIcon class="empty-icon" />
+            <h6 class="heading-5 mb-2">Nenhum projeto</h6>
+            <p class="text-muted text-sm mb-4">Comece criando seu primeiro projeto</p>
+            <router-link to="/projetos/novo" class="btn btn-primary btn-sm">
+              Novo Projeto
+            </router-link>
+          </div>
+          <div v-else class="project-list">
+            <div
+              v-for="projeto in recentProjects"
+              :key="projeto.id"
+              class="project-item"
+            >
+              <div>
+                <h6 class="heading-5 mb-1">{{ projeto.nome }}</h6>
+                <p class="text-muted text-sm mb-1">{{ projeto.cliente }}</p>
+                <p class="text-muted text-sm">{{ formatDate(projeto.created_at) }}</p>
+              </div>
+              <div class="row-gap-2">
+                <span class="badge" :class="getStatusBadgeClass(projeto.status)">
+                  {{ getStatusLabel(projeto.status) }}
+                </span>
+                <router-link
+                  :to="`/projetos/${projeto.id}`"
+                  class="btn btn-secondary btn-sm"
+                >
+                  <ArrowRightIcon class="nav-icon" />
+                </router-link>
               </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900">{{ activity.description }}</p>
-              <p class="text-sm text-gray-500">{{ formatDate(activity.created_at) }}</p>
-            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h5 class="heading-5">Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <router-link to="/projetos/novo" class="quick-action-item">
+              <div class="stat-icon bg-primary">
+                <PlusIcon class="nav-icon" />
+              </div>
+              <div>
+                <p class="font-semibold text-dark mb-1">Novo Projeto</p>
+                <p class="text-muted text-sm">Criar um novo projeto de análise</p>
+              </div>
+            </router-link>
+
+            <router-link to="/catalogos" class="quick-action-item">
+              <div class="stat-icon bg-warning">
+                <BookOpenIcon class="nav-icon" />
+              </div>
+              <div>
+                <p class="font-semibold text-dark mb-1">Gerenciar Catálogos</p>
+                <p class="text-muted text-sm">Módulos, inversores e fabricantes</p>
+              </div>
+            </router-link>
           </div>
         </div>
       </div>
@@ -123,18 +137,17 @@ import {
   CpuChipIcon,
   CloudIcon,
   ArrowRightIcon,
-  ClockIcon,
+  FolderIcon,
   PlusIcon,
-  PencilIcon,
-  TrashIcon
+  BookOpenIcon
 } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 
-const loading = ref(true)
 const stats = ref({})
-const recentActivity = ref([])
+const recentProjects = ref([])
+const loadingProjects = ref(true)
 
-const loadCatalogData = async () => {
+const loadStats = async () => {
   try {
     // Simular carregamento de dados
     await new Promise(resolve => setTimeout(resolve, 800))
@@ -145,52 +158,247 @@ const loadCatalogData = async () => {
       inversores: 45,
       climas: 12
     }
-    
-    recentActivity.value = [
+  } catch (error) {
+    console.error('Erro ao carregar dados dos catálogos:', error)
+  }
+}
+
+const loadRecentProjects = async () => {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    recentProjects.value = [
       {
         id: 1,
-        type: 'create',
-        description: 'Novo módulo "Canadian Solar CS3W-400P" adicionado',
+        nome: 'Projeto Residencial - Casa Silva',
+        cliente: 'João Silva',
+        status: 'aprovado',
         created_at: new Date()
       },
       {
         id: 2,
-        type: 'update',
-        description: 'Inversor "Fronius Primo 5.0-1" atualizado',
-        created_at: new Date(Date.now() - 3600000)
-      },
-      {
-        id: 3,
-        type: 'create',
-        description: 'Fabricante "Jinko Solar" adicionado',
-        created_at: new Date(Date.now() - 7200000)
+        nome: 'Sistema Comercial - Loja ABC',
+        cliente: 'Empresa ABC Ltda',
+        status: 'em_analise',
+        created_at: new Date(Date.now() - 86400000)
       }
     ]
   } catch (error) {
-    console.error('Erro ao carregar dados dos catálogos:', error)
+    console.error('Erro ao carregar projetos recentes:', error)
   } finally {
-    loading.value = false
+    loadingProjects.value = false
   }
 }
 
-const getActivityIcon = (type) => {
-  const icons = {
-    create: PlusIcon,
-    update: PencilIcon,
-    delete: TrashIcon
-  }
-  return icons[type] || PlusIcon
-}
-
-const formatDate = (date) => {
+const formatDate = date => {
   if (!date) return ''
   const parsed = new Date(date)
   return isNaN(parsed.getTime())
     ? ''
-    : format(parsed, 'dd/MM/yyyy HH:mm', { locale: ptBR })
+    : format(parsed, 'dd/MM/yyyy', { locale: ptBR })
+}
+
+const getStatusLabel = status => {
+  const labels = {
+    rascunho: 'Rascunho',
+    em_analise: 'Em Análise',
+    aprovado: 'Aprovado',
+    rejeitado: 'Rejeitado'
+  }
+  return labels[status] || status
+}
+
+const getStatusBadgeClass = status => {
+  const classes = {
+    rascunho: 'badge-secondary',
+    em_analise: 'badge-warning',
+    aprovado: 'badge-success',
+    rejeitado: 'badge-danger'
+  }
+  return classes[status] || 'badge-secondary'
 }
 
 onMounted(() => {
-  loadCatalogData()
+  loadStats()
+  loadRecentProjects()
 })
 </script>
+
+<style scoped>
+.catalog-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.catalog-header h1 {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0;
+  color: #222;
+}
+
+.catalog-header p {
+  margin-top: 6px;
+  color: #555;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.catalog-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.catalog-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.catalog-card h3 {
+  margin-top: 15px;
+  font-size: 18px;
+  color: #222;
+}
+
+.catalog-card p {
+  font-size: 14px;
+  color: #666;
+  margin: 10px 0 15px;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #eef3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: #1a73e8;
+}
+
+.card-footer {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a73e8;
+}
+
+.stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--space-3);
+  color: var(--white);
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.project-item:hover {
+  background-color: var(--gray-50);
+}
+
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.quick-action-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3);
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.quick-action-item:hover {
+  border-color: var(--primary);
+  background-color: var(--gray-50);
+  color: inherit;
+}
+
+/* Layout 2 colunas responsivo */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px; /* equivalente ao gap-6 */
+}
+
+/* A partir de ~desktop (ajuste conforme seu breakpoint) */
+@media (min-width: 992px) {
+  .two-col {
+    grid-template-columns: 1fr 1fr;
+    align-items: start; /* impede esticar verticalmente */
+  }
+}
+
+/* Pequenas utilitárias para substituir as classes Tailwind usadas no trecho */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link-small-primary {
+  font-size: 0.875rem; /* ~14px */
+  font-weight: 500;
+  color: var(--primary, #1a73e8);
+  text-decoration: none;
+}
+.link-small-primary:hover {
+  text-decoration: underline;
+}
+
+.row-gap-2 {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* ~gap-2 */
+}
+
+/* (Opcional) garantir que ambas as cards tenham mesma “tensão” visual */
+.two-col .card {
+  height: 100%;
+}
+</style>
