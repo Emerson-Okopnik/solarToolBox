@@ -32,12 +32,7 @@
           ></span>
           {{ executando ? 'Executando...' : 'Executar Análise' }}
         </button>
-        <router-link
-          :to="`/projetos/${projeto.id}/editar`"
-          class="btn btn-outline-secondary"
-        >
-          Editar
-        </router-link>
+        <router-link :to="`/projetos/${projeto.id}/editar`" class="btn btn-outline-secondary">Editar</router-link>
       </div>
     </div>
 
@@ -48,7 +43,7 @@
         <div class="card">
           <div class="card-header d-flex align-items-center justify-content-between section-header">
             <h3 class="h6 mb-0">Arranjos Fotovoltaicos</h3>
-            <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal">
               <PlusIcon style="width:1rem;height:1rem" class="me-1" />
               Adicionar Arranjo
             </button>
@@ -59,7 +54,7 @@
               <CpuChipIcon style="width:3rem;height:3rem" class="mb-2 text-muted" />
               <h6 class="mb-1">Nenhum arranjo</h6>
               <p class="text-muted mb-3">Adicione arranjos para começar a análise</p>
-              <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">
+              <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal">
                 <PlusIcon style="width:1rem;height:1rem" class="me-1" /> Adicionar Arranjo
               </button>
             </div>
@@ -74,7 +69,7 @@
                   <div class="me-3">
                     <div class="fw-semibold text-dark">{{ arranjo.nome }}</div>
                     <div class="text-muted small">
-                      {{ arranjo.modulo?.nome }} | {{ arranjo.inversor?.nome }}
+                      {{ arranjo.modulo?.nome }} {{ arranjo.inversor?.modelo }}
                     </div>
                     <div class="text-muted small">
                       Azimute: {{ arranjo.azimute }}° | Inclinação: {{ arranjo.inclinacao }}°
@@ -175,6 +170,63 @@
         </div>
       </div>
     </div>
+    <!-- Modal Novo Arranjo -->
+    <div v-if="showArranjoModal">
+      <div class="modal fade show" style="display:block" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Novo Arranjo</h5>
+              <button type="button" class="btn-close" @click="closeArranjoModal"></button>
+            </div>
+            <form @submit.prevent="criarArranjo">
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="arranjo_nome" class="form-label">Nome *</label>
+                  <input id="arranjo_nome" v-model="arranjoForm.nome" type="text" required class="form-control" />
+                </div>
+                <div class="mb-3">
+                  <label for="arranjo_modulo" class="form-label">Módulo *</label>
+                  <select id="arranjo_modulo" v-model.number="arranjoForm.modulo_id" required class="form-select">
+                    <option value="">Selecione</option>
+                    <option v-for="modulo in catalogosStore.modulos" :key="modulo.id" :value="modulo.id">
+                      {{ modulo.modelo }} - {{ modulo.potencia }}W
+                    </option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="arranjo_inversor" class="form-label">Inversor *</label>
+                  <select id="arranjo_inversor" v-model.number="arranjoForm.inversor_id" required class="form-select">
+                    <option value="">Selecione</option>
+                    <option v-for="inversor in catalogosStore.inversores" :key="inversor.id" :value="inversor.id">
+                      {{ inversor.modelo }} - {{ inversor.potencia_nominal }}W
+                    </option>
+                  </select>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="arranjo_azimute" class="form-label">Azimute (°)</label>
+                    <input id="arranjo_azimute" v-model.number="arranjoForm.azimute" type="number" min="0" max="360" required class="form-control" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="arranjo_inclinacao" class="form-label">Inclinação (°)</label>
+                    <input id="arranjo_inclinacao" v-model.number="arranjoForm.inclinacao" type="number" min="0" max="90" required class="form-control" />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" @click="closeArranjoModal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" :disabled="salvandoArranjo">
+                  <span v-if="salvandoArranjo" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  {{ salvandoArranjo ? 'Salvando...' : 'Criar Arranjo' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    </div>
   </div>
 </template>
 
@@ -191,16 +243,27 @@ import {
 } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import { useProjetosStore } from '@/stores/projetos'
+import { useCatalogosStore } from '@/stores/catalogos'
 import { useToast } from 'vue-toastification'
 
 const route = useRoute()
 const projetosStore = useProjetosStore()
+const catalogosStore = useCatalogosStore()
 const toast = useToast()
 
 const loading = ref(true)
 const executando = ref(false)
 const projeto = ref(null)
 const ultimaExecucao = ref(null)
+const showArranjoModal = ref(false)
+const salvandoArranjo = ref(false)
+const arranjoForm = ref({
+  nome: '',
+  modulo_id: '',
+  inversor_id: '',
+  azimute: 180,
+  inclinacao: 20
+})
 
 const totalStrings = computed(() => {
   return projeto.value?.arranjos?.reduce((total, arranjo) => {
@@ -249,11 +312,44 @@ const executarAnalise = async () => {
   }
 }
 
+const openArranjoModal = () => {
+  showArranjoModal.value = true
+}
+
+const closeArranjoModal = () => {
+  showArranjoModal.value = false
+  arranjoForm.value = {
+    nome: '',
+    modulo_id: '',
+    inversor_id: '',
+    azimute: 180,
+    inclinacao: 20
+  }
+}
+
+const criarArranjo = async () => {
+  salvandoArranjo.value = true
+  try {
+    await projetosStore.criarArranjo(projeto.value.id, arranjoForm.value)
+    toast.success('Arranjo criado com sucesso!')
+    closeArranjoModal()
+  } catch (error) {
+    toast.error(projetosStore.error || 'Erro ao criar arranjo')
+  } finally {
+    salvandoArranjo.value = false
+  }
+}
+
 onMounted(async () => {
   try {
-    projeto.value = await projetosStore.buscarProjeto(route.params.id)
+    const [proj] = await Promise.all([
+      projetosStore.buscarProjeto(route.params.id),
+      catalogosStore.carregarModulos(),
+      catalogosStore.carregarInversores()
+    ])
+    projeto.value = proj
   } catch (error) {
-    toast.error('Erro ao carregar projeto')
+    toast.error('Erro ao carregar dados')
   } finally {
     loading.value = false
   }

@@ -29,7 +29,7 @@ export const useProjetosStore = defineStore("projetos", {
       this.error = null
       try {
         const data = await projetosService.buscar(id)
-        const projeto = data.data ?? data
+        const projeto = data?.data?.projeto || data?.projeto || data
         this.projetoAtual = projeto
         return projeto
       } catch (error) {
