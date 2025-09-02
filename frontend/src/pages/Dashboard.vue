@@ -1,12 +1,10 @@
 <template>
   <div class="container">
-     Header simplificado com CSS puro 
     <div class="mb-6">
       <h1 class="heading-1 mb-2">Dashboard</h1>
       <p class="text-muted">Visão geral dos seus projetos</p>
     </div>
 
-     Stats cards com grid CSS puro 
     <div class="grid grid-cols-4 gap-4 mb-8">
       <div class="card card-hover">
         <div class="card-body">
@@ -65,9 +63,7 @@
       </div>
     </div>
 
-     Layout principal com grid CSS puro 
     <div class="grid grid-cols-2 gap-6">
-       Recent Projects 
       <div class="card">
         <div class="card-header">
           <div class="flex items-center justify-between">
@@ -116,7 +112,6 @@
         </div>
       </div>
 
-       Quick Actions 
       <div class="card">
         <div class="card-header">
           <h5 class="heading-5">Ações Rápidas</h5>
