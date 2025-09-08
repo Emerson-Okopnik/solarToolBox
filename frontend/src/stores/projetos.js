@@ -1,5 +1,6 @@
 import { defineStore } from "pinia"
 import { projetosService } from "@/services/projetos"
+import { stringsService } from "@/services/strings"
 
 export const useProjetosStore = defineStore("projetos", {
   state: () => ({
@@ -82,6 +83,28 @@ export const useProjetosStore = defineStore("projetos", {
         return arranjo
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao criar arranjo"
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async criarString(arranjoId, dados) {
+      this.loading = true
+      this.error = null
+      try {
+        const data = await stringsService.criar(arranjoId, dados)
+        const novaString = data.data ?? data
+        if (this.projetoAtual) {
+          const arranjo = this.projetoAtual.arranjos.find(a => a.id === arranjoId)
+          if (arranjo) {
+            arranjo.strings = arranjo.strings || []
+            arranjo.strings.push(novaString)
+          }
+        }
+        return novaString
+      } catch (error) {
+        this.error = error.response?.data?.message || "Erro ao criar string"
         throw error
       } finally {
         this.loading = false

@@ -97,10 +97,12 @@
             </thead>
             <tbody>
               <tr v-for="projeto in projetos" :key="projeto.id">
-                <td>
+                <td> 
                   <div class="cell-projeto">
-                    <div class="name">{{ projeto.nome }}</div>
-                    <div class="desc text-truncate-2">{{ projeto.descricao }}</div>
+                    <router-link :to="`/projetos/${projeto.id}`" class="action-link list">
+                      <div class="name">{{ projeto.nome }}</div>
+                      <div class="desc text-truncate-2">{{ projeto.descricao }}</div>
+                    </router-link>
                   </div>
                 </td>
                 <td class="text-truncate">{{ projeto.cliente }}</td>
@@ -358,4 +360,5 @@ onMounted(() => {
 .action-link.view,
 .action-link.edit { color: #0d6efd; }
 .action-link.delete { color: #dc3545; }
+.action-link.list { color: #000000; }
 </style>

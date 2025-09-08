@@ -82,6 +82,24 @@
                     <span class="badge text-bg-info">{{ arranjo.status }}</span>
                   </div>
                 </div>
+                <div v-if="arranjo.strings && arranjo.strings.length" class="mt-2">
+                  <div
+                    v-for="string in arranjo.strings"
+                    :key="string.id"
+                    class="d-flex justify-content-between small"
+                  >
+                    <span>MPPT {{ string.mppt_id || '-' }} - {{ string.conexao }}</span>
+                    <span>{{ string.ns }}s × {{ string.np }}p</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary mt-2 d-inline-flex align-items-center"
+                  @click="openStringModal(arranjo)"
+                >
+                  <PlusIcon style="width:1rem;height:1rem" class="me-1" />
+                  Nova String
+                </button>
               </div>
             </div>
           </div>
@@ -227,6 +245,62 @@
       </div>
       <div class="modal-backdrop fade show"></div>
     </div>
+
+    <!-- Modal Nova String -->
+    <div v-if="showStringModal">
+      <div class="modal fade show" style="display:block" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Nova String</h5>
+              <button type="button" class="btn-close" @click="closeStringModal"></button>
+            </div>
+            <form @submit.prevent="criarString">
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="string_nome" class="form-label">Nome *</label>
+                  <input id="string_nome" v-model="stringForm.nome" type="text" required class="form-control" />
+                </div>
+                <div class="mb-3">
+                  <label for="string_conexao" class="form-label">Tipo de Conexão *</label>
+                  <select id="string_conexao" v-model="stringForm.tipo_conexao" class="form-select" required>
+                    <option value="serie">Série</option>
+                    <option value="paralelo">Paralelo</option>
+                  </select>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label for="string_ns" class="form-label">Módulos em Série</label>
+                    <input id="string_ns" v-model.number="stringForm.num_modulos_serie" type="number" min="1" required class="form-control" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="string_np" class="form-label">Strings em Paralelo</label>
+                    <input id="string_np" v-model.number="stringForm.num_strings_paralelo" type="number" min="1" required class="form-control" />
+                  </div>
+                </div>
+                <div class="mb-3" v-if="mpptsList.length">
+                  <label for="string_mppt" class="form-label">MPPT</label>
+                  <select id="string_mppt" v-model="stringForm.mppt_id" class="form-select">
+                    <option value="">Selecione MPPT</option>
+                    <option v-for="mppt in mpptsList" :key="mppt.id" :value="mppt.id">
+                      MPPT {{ mppt.nome || mppt.id }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" @click="closeStringModal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" :disabled="salvandoString">
+                  <span v-if="salvandoString" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  {{ salvandoString ? 'Salvando...' : 'Criar String' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    </div>
   </div>
 </template>
 
@@ -245,6 +319,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import { useProjetosStore } from '@/stores/projetos'
 import { useCatalogosStore } from '@/stores/catalogos'
 import { useToast } from 'vue-toastification'
+import { catalogosService } from '@/services/catalogos'
 
 const route = useRoute()
 const projetosStore = useProjetosStore()
@@ -261,9 +336,21 @@ const arranjoForm = ref({
   nome: '',
   modulo_id: '',
   inversor_id: '',
-  azimute: 180,
+  azimute: 0,
   inclinacao: 20
 })
+
+const showStringModal = ref(false)
+const salvandoString = ref(false)
+const stringForm = ref({
+  nome: '',
+  tipo_conexao: 'serie',
+  num_modulos_serie: 1,
+  num_strings_paralelo: 1,
+  mppt_id: ''
+})
+const selectedArranjo = ref(null)
+const mpptsList = ref([])
 
 const totalStrings = computed(() => {
   return projeto.value?.arranjos?.reduce((total, arranjo) => {
@@ -337,6 +424,44 @@ const criarArranjo = async () => {
     toast.error(projetosStore.error || 'Erro ao criar arranjo')
   } finally {
     salvandoArranjo.value = false
+  }
+}
+
+const openStringModal = async (arranjo) => {
+  selectedArranjo.value = arranjo
+  try {
+    const inversorId = arranjo.inversor_id || arranjo.inversor?.id
+    mpptsList.value = inversorId ? await catalogosService.listarMppts(inversorId) : []
+  } catch (error) {
+    mpptsList.value = []
+  }
+  showStringModal.value = true
+}
+
+const closeStringModal = () => {
+  showStringModal.value = false
+  selectedArranjo.value = null
+  stringForm.value = {
+    nome: '',
+    tipo_conexao: 'serie',
+    num_modulos_serie: 1,
+    num_strings_paralelo: 1,
+    mppt_id: ''
+  }
+  mpptsList.value = []
+}
+
+const criarString = async () => {
+  if (!selectedArranjo.value) return
+  salvandoString.value = true
+  try {
+    await projetosStore.criarString(selectedArranjo.value.id, stringForm.value)
+    toast.success('String criada com sucesso!')
+    closeStringModal()
+  } catch (error) {
+    toast.error(projetosStore.error || 'Erro ao criar string')
+  } finally {
+    salvandoString.value = false
   }
 }
 
