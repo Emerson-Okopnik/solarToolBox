@@ -242,7 +242,7 @@ const handleSubmit = async () => {
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
     } else {
-      oast.error(error.response?.data?.message || 'Erro ao salvar projeto')
+      toast.error(error.response?.data?.message || 'Erro ao salvar projeto')
     }
   } finally {
     loading.value = false

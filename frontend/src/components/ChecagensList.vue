@@ -62,7 +62,7 @@
 import { defineProps, ref } from 'vue'
 import JsonViewer from './ui/JsonViewer.vue'
 
-const props = defineProps({
+defineProps({
   checagens: { type: Array, default: () => [] }
 })
 

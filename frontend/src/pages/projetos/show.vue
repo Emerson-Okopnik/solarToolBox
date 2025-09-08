@@ -330,7 +330,6 @@ import { useRoute } from 'vue-router'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-  ChevronRightIcon,
   PlusIcon,
   CpuChipIcon,
   PencilSquareIcon,
