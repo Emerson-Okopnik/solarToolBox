@@ -76,17 +76,17 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           v-for="modulo in modulosFiltrados"
           :key="modulo.id"
           class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
         >
-          <div class="p-6">
-            <div class="flex justify-between items-start mb-4">
+          <div class="p-4">
+            <div class="flex justify-between items-start mb-3">
               <div>
-                <h3 class="text-lg font-semibold text-gray-900">{{ modulo.modelo }}</h3>
-                <p class="text-sm text-gray-600">{{ getNomeFabricante(modulo.fabricante_id) }}</p>
+                <h3 class="text-base font-semibold text-gray-900">{{ modulo.modelo }}</h3>
+                <p class="text-xs text-gray-600">{{ getNomeFabricante(modulo.fabricante_id) }}</p>
               </div>
               <div class="flex items-center gap-2">
                 <input
@@ -100,24 +100,24 @@
               </div>
             </div>
 
-            <div class="space-y-3 mb-4">
+            <div class="space-y-2 mb-3">
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Potência</span>
-                <span class="text-sm font-medium text-gray-900">{{ modulo.potencia_nominal }}W</span>
+                <span class="text-xs text-gray-600">Potência</span>
+                <span class="text-xs font-medium text-gray-900">{{ modulo.potencia_nominal }}W</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Tecnologia</span>
-                <span class="text-sm font-medium text-gray-900 capitalize">{{ modulo.tecnologia }}</span>
+                <span class="text-xs text-gray-600">Tecnologia</span>
+                <span class="text-xs font-medium text-gray-900 capitalize">{{ modulo.tecnologia }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-sm text-gray-600">Eficiência</span>
-                <span class="text-sm font-medium text-gray-900">{{ calcularEficiencia(modulo) }}%</span>
+                <span class="text-xs text-gray-600">Eficiência</span>
+                <span class="text-xs font-medium text-gray-900">{{ calcularEficiencia(modulo) }}%</span>
               </div>
             </div>
 
-            <div class="border-t pt-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Especificações Elétricas</h4>
-              <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="border-t pt-3">
+              <h4 class="text-xs font-medium text-gray-900 mb-2">Especificações Elétricas</h4>
+              <div class="grid grid-cols-2 gap-2 text-[10px]">
                 <div>
                   <span class="text-gray-600">Voc:</span>
                   <span class="font-medium ml-1">{{ modulo.voc }}V</span>

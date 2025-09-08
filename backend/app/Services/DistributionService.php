@@ -209,10 +209,10 @@ class DistributionService
      */
     private function estimarCorrenteGrupo($grupo)
     {
-        return $grupo['arranjos']->sum(function($arranjo) {
-            return $arranjo->strings->sum(function($string) {
-                return ($string->corrente_maxima_potencia ?? $arranjo->modulo->imp) * 
-                       $string->num_strings_paralelo;
+        return $grupo['arranjos']->sum(function ($arranjo) {
+            return $arranjo->strings->sum(function ($string) use ($arranjo) {
+                return ($string->corrente_maxima_potencia ?? $arranjo->modulo->imp)
+                    * $string->num_strings_paralelo;
             });
         });
     }
