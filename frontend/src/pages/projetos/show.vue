@@ -86,10 +86,18 @@
                   <div
                     v-for="string in arranjo.strings"
                     :key="string.id"
-                    class="d-flex justify-content-between small"
+                    class="d-flex justify-content-between align-items-center small"
                   >
-                    <span>MPPT {{ string.mppt_id || '-' }} - {{ string.conexao }}</span>
-                    <span>{{ string.ns }}s × {{ string.np }}p</span>
+                    <span>MPPT {{ string.mppt_id || '-' }} - {{ getTipoConexaoLabel(string.tipo_conexao) }}</span>
+                    <div class="d-flex align-items-center">
+                      <span class="me-2">{{ string.total_modulos }} módulos ({{ string.num_modulos_serie }}s × {{ string.num_strings_paralelo }}p)</span>
+                      <button type="button" class="btn btn-link btn-sm p-0 me-1" @click="openStringModal(arranjo, string)">
+                        <PencilSquareIcon style="width:1rem;height:1rem" />
+                      </button>
+                      <button type="button" class="btn btn-link btn-sm text-danger p-0" @click="removerString(arranjo, string)">
+                        <TrashIcon style="width:1rem;height:1rem" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -111,25 +119,31 @@
             <h3 class="h6 mb-0">Resultados da Análise</h3>
           </div>
           <div class="card-body">
-            <div class="row text-center g-3">
+            <div class="row text-center g-3 mb-4">
+              <div class="col-4">
+                <div class="kpi">
+                  <div class="value">{{ ultimaExecucao.total_checagens || 0 }}</div>
+                  <div class="label">Total</div>
+                </div>
+              </div>
               <div class="col-4">
                 <div class="kpi">
                   <div class="value text-success">{{ ultimaExecucao.checagens_aprovadas || 0 }}</div>
-                  <div class="label">Checagens Aprovadas</div>
+                  <div class="label">Aprovadas</div>
                 </div>
               </div>
               <div class="col-4">
                 <div class="kpi">
-                  <div class="value" style="color:#f59e0b">{{ ultimaExecucao.checagens_aviso || 0 }}</div>
-                  <div class="label">Avisos</div>
+                  <div class="value text-danger">{{ ultimaExecucao.checagens_reprovadas || 0 }}</div>
+                  <div class="label">Reprovadas</div>
                 </div>
               </div>
-              <div class="col-4">
-                <div class="kpi">
-                  <div class="value text-danger">{{ ultimaExecucao.checagens_erro || 0 }}</div>
-                  <div class="label">Erros</div>
-                </div>
-              </div>
+            </div>
+            <div v-if="ultimaExecucao.checagens && ultimaExecucao.checagens.length">
+              <ChecagensList :checagens="ultimaExecucao.checagens" />
+            </div>
+            <div v-else class="text-center text-muted small">
+              Nenhuma checagem disponível
             </div>
           </div>
         </div>
@@ -252,10 +266,10 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Nova String</h5>
+              <h5 class="modal-title">{{ editingString ? 'Editar String' : 'Nova String' }}</h5>
               <button type="button" class="btn-close" @click="closeStringModal"></button>
             </div>
-            <form @submit.prevent="criarString">
+            <form @submit.prevent="salvarString">
               <div class="modal-body">
                 <div class="mb-3">
                   <label for="string_nome" class="form-label">Nome *</label>
@@ -278,12 +292,17 @@
                     <input id="string_np" v-model.number="stringForm.num_strings_paralelo" type="number" min="1" required class="form-control" />
                   </div>
                 </div>
-                <div class="mb-3" v-if="mpptsList.length">
-                  <label for="string_mppt" class="form-label">MPPT</label>
-                  <select id="string_mppt" v-model="stringForm.mppt_id" class="form-select">
-                    <option value="">Selecione MPPT</option>
+                <div class="mb-3">
+                  <label for="string_mppt" class="form-label">MPPT do Inversor</label>
+                  <select
+                    id="string_mppt"
+                    v-model="stringForm.mppt_id"
+                    class="form-select"
+                    :disabled="!mpptsList.length"
+                  >
+                    <option value="" disabled>{{ mpptsList.length ? 'Selecione MPPT' : 'Nenhum MPPT disponível' }}</option>
                     <option v-for="mppt in mpptsList" :key="mppt.id" :value="mppt.id">
-                      MPPT {{ mppt.nome || mppt.id }}
+                      MPPT {{ mppt.numero }}
                     </option>
                   </select>
                 </div>
@@ -292,7 +311,7 @@
                 <button type="button" class="btn btn-outline-secondary" @click="closeStringModal">Cancelar</button>
                 <button type="submit" class="btn btn-primary" :disabled="salvandoString">
                   <span v-if="salvandoString" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  {{ salvandoString ? 'Salvando...' : 'Criar String' }}
+                  {{ salvandoString ? 'Salvando...' : (editingString ? 'Salvar Alterações' : 'Criar String') }}
                 </button>
               </div>
             </form>
@@ -313,9 +332,12 @@ import { ptBR } from 'date-fns/locale'
 import {
   ChevronRightIcon,
   PlusIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  PencilSquareIcon,
+  TrashIcon
 } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+import ChecagensList from '@/components/ChecagensList.vue'
 import { useProjetosStore } from '@/stores/projetos'
 import { useCatalogosStore } from '@/stores/catalogos'
 import { useToast } from 'vue-toastification'
@@ -350,6 +372,7 @@ const stringForm = ref({
   mppt_id: ''
 })
 const selectedArranjo = ref(null)
+const editingString = ref(null)
 const mpptsList = ref([])
 
 const totalStrings = computed(() => {
@@ -384,6 +407,14 @@ const getStatusBadgeClass = (status) => {
     rejeitado: 'text-bg-danger'
   }
   return classes[status] || 'text-bg-secondary'
+}
+
+const getTipoConexaoLabel = (tipo) => {
+  const labels = {
+    serie: 'Série',
+    paralelo: 'Paralelo'
+  }
+  return labels[tipo] || tipo
 }
 
 const executarAnalise = async () => {
@@ -427,13 +458,27 @@ const criarArranjo = async () => {
   }
 }
 
-const openStringModal = async (arranjo) => {
+const openStringModal = async (arranjo, string = null) => {
   selectedArranjo.value = arranjo
-  try {
-    const inversorId = arranjo.inversor_id || arranjo.inversor?.id
-    mpptsList.value = inversorId ? await catalogosService.listarMppts(inversorId) : []
-  } catch (error) {
-    mpptsList.value = []
+  editingString.value = string
+  if (arranjo.inversor?.mppts?.length) {
+    mpptsList.value = arranjo.inversor.mppts
+  } else {
+    try {
+      const inversorId = arranjo.inversor_id || arranjo.inversor?.id
+      mpptsList.value = inversorId ? await catalogosService.listarMppts(inversorId) : []
+    } catch (error) {
+      mpptsList.value = []
+    }
+  }
+  if (string) {
+    stringForm.value = {
+      nome: string.nome || '',
+      tipo_conexao: string.tipo_conexao || 'serie',
+      num_modulos_serie: string.num_modulos_serie || 1,
+      num_strings_paralelo: string.num_strings_paralelo || 1,
+      mppt_id: string.mppt_id || ''
+    }
   }
   showStringModal.value = true
 }
@@ -441,6 +486,7 @@ const openStringModal = async (arranjo) => {
 const closeStringModal = () => {
   showStringModal.value = false
   selectedArranjo.value = null
+  editingString.value = null
   stringForm.value = {
     nome: '',
     tipo_conexao: 'serie',
@@ -451,17 +497,33 @@ const closeStringModal = () => {
   mpptsList.value = []
 }
 
-const criarString = async () => {
+const salvarString = async () => {
   if (!selectedArranjo.value) return
   salvandoString.value = true
   try {
-    await projetosStore.criarString(selectedArranjo.value.id, stringForm.value)
-    toast.success('String criada com sucesso!')
+    if (editingString.value) {
+      await projetosStore.atualizarString(selectedArranjo.value.id, editingString.value.id, stringForm.value)
+      toast.success('String atualizada com sucesso!')
+    } else {
+      await projetosStore.criarString(selectedArranjo.value.id, stringForm.value)
+      toast.success('String criada com sucesso!')
+    }
     closeStringModal()
   } catch (error) {
-    toast.error(projetosStore.error || 'Erro ao criar string')
+    const msg = editingString.value ? 'Erro ao atualizar string' : 'Erro ao criar string'
+    toast.error(projetosStore.error || msg)
   } finally {
     salvandoString.value = false
+  }
+}
+
+const removerString = async (arranjo, string) => {
+  if (!confirm('Deseja excluir esta string?')) return
+  try {
+    await projetosStore.deletarString(arranjo.id, string.id)
+    toast.success('String removida com sucesso!')
+  } catch (error) {
+    toast.error(projetosStore.error || 'Erro ao remover string')
   }
 }
 
@@ -473,6 +535,7 @@ onMounted(async () => {
       catalogosStore.carregarInversores()
     ])
     projeto.value = proj
+    ultimaExecucao.value = proj.execucoes?.[0] || null
   } catch (error) {
     toast.error('Erro ao carregar dados')
   } finally {

@@ -115,6 +115,7 @@ class ProjetoController extends Controller
             'user',
             'arranjos.modulo.fabricante',
             'arranjos.inversor.fabricante',
+            'arranjos.inversor.mppts',
             'arranjos.strings',
             'execucoes' => function ($query) {
                 $query->latest()->limit(5);

@@ -23,7 +23,7 @@ class ArranjoController extends Controller
         }
 
         $arranjos = $projeto->arranjos()
-            ->with(['modulo.fabricante', 'inversor.fabricante', 'strings'])
+            ->with(['modulo.fabricante', 'inversor.fabricante', 'inversor.mppts', 'strings'])
             ->orderBy('nome')
             ->get();
 
@@ -66,7 +66,7 @@ class ArranjoController extends Controller
             'fator_sombreamento' => $request->fator_sombreamento ?? 1.0,
         ]);
 
-        $arranjo->load(['modulo.fabricante', 'inversor.fabricante']);
+        $arranjo->load(['modulo.fabricante', 'inversor.fabricante', 'inversor.mppts']);
 
         return response()->json([
             'success' => true,

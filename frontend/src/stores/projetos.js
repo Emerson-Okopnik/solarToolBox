@@ -110,5 +110,48 @@ export const useProjetosStore = defineStore("projetos", {
         this.loading = false
       }
     },
+
+        async atualizarString(arranjoId, stringId, dados) {
+      this.loading = true
+      this.error = null
+      try {
+        const data = await stringsService.atualizar(stringId, dados)
+        const stringAtualizada = data.data ?? data
+        if (this.projetoAtual) {
+          const arranjo = this.projetoAtual.arranjos.find(a => a.id === arranjoId)
+          if (arranjo && arranjo.strings) {
+            const index = arranjo.strings.findIndex(s => s.id === stringId)
+            if (index !== -1) {
+              arranjo.strings[index] = stringAtualizada
+            }
+          }
+        }
+        return stringAtualizada
+      } catch (error) {
+        this.error = error.response?.data?.message || "Erro ao atualizar string"
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deletarString(arranjoId, stringId) {
+      this.loading = true
+      this.error = null
+      try {
+        await stringsService.remover(stringId)
+        if (this.projetoAtual) {
+          const arranjo = this.projetoAtual.arranjos.find(a => a.id === arranjoId)
+          if (arranjo && arranjo.strings) {
+            arranjo.strings = arranjo.strings.filter(s => s.id !== stringId)
+          }
+        }
+      } catch (error) {
+        this.error = error.response?.data?.message || "Erro ao remover string"
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
   },
 })
