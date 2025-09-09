@@ -84,4 +84,30 @@ export const catalogosService = {
     const response = await api.post("/climas", dados)
     return response.data
   },
+
+  async atualizarClima(id, dados) {
+    const response = await api.put(`/climas/${id}`, dados)
+    return response.data
+  },
+
+  async excluirClima(id) {
+    const response = await api.delete(`/climas/${id}`)
+    return response.data
+  },
+
+  async obterEstatisticas() {
+    const [fabricantes, modulos, inversores, climas] = await Promise.all([
+      api.get("/catalogos/fabricantes", { params: { per_page: 1 } }),
+      api.get("/catalogos/modulos", { params: { per_page: 1 } }),
+      api.get("/catalogos/inversores", { params: { per_page: 1 } }),
+      api.get("/catalogos/climas", { params: { per_page: 1 } }),
+    ])
+
+    return {
+      fabricantes: fabricantes.data?.data?.total || 0,
+      modulos: modulos.data?.data?.total || 0,
+      inversores: inversores.data?.data?.total || 0,
+      climas: climas.data?.data?.total || 0,
+    }
+  },
 }

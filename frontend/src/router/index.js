@@ -16,6 +16,11 @@ import Fabricantes from "@/pages/catalogos/Fabricantes.vue"
 import Modulos from "@/pages/catalogos/Modulos.vue"
 import Inversores from "@/pages/catalogos/Inversores.vue"
 import Climas from "@/pages/catalogos/Climas.vue"
+import CadastroIndex from "@/pages/cadastro/Index.vue"
+import CadastroFabricante from "@/pages/cadastro/Fabricante.vue"
+import CadastroModulos from "@/pages/cadastro/Modulos.vue"
+import CadastroInversores from "@/pages/cadastro/Inversores.vue"
+import CadastroClimas from "@/pages/cadastro/Climas.vue"
 
 const routes = [
   {
@@ -100,6 +105,36 @@ const routes = [
         component: Climas,
         meta: { title: "Climas" },
       },
+      {
+        path: "cadastro",
+        name: "cadastro",
+        component: CadastroIndex,
+        meta: { title: "Cadastro", requiresAdmin: true },
+      },
+            {
+        path: "cadastro/fabricante",
+        name: "cadastro-fabricante",
+        component: CadastroFabricante,
+        meta: { title: "Cadastro Fabricante", requiresAdmin: true },
+      },
+      {
+        path: "cadastro/modulos",
+        name: "cadastro-modulos",
+        component: CadastroModulos,
+        meta: { title: "Cadastro Módulos", requiresAdmin: true },
+      },
+      {
+        path: "cadastro/inversores",
+        name: "cadastro-inversores",
+        component: CadastroInversores,
+        meta: { title: "Cadastro Inversores", requiresAdmin: true },
+      },
+      {
+        path: "cadastro/climas",
+        name: "cadastro-climas",
+        component: CadastroClimas,
+        meta: { title: "Cadastro Climas", requiresAdmin: true },
+      },
     ],
   },
   {
@@ -133,6 +168,8 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: "login" })
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    next({ name: "catalogos" })
+  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next({ name: "catalogos" })
   } else {
     next()

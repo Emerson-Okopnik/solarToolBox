@@ -51,6 +51,8 @@ class CalculationEngineService
             // 4. Gerar checagens
             $this->gerarChecagens($execucao, $configuracoes);
 
+            $this->atualizarStatusProjeto($execucao);
+
             // Finalizar execução
             $this->finalizarExecucao($execucao, 'concluida');
 
@@ -189,6 +191,27 @@ class CalculationEngineService
             'checagens_aprovadas' => $checagensAprovadas,
             'checagens_reprovadas' => $checagensReprovadas,
         ]);
+    }
+
+    /**
+     * Atualiza o status do projeto de acordo com os resultados
+     */
+    private function atualizarStatusProjeto(Execucao $execucao)
+    {
+        $projeto = $execucao->projeto;
+
+        $checagensReprovadas = $execucao->checagens()->where('resultado', 'reprovado')->count();
+        if ($checagensReprovadas > 0) {
+            $projeto->update(['status' => 'rejeitado']);
+            return;
+        }
+
+        $totalChecagens = $execucao->checagens()->count();
+        $checagensAprovadas = $execucao->checagens()->where('resultado', 'aprovado')->count();
+
+        if ($totalChecagens > 0 && $totalChecagens === $checagensAprovadas) {
+            $projeto->update(['status' => 'aprovado']);
+        }
     }
 
     /**

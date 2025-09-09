@@ -51,8 +51,7 @@
           </button>
 
           <div v-if="userMenuOpen" class="user-dropdown">
-            <a href="#" class="dropdown-item">Perfil</a>
-            <a href="#" class="dropdown-item">Configurações</a>
+            <div class="dropdown-item">Acesso: <b>{{ userRole }}</b></div>
             <div class="dropdown-divider"></div>
             <button @click="handleLogout" class="dropdown-item" type="button">
               Sair
@@ -100,19 +99,28 @@ export default defineComponent({
     return {
       sidebarOpen: false,
       userMenuOpen: false,
-      navigation: [
-        { name: 'catalogos', label: 'Catálogos', to: '/catalogos', icon: 'BookOpenIcon' },
-        { name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' },
-      ]
     }
   },
   computed: {
+    navigation() {
+      const items = [
+        { name: 'catalogos', label: 'Catálogos', to: '/catalogos', icon: 'BookOpenIcon' },
+        { name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' },
+      ]
+      if (this.authStore.isAdmin) {
+        items.push({ name: 'cadastro', label: 'Cadastro', to: '/cadastro', icon: 'HomeIcon' })
+      }
+      return items
+    },
     userInitials() {
       const name = this.authStore.user?.name || ''
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     },
     userName() {
       return this.authStore.user?.name || ''
+    },
+    userRole() {
+      return this.authStore.user?.role || ''
     }
   },
   methods: {

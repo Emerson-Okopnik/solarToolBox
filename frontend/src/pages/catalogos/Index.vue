@@ -103,21 +103,11 @@
           <div class="quick-actions">
             <router-link to="/projetos/novo" class="quick-action-item">
               <div class="stat-icon bg-primary">
-                <PlusIcon class="nav-icon" />
+                <PlusIcon/>
               </div>
               <div>
                 <p class="font-semibold text-dark mb-1">Novo Projeto</p>
                 <p class="text-muted text-sm">Criar um novo projeto de análise</p>
-              </div>
-            </router-link>
-
-            <router-link to="/catalogos" class="quick-action-item">
-              <div class="stat-icon bg-warning">
-                <BookOpenIcon class="nav-icon" />
-              </div>
-              <div>
-                <p class="font-semibold text-dark mb-1">Gerenciar Catálogos</p>
-                <p class="text-muted text-sm">Módulos, inversores e fabricantes</p>
               </div>
             </router-link>
           </div>
@@ -142,6 +132,8 @@ import {
   BookOpenIcon
 } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+import { projetosService } from '@/services/projetos'
+import { catalogosService } from '@/services/catalogos'
 
 const stats = ref({})
 const recentProjects = ref([])
@@ -149,41 +141,21 @@ const loadingProjects = ref(true)
 
 const loadStats = async () => {
   try {
-    // Simular carregamento de dados
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    stats.value = {
-      fabricantes: 25,
-      modulos: 150,
-      inversores: 45,
-      climas: 12
-    }
+    stats.value = await catalogosService.obterEstatisticas()
   } catch (error) {
     console.error('Erro ao carregar dados dos catálogos:', error)
+    stats.value = {}
   }
 }
 
 const loadRecentProjects = async () => {
+  loadingProjects.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    recentProjects.value = [
-      {
-        id: 1,
-        nome: 'Projeto Residencial - Casa Silva',
-        cliente: 'João Silva',
-        status: 'aprovado',
-        created_at: new Date()
-      },
-      {
-        id: 2,
-        nome: 'Sistema Comercial - Loja ABC',
-        cliente: 'Empresa ABC Ltda',
-        status: 'em_analise',
-        created_at: new Date(Date.now() - 86400000)
-      }
-    ]
+    const response = await projetosService.listar({ per_page: 2 })
+    recentProjects.value = response.data?.data || []
   } catch (error) {
     console.error('Erro ao carregar projetos recentes:', error)
+    recentProjects.value = []
   } finally {
     loadingProjects.value = false
   }

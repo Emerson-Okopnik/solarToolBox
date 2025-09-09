@@ -89,6 +89,43 @@ export const useProjetosStore = defineStore("projetos", {
       }
     },
     
+        async atualizarArranjo(arranjoId, dados) {
+      this.loading = true
+      this.error = null
+      try {
+        const data = await projetosService.atualizarArranjo(arranjoId, dados)
+        const arranjoAtualizado = data.data ?? data
+        if (this.projetoAtual) {
+          const index = this.projetoAtual.arranjos.findIndex(a => a.id === arranjoId)
+          if (index !== -1) {
+            this.projetoAtual.arranjos[index] = arranjoAtualizado
+          }
+        }
+        return arranjoAtualizado
+      } catch (error) {
+        this.error = error.response?.data?.message || "Erro ao atualizar arranjo"
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deletarArranjo(arranjoId) {
+      this.loading = true
+      this.error = null
+      try {
+        await projetosService.removerArranjo(arranjoId)
+        if (this.projetoAtual) {
+          this.projetoAtual.arranjos = this.projetoAtual.arranjos.filter(a => a.id !== arranjoId)
+        }
+      } catch (error) {
+        this.error = error.response?.data?.message || "Erro ao remover arranjo"
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
     async criarString(arranjoId, dados) {
       this.loading = true
       this.error = null

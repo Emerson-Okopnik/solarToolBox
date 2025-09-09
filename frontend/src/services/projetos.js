@@ -35,4 +35,14 @@ export const projetosService = {
     const response = await api.post(`/projetos/${projetoId}/arranjos`, dados)
     return response.data
   },
+
+  async atualizarArranjo(arranjoId, dados) {
+    const response = await api.put(`/arranjos/${arranjoId}`, dados)
+    return response.data
+  },
+
+  async removerArranjo(arranjoId) {
+    const response = await api.delete(`/arranjos/${arranjoId}`)
+    return response.data
+  },
 }

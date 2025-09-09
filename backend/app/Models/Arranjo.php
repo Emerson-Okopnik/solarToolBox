@@ -26,6 +26,16 @@ class Arranjo extends Model
         'fator_sombreamento' => 'decimal:4',
     ];
 
+        protected static function booted()
+    {
+        static::created(function (Arranjo $arranjo) {
+            $projeto = $arranjo->projeto;
+            if ($projeto && $projeto->status === 'rascunho') {
+                $projeto->update(['status' => 'em_analise']);
+            }
+        });
+    }
+    
     // Relacionamentos
     public function projeto()
     {

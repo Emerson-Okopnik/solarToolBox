@@ -19,20 +19,12 @@
           <div class="flex gap-2">
             <select
               v-model="fabricanteSelecionado"
-              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos os fabricantes</option>
               <option v-for="fab in fabricantesDisponiveis" :key="fab.id" :value="fab.id">
                 {{ fab.nome }}
               </option>
-            </select>
-            <select
-              v-model="tipoSelecionado"
-              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos os tipos</option>
-              <option value="string">String</option>
-              <option value="microinversor">Microinversor</option>
             </select>
             <select
               v-model="ordenacao"
@@ -47,11 +39,11 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="flex flex-wrap gap-6">
         <div
           v-for="inversor in inversoresFiltrados"
           :key="inversor.id"
-          class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+          class="w-full md:w-[calc(50%-0.75rem)] bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
         >
           <div class="p-6">
             <div class="flex justify-between items-start mb-4">
@@ -138,7 +130,6 @@ import { useCatalogosStore } from '@/stores/catalogos'
 const store = useCatalogosStore()
 const busca = ref('')
 const fabricanteSelecionado = ref('')
-const tipoSelecionado = ref('')
 const ordenacao = ref('potencia_desc')
 
 const fabricantesDisponiveis = computed(() => {
@@ -160,10 +151,6 @@ const inversoresFiltrados = computed(() => {
 
   if (fabricanteSelecionado.value) {
     resultado = resultado.filter(i => i.fabricante_id == fabricanteSelecionado.value)
-  }
-
-  if (tipoSelecionado.value) {
-    resultado = resultado.filter(i => i.tipo === tipoSelecionado.value)
   }
 
   return resultado.sort((a, b) => {

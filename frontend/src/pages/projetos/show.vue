@@ -43,7 +43,7 @@
         <div class="card">
           <div class="card-header d-flex align-items-center justify-content-between section-header">
             <h3 class="h6 mb-0">Arranjos Fotovoltaicos</h3>
-            <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal">
+            <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal()">
               <PlusIcon style="width:1rem;height:1rem" class="me-1" />
               Adicionar Arranjo
             </button>
@@ -54,7 +54,7 @@
               <CpuChipIcon style="width:3rem;height:3rem" class="mb-2 text-muted" />
               <h6 class="mb-1">Nenhum arranjo</h6>
               <p class="text-muted mb-3">Adicione arranjos para começar a análise</p>
-              <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal">
+              <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal()">
                 <PlusIcon style="width:1rem;height:1rem" class="me-1" /> Adicionar Arranjo
               </button>
             </div>
@@ -79,10 +79,18 @@
                     <div class="small fw-semibold text-dark">
                       {{ arranjo.strings?.length || 0 }} strings
                     </div>
-                    <span class="badge text-bg-info">{{ arranjo.status }}</span>
+                    <span class="badge" :class="getStatusBadgeClass(arranjo.status)">{{ getStatusLabel(arranjo.status) }}</span>
+                    <div class="mt-1">
+                      <button type="button" class="btn btn-link btn-sm p-0 me-1" @click="openArranjoModal(arranjo)">
+                        <PencilSquareIcon style="width:1rem;height:1rem" />
+                      </button>
+                      <button type="button" class="btn btn-link btn-sm text-danger p-0" @click="removerArranjo(arranjo)">
+                        <TrashIcon style="width:1rem;height:1rem" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div v-if="arranjo.strings && arranjo.strings.length" class="mt-2">
+                <div v-if="arranjo.strings && arranjo.strings.length" class="bg-gray-50 mt-2">
                   <div
                     v-for="string in arranjo.strings"
                     :key="string.id"
@@ -202,16 +210,16 @@
         </div>
       </div>
     </div>
-    <!-- Modal Novo Arranjo -->
+    <!-- Modal Arranjo -->
     <div v-if="showArranjoModal">
       <div class="modal fade show" style="display:block" tabindex="-1">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Novo Arranjo</h5>
+              <h5 class="modal-title">{{ editingArranjo ? 'Editar Arranjo' : 'Novo Arranjo' }}</h5>
               <button type="button" class="btn-close" @click="closeArranjoModal"></button>
             </div>
-            <form @submit.prevent="criarArranjo">
+            <form @submit.prevent="salvarArranjo">
               <div class="modal-body">
                 <div class="mb-3">
                   <label for="arranjo_nome" class="form-label">Nome *</label>
@@ -250,7 +258,7 @@
                 <button type="button" class="btn btn-outline-secondary" @click="closeArranjoModal">Cancelar</button>
                 <button type="submit" class="btn btn-primary" :disabled="salvandoArranjo">
                   <span v-if="salvandoArranjo" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  {{ salvandoArranjo ? 'Salvando...' : 'Criar Arranjo' }}
+                  {{ salvandoArranjo ? 'Salvando...' : (editingArranjo ? 'Salvar Alterações' : 'Criar Arranjo') }}
                 </button>
               </div>
             </form>
@@ -360,6 +368,7 @@ const arranjoForm = ref({
   azimute: 0,
   inclinacao: 20
 })
+const editingArranjo = ref(null)
 
 const showStringModal = ref(false)
 const salvandoString = ref(false)
@@ -429,12 +438,23 @@ const executarAnalise = async () => {
   }
 }
 
-const openArranjoModal = () => {
+const openArranjoModal = (arranjo = null) => {
+  editingArranjo.value = arranjo
+  if (arranjo) {
+    arranjoForm.value = {
+      nome: arranjo.nome || '',
+      modulo_id: arranjo.modulo_id || arranjo.modulo?.id || '',
+      inversor_id: arranjo.inversor_id || arranjo.inversor?.id || '',
+      azimute: arranjo.azimute,
+      inclinacao: arranjo.inclinacao
+    }
+  }
   showArranjoModal.value = true
 }
 
 const closeArranjoModal = () => {
   showArranjoModal.value = false
+  editingArranjo.value = null
   arranjoForm.value = {
     nome: '',
     modulo_id: '',
@@ -444,16 +464,32 @@ const closeArranjoModal = () => {
   }
 }
 
-const criarArranjo = async () => {
+const salvarArranjo = async () => {
   salvandoArranjo.value = true
   try {
-    await projetosStore.criarArranjo(projeto.value.id, arranjoForm.value)
-    toast.success('Arranjo criado com sucesso!')
+    if (editingArranjo.value) {
+      await projetosStore.atualizarArranjo(editingArranjo.value.id, arranjoForm.value)
+      toast.success('Arranjo atualizado com sucesso!')
+    } else {
+      await projetosStore.criarArranjo(projeto.value.id, arranjoForm.value)
+      toast.success('Arranjo criado com sucesso!')
+    }
     closeArranjoModal()
   } catch (error) {
-    toast.error(projetosStore.error || 'Erro ao criar arranjo')
+    const msg = editingArranjo.value ? 'Erro ao atualizar arranjo' : 'Erro ao criar arranjo'
+    toast.error(projetosStore.error || msg)
   } finally {
     salvandoArranjo.value = false
+  }
+}
+
+const removerArranjo = async (arranjo) => {
+  if (!confirm('Deseja excluir este arranjo?')) return
+  try {
+    await projetosStore.deletarArranjo(arranjo.id)
+    toast.success('Arranjo removido com sucesso!')
+  } catch (error) {
+    toast.error(projetosStore.error || 'Erro ao remover arranjo')
   }
 }
 
