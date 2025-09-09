@@ -86,7 +86,7 @@ class InversorController extends Controller
             // MPPTs
             'mppts' => 'required|array|min:1',
             'mppts.*.numero' => 'required|integer|min:1',
-            'mppts.*.tensao_mppt_min' => 'required|numeric|min:50|max:1000',
+            'mppts.*.tensao_mppt_min' => 'required|numeric|min:40|max:1000',
             'mppts.*.tensao_mppt_max' => 'required|numeric|min:100|max:1500',
             'mppts.*.corrente_entrada_max' => 'required|numeric|min:1|max:100',
             'mppts.*.strings_max' => 'required|integer|min:1|max:50',

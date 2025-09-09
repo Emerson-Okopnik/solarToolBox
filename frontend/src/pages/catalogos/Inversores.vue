@@ -62,7 +62,7 @@
               </div>
               <div class="text-right">
                 <div class="text-2xl font-bold text-blue-600">{{ (inversor.potencia_ac_nominal / 1000).toFixed(1) }}kW</div>
-                <div class="text-xs text-gray-500">{{ inversor.eficiencia_max }}% eficiência</div>
+                <div class="text-xs text-gray-500">{{ parseEficiencia(inversor.eficiencia_max).toFixed(2) }}% eficiência</div>
               </div>
             </div>
 
@@ -119,40 +119,9 @@
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-900 mb-3">Curva de Eficiência</h4>
               <div class="bg-gray-50 rounded-lg p-4">
-                <div class="flex items-end justify-between h-20">
-                  <div
-                    v-for="(ponto, index) in gerarCurva(inversor)"
-                    :key="index"
-                    class="bg-green-500 rounded-t"
-                    :style="{ 
-                      width: '12%', 
-                      height: `${ponto}%`,
-                      marginRight: '2px'
-                    }"
-                  ></div>
+                <div class="p-3">
+                  <canvas :ref="el => setChartRef(el, inversor.id)"></canvas>
                 </div>
-                <div class="flex justify-between text-xs text-gray-600 mt-2">
-                  <span>10%</span>
-                  <span>25%</span>
-                  <span>50%</span>
-                  <span>75%</span>
-                  <span>100%</span>
-                </div>
-                <div class="text-center text-xs text-gray-500 mt-1">
-                  % da Potência Nominal
-                </div>
-              </div>
-            </div>
-
-            <div class="border-t pt-4">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Eficiência</span>
-                <span
-                  :class="getClasseEficiencia(inversor.eficiencia_max)"
-                  class="px-2 py-1 rounded text-xs"
-                >
-                  {{ getTextoEficiencia(inversor.eficiencia_max) }}
-                </span>
               </div>
             </div>
           </div>
@@ -163,7 +132,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue'
+import Chart from 'chart.js/auto'
 import { useCatalogosStore } from '@/stores/catalogos'
 
 const store = useCatalogosStore()
@@ -200,7 +170,8 @@ const inversoresFiltrados = computed(() => {
   return resultado.sort((a, b) => {
     switch (ordenacao.value) {
       case 'potencia_asc': return a.potencia_ac_nominal - b.potencia_ac_nominal
-      case 'eficiencia_desc': return b.eficiencia_max - a.eficiencia_max
+      case 'eficiencia_desc':
+        return parseEficiencia(b.eficiencia_max) - parseEficiencia(a.eficiencia_max)
       case 'modelo': return a.modelo.localeCompare(b.modelo)
       default: return b.potencia_ac_nominal - a.potencia_ac_nominal
     }
@@ -212,25 +183,78 @@ const getNomeFabricante = (fabricanteId) => {
   return fabricante ? fabricante.nome : 'N/A'
 }
 
+const parseEficiencia = (valor) => {
+  const numero = parseFloat(String(valor).replace(',', '.'))
+  if (Number.isNaN(numero)) return 0
+  return numero > 1 ? numero : numero * 100
+}
+
 const gerarCurva = (inversor) => {
-  const raw = parseFloat(inversor.eficiencia_max)
-  const base = raw <= 1 ? raw * 100 : raw
-  return [base * 0.85, base * 0.92, base * 0.98, base * 0.99, base]
-}
-
-const getClasseEficiencia = (eficiencia) => {
-  if (eficiencia >= 97) return 'bg-green-100 text-green-800'
-  if (eficiencia >= 95) return 'bg-yellow-100 text-yellow-800'
-  return 'bg-red-100 text-red-800'
-}
-
-const getTextoEficiencia = (eficiencia) => {
-  if (eficiencia >= 97) return 'Excelente'
-  if (eficiencia >= 95) return 'Boa'
-  return 'Regular'
+  const base = parseEficiencia(inversor.eficiencia_max)
+  if (!base) return [0, 0, 0, 0, 0]
+  const fatores = [0.85, 0.92, 0.98, 0.99, 1]
+  return fatores.map(f => {
+    const valor = base * f
+    return parseFloat(Math.min(100, valor).toFixed(2))
+  })
 }
 
 onMounted(() => {
   store.carregarTodos()
+})
+
+const chartRefs = ref({})
+const chartInstances = ref({})
+
+const setChartRef = (el, id) => {
+  if (el) chartRefs.value[id] = el
+}
+
+const renderCharts = () => {
+  nextTick(() => {
+    inversoresFiltrados.value.forEach(inv => {
+      const ctx = chartRefs.value[inv.id]
+      if (!ctx) return
+      if (chartInstances.value[inv.id]) {
+        chartInstances.value[inv.id].destroy()
+      }
+      chartInstances.value[inv.id] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['10%', '25%', '50%', '75%', '100%'],
+          datasets: [{
+            data: gerarCurva(inv),
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(34,197,94,0.2)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: {
+              beginAtZero: true,
+              max: 100,
+              grid: { display: false },
+              ticks: { display: false }
+            }
+          }
+        }
+      })
+    })
+  })
+}
+
+watch(inversoresFiltrados, () => {
+  renderCharts()
+}, { deep: true })
+
+onUnmounted(() => {
+  Object.values(chartInstances.value).forEach(ch => ch.destroy())
 })
 </script>
