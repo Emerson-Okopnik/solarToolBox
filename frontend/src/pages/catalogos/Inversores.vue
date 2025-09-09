@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div
           v-for="inversor in inversoresFiltrados"
           :key="inversor.id"
@@ -61,8 +61,8 @@
                 <p class="text-sm text-gray-600">{{ getNomeFabricante(inversor.fabricante_id) }}</p>
               </div>
               <div class="text-right">
-                <div class="text-2xl font-bold text-blue-600">{{ (inversor.potencia_nominal / 1000).toFixed(1) }}kW</div>
-                <div class="text-xs text-gray-500">{{ inversor.eficiencia }}% eficiência</div>
+                <div class="text-2xl font-bold text-blue-600">{{ (inversor.potencia_ac_nominal / 1000).toFixed(1) }}kW</div>
+                <div class="text-xs text-gray-500">{{ inversor.eficiencia_max }}% eficiência</div>
               </div>
             </div>
 
@@ -71,11 +71,11 @@
               <div class="grid grid-cols-2 gap-4">
                 <div class="bg-gray-50 rounded-lg p-3">
                   <div class="text-xs text-gray-600 mb-1">Tensão Máxima</div>
-                  <div class="text-lg font-semibold text-gray-900">{{ inversor.vdc_max }}V</div>
+                  <div class="text-lg font-semibold text-gray-900">{{ inversor.tensao_dc_max }}V</div>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3">
                   <div class="text-xs text-gray-600 mb-1">Corrente Máxima</div>
-                  <div class="text-lg font-semibold text-gray-900">{{ inversor.idc_max }}A</div>
+                  <div class="text-lg font-semibold text-gray-900">{{ inversor.corrente_dc_max }}A</div>
                 </div>
               </div>
             </div>
@@ -84,15 +84,15 @@
               <h4 class="text-sm font-medium text-gray-900 mb-3">Janela MPPT</h4>
               <div class="bg-blue-50 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-blue-800">{{ inversor.vmppt_min }}V</span>
-                  <span class="text-sm text-blue-800">{{ inversor.vmppt_max }}V</span>
+                  <span class="text-sm text-blue-800">{{ inversor.tensao_dc_min }}V</span>
+                  <span class="text-sm text-blue-800">{{ inversor.tensao_dc_max }}V</span>
                 </div>
                 <div class="w-full bg-blue-200 rounded-full h-2">
                   <div class="bg-blue-600 h-2 rounded-full w-full"></div>
                 </div>
                 <div class="text-center mt-2">
                   <span class="text-xs text-blue-700">
-                    Faixa: {{ inversor.vmppt_max - inversor.vmppt_min }}V
+                    Faixa: {{ inversor.tensao_dc_max - inversor.tensao_dc_min }}V
                   </span>
                 </div>
               </div>
@@ -110,7 +110,7 @@
                 >
                   <div class="text-xs text-yellow-700 mb-1">MPPT {{ n }}</div>
                   <div class="text-sm font-medium text-yellow-900">
-                    {{ (inversor.idc_max / inversor.num_mppts).toFixed(1) }}A
+                    {{ (inversor.corrente_dc_max / inversor.num_mppts).toFixed(1) }}A
                   </div>
                 </div>
               </div>
@@ -146,18 +146,13 @@
 
             <div class="border-t pt-4">
               <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Compatibilidade</span>
-                <div class="flex gap-1">
-                  <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                    {{ contarCompativeis(inversor) }} módulos
-                  </span>
-                  <span
-                    :class="getClasseEficiencia(inversor.eficiencia)"
-                    class="px-2 py-1 rounded text-xs"
-                  >
-                    {{ getTextoEficiencia(inversor.eficiencia) }}
-                  </span>
-                </div>
+                <span class="text-sm text-gray-600">Eficiência</span>
+                <span
+                  :class="getClasseEficiencia(inversor.eficiencia_max)"
+                  class="px-2 py-1 rounded text-xs"
+                >
+                  {{ getTextoEficiencia(inversor.eficiencia_max) }}
+                </span>
               </div>
             </div>
           </div>
@@ -204,10 +199,10 @@ const inversoresFiltrados = computed(() => {
 
   return resultado.sort((a, b) => {
     switch (ordenacao.value) {
-      case 'potencia_asc': return a.potencia_nominal - b.potencia_nominal
-      case 'eficiencia_desc': return b.eficiencia - a.eficiencia
+      case 'potencia_asc': return a.potencia_ac_nominal - b.potencia_ac_nominal
+      case 'eficiencia_desc': return b.eficiencia_max - a.eficiencia_max
       case 'modelo': return a.modelo.localeCompare(b.modelo)
-      default: return b.potencia_nominal - a.potencia_nominal
+      default: return b.potencia_ac_nominal - a.potencia_ac_nominal
     }
   })
 })
@@ -218,15 +213,8 @@ const getNomeFabricante = (fabricanteId) => {
 }
 
 const gerarCurva = (inversor) => {
-  const base = inversor.eficiencia
+  const base = inversor.eficiencia_max
   return [base * 0.85, base * 0.92, base * 0.98, base * 0.99, base * 1.0]
-}
-
-const contarCompativeis = (inversor) => {
-  return store.modulos.filter(modulo => {
-    const stringMax = Math.floor(inversor.vdc_max / modulo.voc)
-    return stringMax >= 8 && stringMax <= 25
-  }).length
 }
 
 const getClasseEficiencia = (eficiencia) => {
