@@ -32,7 +32,6 @@
             >
               <option value="">Todos os tipos</option>
               <option value="string">String</option>
-              <option value="central">Central</option>
               <option value="microinversor">Microinversor</option>
             </select>
             <select

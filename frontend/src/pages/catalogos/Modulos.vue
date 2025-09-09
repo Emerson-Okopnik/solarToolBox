@@ -26,15 +26,6 @@
                 {{ fab.nome }}
               </option>
             </select>
-            <select
-              v-model="tecnologiaSelecionada"
-              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todas as tecnologias</option>
-              <option value="monocristalino">Monocristalino</option>
-              <option value="policristalino">Policristalino</option>
-              <option value="filme_fino">Filme Fino</option>
-            </select>
           </div>
         </div>
 
@@ -150,7 +141,6 @@ import { useCatalogosStore } from '@/stores/catalogos'
 const store = useCatalogosStore()
 const busca = ref('')
 const fabricanteSelecionado = ref('')
-const tecnologiaSelecionada = ref('')
 const modulosComparacao = ref([])
 
 const fabricantesDisponiveis = computed(() => {
@@ -172,10 +162,6 @@ const modulosFiltrados = computed(() => {
 
   if (fabricanteSelecionado.value) {
     resultado = resultado.filter(m => m.fabricante_id == fabricanteSelecionado.value)
-  }
-
-  if (tecnologiaSelecionada.value) {
-    resultado = resultado.filter(m => m.tecnologia === tecnologiaSelecionada.value)
   }
 
   return resultado.sort((a, b) => b.potencia_nominal - a.potencia_nominal)
