@@ -213,8 +213,9 @@ const getNomeFabricante = (fabricanteId) => {
 }
 
 const gerarCurva = (inversor) => {
-  const base = inversor.eficiencia_max
-  return [base * 0.85, base * 0.92, base * 0.98, base * 0.99, base * 1.0]
+  const raw = parseFloat(inversor.eficiencia_max)
+  const base = raw <= 1 ? raw * 100 : raw
+  return [base * 0.85, base * 0.92, base * 0.98, base * 0.99, base]
 }
 
 const getClasseEficiencia = (eficiencia) => {
