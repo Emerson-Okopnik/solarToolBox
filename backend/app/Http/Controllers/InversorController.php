@@ -70,7 +70,7 @@ class InversorController extends Controller
             'tipo' => 'required|in:string,central,micro,otimizador',
             'potencia_dc_max' => 'required|numeric|min:100|max:1000000',
             'tensao_dc_max' => 'required|numeric|min:100|max:2000',
-            'tensao_dc_min' => 'required|numeric|min:50|max:1000',
+            'tensao_dc_min' => 'required|numeric|min:40|max:1000',
             'corrente_dc_max' => 'required|numeric|min:1|max:1000',
             'num_mppts' => 'required|integer|min:1|max:20',
             'potencia_ac_nominal' => 'required|numeric|min:100|max:1000000',

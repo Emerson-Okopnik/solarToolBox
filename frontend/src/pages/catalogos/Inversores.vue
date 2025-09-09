@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div
           v-for="inversor in inversoresFiltrados"
           :key="inversor.id"
@@ -118,7 +118,7 @@
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-900 mb-3">Curva de Eficiência</h4>
               <div class="bg-gray-50 rounded-lg p-4">
-                <div class="p-3">
+                <div>
                   <canvas :ref="el => setChartRef(el, inversor.id)"></canvas>
                 </div>
               </div>

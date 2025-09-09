@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto">
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Módulos Fotovoltaicos</h1>
-        <p class="text-gray-600">Compare e gerencie módulos solares</p>
+        <p class="text-gray-600">Gerencie módulos solares</p>
       </div>
 
       <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
@@ -28,43 +28,6 @@
             </select>
           </div>
         </div>
-
-        <div v-if="modulosComparacao.length > 0" class="border-t pt-4">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-medium text-gray-900">
-              Comparação ({{ modulosComparacao.length }}/3)
-            </h3>
-            <button
-              @click="modulosComparacao = []"
-              class="text-red-600 hover:text-red-800 text-sm"
-            >
-              Limpar comparação
-            </button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div
-              v-for="modulo in modulosComparacao"
-              :key="modulo.id"
-              class="bg-blue-50 border border-blue-200 rounded-lg p-4"
-            >
-              <div class="flex justify-between items-start mb-2">
-                <h4 class="font-medium text-blue-900">{{ modulo.modelo }}</h4>
-                <button
-                  @click="removerComparacao(modulo.id)"
-                  class="text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </div>
-              <div class="space-y-1 text-sm text-blue-800">
-                <div>Potência: {{ modulo.potencia_nominal }}W</div>
-                <div>Voc: {{ modulo.voc }}V</div>
-                <div>Isc: {{ modulo.isc }}A</div>
-                <div>Eficiência: {{ calcularEficiencia(modulo) }}%</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,21 +37,9 @@
           class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
         >
           <div class="p-4">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <h3 class="text-sm font-semibold text-gray-900">{{ modulo.modelo }}</h3>
-                <p class="text-sm text-gray-600">{{ getNomeFabricante(modulo.fabricante_id) }}</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  :checked="moduloSelecionado(modulo.id)"
-                  @change="toggleComparacao(modulo)"
-                  :disabled="!moduloSelecionado(modulo.id) && modulosComparacao.length >= 3"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span class="text-xs text-gray-500">Comparar</span>
-              </div>
+            <div class="mb-2">
+              <h3 class="text-sm font-semibold text-gray-900">{{ modulo.modelo }}</h3>
+              <p class="text-sm text-gray-600">{{ getNomeFabricante(modulo.fabricante_id) }}</p>
             </div>
 
             <div class="space-y-1 mb-2">
@@ -141,7 +92,6 @@ import { useCatalogosStore } from '@/stores/catalogos'
 const store = useCatalogosStore()
 const busca = ref('')
 const fabricanteSelecionado = ref('')
-const modulosComparacao = ref([])
 
 const fabricantesDisponiveis = computed(() => {
   return store.fabricantes.filter(f => 
@@ -176,26 +126,6 @@ const calcularEficiencia = (modulo) => {
   const areaAproximada = 2
   const eficiencia = (modulo.potencia_nominal / (1000 * areaAproximada)) * 100
   return eficiencia.toFixed(1)
-}
-
-const moduloSelecionado = (moduloId) => {
-  return modulosComparacao.value.some(m => m.id === moduloId)
-}
-
-const toggleComparacao = (modulo) => {
-  const index = modulosComparacao.value.findIndex(m => m.id === modulo.id)
-  if (index >= 0) {
-    modulosComparacao.value.splice(index, 1)
-  } else if (modulosComparacao.value.length < 3) {
-    modulosComparacao.value.push(modulo)
-  }
-}
-
-const removerComparacao = (moduloId) => {
-  const index = modulosComparacao.value.findIndex(m => m.id === moduloId)
-  if (index >= 0) {
-    modulosComparacao.value.splice(index, 1)
-  }
 }
 
 onMounted(() => {
