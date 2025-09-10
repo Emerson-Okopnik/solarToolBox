@@ -15,7 +15,12 @@
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Tecnologia</label>
-              <input v-model="form.tecnologia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <select v-model="form.tecnologia" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="" disabled>Selecione...</option>
+                <option value="mono">Monocristalino</option>
+                <option value="poly">Policristalino</option>
+                <option value="thin-film">Filme Fino</option>
+              </select>
             </div>
             <div class="grid grid-cols-2 gap-">
               <div>
@@ -140,7 +145,8 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mod.potencia_nominal }}W</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ mod.ativo }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> 
-                  <button @click="editar(mod)" class="btn btn-link btn-sm p-0 me-1">Editar</button> <button @click="remover(mod.id)" class="btn btn-link btn-sm text-danger p-0">Excluir</button> 
+                  <button @click="editar(mod)" class="btn btn-link btn-sm p-0 me-1">Editar</button>
+                  <button @click="remover(mod.id)" class="btn btn-link btn-sm text-danger p-0">Excluir</button> 
                 </td>
               </tr>
             </tbody>
