@@ -1,12 +1,11 @@
 <template>
   <div class="space-y-8">
+    <!-- Header -->
+    <div class="catalog-header">
+      <h1>Catálogos</h1>
+      <p>Gerencie fabricantes, módulos, inversores e dados climáticos</p>
+    </div>
     <div class="catalog-page">
-      <!-- Header -->
-      <div class="catalog-header">
-        <h1>Catálogos</h1>
-        <p>Gerencie fabricantes, módulos, inversores e dados climáticos</p>
-      </div>
-
       <!-- Grid de cards -->
       <div class="catalog-grid">
         <router-link to="/catalogos/fabricantes" class="catalog-card">
