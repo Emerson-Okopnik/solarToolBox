@@ -20,19 +20,19 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1">Voc (V)</label>
-            <input v-model.number="form.voc" type="number" step="0.1" class="w-full border rounded px-3 py-2" />
+            <input v-model.number="form.voc" type="number" step="0.01" class="w-full border rounded px-3 py-2"/>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Vmp (V)</label>
-            <input v-model.number="form.vmp" type="number" step="0.1" class="w-full border rounded px-3 py-2" />
+            <input v-model.number="form.vmp" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Isc (A)</label>
-            <input v-model.number="form.isc" type="number" step="0.1" class="w-full border rounded px-3 py-2" />
+            <input v-model.number="form.isc" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Imp (A)</label>
-            <input v-model.number="form.imp" type="number" step="0.1" class="w-full border rounded px-3 py-2" />
+            <input v-model.number="form.imp" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
           </div>
         </div>
         <div class="flex gap-2">
