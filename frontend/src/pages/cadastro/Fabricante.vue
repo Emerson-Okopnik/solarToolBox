@@ -13,15 +13,17 @@
               <label class="block text-sm font-medium mb-1">Nome</label>
               <input v-model="form.nome" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
             </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">País</label>
-              <input v-model="form.pais"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Website</label>
-              <input v-model="form.website"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <div class="grid grid-cols-2 gap-4 mt-2">
+              <div>
+                <label class="block text-sm font-medium mb-1">País</label>
+                <input v-model="form.pais"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Website</label>
+                <input v-model="form.website"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
             </div>
           </div>
           <label class="inline-flex items-center">
