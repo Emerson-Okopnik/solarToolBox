@@ -177,7 +177,7 @@ class InversorController extends Controller
             'tipo' => 'required|in:string,central,micro,otimizador',
             'potencia_dc_max' => 'required|numeric|min:100|max:1000000',
             'tensao_dc_max' => 'required|numeric|min:100|max:2000',
-            'tensao_dc_min' => 'required|numeric|min:50|max:1000',
+            'tensao_dc_min' => 'required|numeric|min:40|max:1000',
             'corrente_dc_max' => 'required|numeric|min:1|max:1000',
             'num_mppts' => 'required|integer|min:1|max:20',
             'potencia_ac_nominal' => 'required|numeric|min:100|max:1000000',
@@ -193,7 +193,7 @@ class InversorController extends Controller
             // MPPTs
             'mppts' => 'required|array|min:1',
             'mppts.*.numero' => 'required|integer|min:1',
-            'mppts.*.tensao_mppt_min' => 'required|numeric|min:50|max:1000',
+            'mppts.*.tensao_mppt_min' => 'required|numeric|min:40|max:1000',
             'mppts.*.tensao_mppt_max' => 'required|numeric|min:100|max:1500',
             'mppts.*.corrente_entrada_max' => 'required|numeric|min:1|max:100',
             'mppts.*.strings_max' => 'required|integer|min:1|max:50',
@@ -250,6 +250,7 @@ class InversorController extends Controller
 
             return response()->json([
                 'success' => false,
+                'inversor' => $inversor,
                 'message' => 'Erro ao atualizar inversor: ' . $e->getMessage(),
             ], 500);
         }

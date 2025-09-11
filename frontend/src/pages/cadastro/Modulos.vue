@@ -22,7 +22,7 @@
                 <option value="thin-film">Filme Fino</option>
               </select>
             </div>
-            <div class="grid grid-cols-2 gap-">
+            <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Potência Nominal (W)</label>
                 <input v-model.number="form.potencia_nominal" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />

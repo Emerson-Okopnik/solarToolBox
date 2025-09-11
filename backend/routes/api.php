@@ -33,7 +33,7 @@ Route::middleware('jwt.auth')->group(function () {
     // Gestão de catálogos (admin)
     Route::apiResource('fabricantes', FabricanteController::class)->except(['index']);
     Route::apiResource('modulos', ModuloController::class)->except(['index']);
-    Route::apiResource('inversores', InversorController::class)->except(['index']);
+    Route::apiResource('inversores', InversorController::class)->parameters(['inversores' => 'inversor'])->except(['index']);
     Route::apiResource('climas', ClimaController::class)->except(['index']);
 
     // Projetos
