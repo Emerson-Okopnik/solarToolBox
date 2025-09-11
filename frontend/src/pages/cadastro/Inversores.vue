@@ -17,6 +17,14 @@
             <input v-model.number="form.potencia_ac_nominal" type="number" class="w-full border rounded px-3 py-2" />
           </div>
           <div>
+            <label class="block text-sm font-medium mb-1">Potência DC Máx (W)</label>
+            <input
+              v-model.number="form.potencia_dc_max"
+              type="number"
+              class="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div>
             <label class="block text-sm font-medium mb-1">Fabricante</label>
             <select v-model="form.fabricante_id" class="w-full border rounded px-3 py-2">
               <option v-for="fab in store.fabricantes" :key="fab.id" :value="fab.id">{{ fab.nome }}</option>
@@ -49,9 +57,116 @@
               <input v-model.number="form.corrente_dc_max" type="number" class="w-full border rounded px-3 py-2" />
             </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Número de MPPTs</label>
-            <input v-model.number="form.num_mppts" type="number" class="w-full border rounded px-3 py-2" />
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Tensão AC Nominal (V)</label>
+              <input
+                v-model.number="form.tensao_ac_nominal"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Corrente AC Máx (A)</label>
+              <input
+                v-model.number="form.corrente_ac_max"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Frequência Nominal (Hz)</label>
+              <input
+                v-model.number="form.frequencia_nominal"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Temp. Operação Min (°C)</label>
+              <input
+                v-model.number="form.temp_operacao_min"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Temp. Operação Máx (°C)</label>
+              <input
+                v-model.number="form.temp_operacao_max"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Altitude Máx (m)</label>
+              <input
+                v-model.number="form.altitude_max"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Umidade Máx (%)</label>
+              <input
+                v-model.number="form.umidade_max"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Número de MPPTs</label>
+              <input
+                v-model.number="form.num_mppts"
+                type="number"
+                class="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <div class="flex items-center mt-6">
+              <input v-model="form.ativo" type="checkbox" class="mr-2" />
+              <label class="text-sm font-medium">Ativo</label>
+            </div>
+          </div>
+          <div v-for="(mppt, index) in form.mppts" :key="index" class="border p-4 rounded">
+            <h3 class="font-medium mb-2">MPPT {{ index + 1 }}</h3>
+            <div class="grid grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Tensão MPPT Min (V)</label>
+                <input
+                  v-model.number="mppt.tensao_mppt_min"
+                  type="number"
+                  class="w-full border rounded px-3 py-2"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Tensão MPPT Máx (V)</label>
+                <input
+                  v-model.number="mppt.tensao_mppt_max"
+                  type="number"
+                  class="w-full border rounded px-3 py-2"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Corrente Entrada Máx (A)</label>
+                <input
+                  v-model.number="mppt.corrente_entrada_max"
+                  type="number"
+                  class="w-full border rounded px-3 py-2"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Strings Máx</label>
+                <input
+                  v-model.number="mppt.strings_max"
+                  type="number"
+                  class="w-full border rounded px-3 py-2"
+                />
+              </div>
+            </div>
           </div>
           <div class="flex gap-2">
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">
@@ -92,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch} from 'vue'
 import { useCatalogosStore } from '@/stores/catalogos'
 
 const store = useCatalogosStore()
@@ -100,13 +215,23 @@ const store = useCatalogosStore()
 const form = ref({
   modelo: '',
   potencia_ac_nominal: '',
+   potencia_dc_max: '',
   fabricante_id: '',
   eficiencia_max: '',
   tipo: 'string',
   tensao_dc_min: '',
   tensao_dc_max: '',
   corrente_dc_max: '',
-  num_mppts: '',
+  tensao_ac_nominal: '',
+  corrente_ac_max: '',
+  frequencia_nominal: '',
+  temp_operacao_min: '',
+  temp_operacao_max: '',
+  altitude_max: '',
+  umidade_max: '',
+  num_mppts: 0,
+  ativo: true,
+  mppts: [],
 })
 const editando = ref(false)
 const editId = ref(null)
@@ -116,17 +241,47 @@ onMounted(() => {
   store.carregarFabricantes()
 })
 
+watch(
+  () => form.value.num_mppts,
+  novo => {
+    const n = Number(novo) || 0
+    if (form.value.mppts.length < n) {
+      for (let i = form.value.mppts.length; i < n; i++) {
+        form.value.mppts.push({
+          numero: i + 1,
+          tensao_mppt_min: '',
+          tensao_mppt_max: '',
+          corrente_entrada_max: '',
+          strings_max: '',
+        })
+      }
+    } else if (form.value.mppts.length > n) {
+      form.value.mppts.splice(n)
+    }
+  }
+)
+
 function reset() {
   form.value = {
     modelo: '',
     potencia_ac_nominal: '',
+    potencia_dc_max: '',
     fabricante_id: '',
     eficiencia_max: '',
     tipo: 'string',
     tensao_dc_min: '',
     tensao_dc_max: '',
     corrente_dc_max: '',
-    num_mppts: '',
+    tensao_ac_nominal: '',
+    corrente_ac_max: '',
+    frequencia_nominal: '',
+    temp_operacao_min: '',
+    temp_operacao_max: '',
+    altitude_max: '',
+    umidade_max: '',
+    num_mppts: 0,
+    ativo: true,
+    mppts: [],
   }
   editando.value = false
   editId.value = null
@@ -145,13 +300,29 @@ function editar(inv) {
   form.value = {
     modelo: inv.modelo,
     potencia_ac_nominal: inv.potencia_ac_nominal,
+    potencia_dc_max: inv.potencia_dc_max,
     fabricante_id: inv.fabricante_id,
     eficiencia_max: inv.eficiencia_max,
     tipo: inv.tipo,
     tensao_dc_min: inv.tensao_dc_min,
     tensao_dc_max: inv.tensao_dc_max,
     corrente_dc_max: inv.corrente_dc_max,
+    tensao_ac_nominal: inv.tensao_ac_nominal,
+    corrente_ac_max: inv.corrente_ac_max,
+    frequencia_nominal: inv.frequencia_nominal,
+    temp_operacao_min: inv.temp_operacao_min,
+    temp_operacao_max: inv.temp_operacao_max,
+    altitude_max: inv.altitude_max,
+    umidade_max: inv.umidade_max,
     num_mppts: inv.num_mppts,
+    ativo: inv.ativo,
+    mppts: inv.mppts ? inv.mppts.map(m => ({
+      numero: m.numero,
+      tensao_mppt_min: m.tensao_mppt_min,
+      tensao_mppt_max: m.tensao_mppt_max,
+      corrente_entrada_max: m.corrente_entrada_max,
+      strings_max: m.strings_max,
+    })) : [],
   }
   editId.value = inv.id
   editando.value = true

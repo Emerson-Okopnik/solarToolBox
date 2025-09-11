@@ -89,7 +89,7 @@ export const useProjetosStore = defineStore("projetos", {
       }
     },
     
-        async atualizarArranjo(arranjoId, dados) {
+    async atualizarArranjo(arranjoId, dados) {
       this.loading = true
       this.error = null
       try {
