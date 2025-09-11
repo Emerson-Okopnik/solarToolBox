@@ -21,7 +21,7 @@ Route::prefix('catalogos')->group(function () {
     Route::get('/fabricantes', [FabricanteController::class, 'index']);
     Route::get('/modulos', [ModuloController::class, 'index']);
     Route::get('/inversores', [InversorController::class, 'index']);
-    Route::get('/inversores/{id}/mppts', [InversorController::class, 'getMppts']);
+    Route::get('/inversores/{inversor}/mppts', [InversorController::class, 'getMppts']);
     Route::get('/climas', [ClimaController::class, 'index']);
 });
 

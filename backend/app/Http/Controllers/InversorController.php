@@ -7,6 +7,11 @@ use App\Models\Mppt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+
 class InversorController extends Controller
 {
     //Lista todos os inversores

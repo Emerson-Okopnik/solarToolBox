@@ -8,168 +8,121 @@
 
       <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
         <form @submit.prevent="salvar" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-1">Modelo</label>
-            <input v-model="form.modelo" class="w-full border rounded px-3 py-2" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Potência AC Nominal (W)</label>
-            <input v-model.number="form.potencia_ac_nominal" type="number" class="w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Potência DC Máx (W)</label>
-            <input
-              v-model.number="form.potencia_dc_max"
-              type="number"
-              class="w-full border rounded px-3 py-2"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Fabricante</label>
-            <select v-model="form.fabricante_id" class="w-full border rounded px-3 py-2">
-              <option v-for="fab in store.fabricantes" :key="fab.id" :value="fab.id">{{ fab.nome }}</option>
-            </select>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-1">Eficiência Máxima (%)</label>
-              <input v-model.number="form.eficiencia_max" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+              <label class="block text-sm font-medium mb-1">Modelo</label>
+              <input v-model="form.modelo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-2">
+              <div>
+                <label class="block text-sm font-medium mb-1">Potência AC Nominal (W)</label>
+                <input v-model.number="form.potencia_ac_nominal" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Potência DC Máx (W)</label>
+                <input v-model.number="form.potencia_dc_max" type="number"  step="0.01"class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-1">Tipo</label>
-              <select v-model="form.tipo" class="w-full border rounded px-3 py-2">
-                <option value="string">String</option>
-                <option value="microinversor">Microinversor</option>
+              <label class="block text-sm font-medium mb-1">Fabricante</label>
+              <select v-model="form.fabricante_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option v-for="fab in store.fabricantes" :key="fab.id" :value="fab.id">{{ fab.nome }}</option>
               </select>
             </div>
-          </div>
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium mb-1">Tensão DC Min (V)</label>
-              <input v-model.number="form.tensao_dc_min" type="number" class="w-full border rounded px-3 py-2" />
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Eficiência Máxima (%)</label>
+                <input v-model.number="form.eficiencia_max" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Tipo</label>
+                <select v-model="form.tipo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="string">String</option>
+                  <option value="microinversor">Microinversor</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Tensão DC Máx (V)</label>
-              <input v-model.number="form.tensao_dc_max" type="number" class="w-full border rounded px-3 py-2" />
+
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Tensão DC Min (V)</label>
+                <input v-model.number="form.tensao_dc_min" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Tensão DC Máx (V)</label>
+                <input v-model.number="form.tensao_dc_max" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Corrente DC Máx (A)</label>
+                <input v-model.number="form.corrente_dc_max" type="number"  step="0.01"class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Corrente DC Máx (A)</label>
-              <input v-model.number="form.corrente_dc_max" type="number" class="w-full border rounded px-3 py-2" />
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Tensão AC Nominal (V)</label>
+                <input v-model.number="form.tensao_ac_nominal" type="number"  step="0.01"class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Corrente AC Máx (A)</label>
+                <input v-model.number="form.corrente_ac_max" type="number"  step="0.01"class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Frequência Nominal (Hz)</label>
+                <input v-model.number="form.frequencia_nominal" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
             </div>
-          </div>
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium mb-1">Tensão AC Nominal (V)</label>
-              <input
-                v-model.number="form.tensao_ac_nominal"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Temp. Operação Min (°C)</label>
+                <input v-model.number="form.temp_operacao_min" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Temp. Operação Máx (°C)</label>
+                <input v-model.number="form.temp_operacao_max" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Altitude Máx (m)</label>
+                <input v-model.number="form.altitude_max" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Corrente AC Máx (A)</label>
-              <input
-                v-model.number="form.corrente_ac_max"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Frequência Nominal (Hz)</label>
-              <input
-                v-model.number="form.frequencia_nominal"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium mb-1">Temp. Operação Min (°C)</label>
-              <input
-                v-model.number="form.temp_operacao_min"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Temp. Operação Máx (°C)</label>
-              <input
-                v-model.number="form.temp_operacao_max"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Altitude Máx (m)</label>
-              <input
-                v-model.number="form.altitude_max"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium mb-1">Umidade Máx (%)</label>
-              <input
-                v-model.number="form.umidade_max"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1">Número de MPPTs</label>
-              <input
-                v-model.number="form.num_mppts"
-                type="number"
-                class="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div class="flex items-center mt-6">
-              <input v-model="form.ativo" type="checkbox" class="mr-2" />
-              <label class="text-sm font-medium">Ativo</label>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Umidade Máx (%)</label>
+                <input v-model.number="form.umidade_max" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Número de MPPTs</label>
+                <input v-model.number="form.num_mppts" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
             </div>
           </div>
-          <div v-for="(mppt, index) in form.mppts" :key="index" class="border p-4 rounded">
-            <h3 class="font-medium mb-2">MPPT {{ index + 1 }}</h3>
+          <div class="flex items-center gap-1 mt-3">
+            <input id="ativo" v-model="form.ativo" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+            <label for="ativo" class="ml-2 block text-sm font-medium"> Ativo</label>
+          </div>
+          <div v-for="(mppt, index) in form.mppts" :key="index" class="border p-4 rounded my-2">
+            <h5 class="font-medium mb-2">MPPT {{ index + 1 }}</h5>
             <div class="grid grid-cols-4 gap-4">
               <div>
                 <label class="block text-sm font-medium mb-1">Tensão MPPT Min (V)</label>
-                <input
-                  v-model.number="mppt.tensao_mppt_min"
-                  type="number"
-                  class="w-full border rounded px-3 py-2"
-                />
+                <input v-model.number="mppt.tensao_mppt_min" type="number" step="0.01" class="w-full border rounded px-3 py-2"/>
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Tensão MPPT Máx (V)</label>
-                <input
-                  v-model.number="mppt.tensao_mppt_max"
-                  type="number"
-                  class="w-full border rounded px-3 py-2"
-                />
+                <input v-model.number="mppt.tensao_mppt_max" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Corrente Entrada Máx (A)</label>
-                <input
-                  v-model.number="mppt.corrente_entrada_max"
-                  type="number"
-                  class="w-full border rounded px-3 py-2"
-                />
+                <input v-model.number="mppt.corrente_entrada_max" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Strings Máx</label>
-                <input
-                  v-model.number="mppt.strings_max"
-                  type="number"
-                  class="w-full border rounded px-3 py-2"
-                />
+                <input v-model.number="mppt.strings_max" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
               </div>
             </div>
           </div>
-          <div class="flex gap-2">
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">
+          <div class="flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary d-flex align-items-center">
               {{ editando ? 'Atualizar' : 'Adicionar' }}
             </button>
             <button v-if="editando" type="button" @click="cancelar" class="px-4 py-2 bg-gray-300 rounded">
@@ -184,6 +137,7 @@
           <table class="w-full max-w-4xl mx-auto divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Id</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Potência</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
@@ -191,6 +145,7 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="inv in store.inversores" :key="inv.id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ inv.id }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ inv.modelo }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ inv.potencia_ac_nominal }}W</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -215,7 +170,7 @@ const store = useCatalogosStore()
 const form = ref({
   modelo: '',
   potencia_ac_nominal: '',
-   potencia_dc_max: '',
+  potencia_dc_max: '',
   fabricante_id: '',
   eficiencia_max: '',
   tipo: 'string',
@@ -296,7 +251,14 @@ async function salvar() {
   reset()
 }
 
-function editar(inv) {
+async function editar(inv) {
+  if (!inv.mppts || inv.mppts.length === 0) {
+    await store.carregarMppts(inv.id)
+    const atualizado = store.inversores.find(i => i.id === inv.id)
+    if (atualizado) {
+      inv = atualizado
+    }
+  }
   form.value = {
     modelo: inv.modelo,
     potencia_ac_nominal: inv.potencia_ac_nominal,

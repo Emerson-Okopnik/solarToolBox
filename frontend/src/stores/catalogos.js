@@ -112,12 +112,32 @@ export const useCatalogosStore = defineStore("catalogos", {
       this.loading = true
       try {
         const response = await catalogosService.listarInversores()
-        this.inversores = response
+        const inversores = await Promise.all(
+          response.map(async inv => {
+            const mppts = await catalogosService.listarMppts(inv.id)
+            return { ...inv, mppts }
+          })
+        )
+        this.inversores = inversores
       } catch (error) {
         this.error = error.response?.data?.message || "Erro ao carregar inversores"
         throw error
       } finally {
         this.loading = false
+      }
+    },
+
+    async carregarMppts(inversorId) {
+      try {
+        const mppts = await catalogosService.listarMppts(inversorId)
+        const index = this.inversores.findIndex(i => i.id === inversorId)
+        if (index !== -1) {
+          this.inversores[index].mppts = mppts
+        }
+        return mppts
+      } catch (error) {
+        this.error = error.response?.data?.message || "Erro ao carregar MPPTs"
+        throw error
       }
     },
 
