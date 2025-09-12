@@ -9,7 +9,7 @@
       <router-view />
 
       <div class="text-center mt-6">
-        <p class="text-sm text-muted">&copy; 2024 Solar Toolbox. Todos os direitos reservados.</p>
+        <p class="text-sm text-muted">&copy; 2025 Solar Toolbox. Todos os direitos reservados.</p>
       </div>
     </div>
   </div>
