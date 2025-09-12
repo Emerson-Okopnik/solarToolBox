@@ -39,14 +39,7 @@
         </button>
 
         <div class="user-menu ms-3">
-          <button
-            class="btn btn-secondary user-btn"
-            type="button"
-            @click="toggleUserMenu"
-          >
-            <div class="user-avatar me-2">
-              <span class="font-medium text-sm">{{ userInitials }}</span>
-            </div>
+          <button class="btn user-btn" type="button" @click="toggleUserMenu" >
             <span class="user-name">{{ userName }}</span>
           </button>
 
@@ -111,10 +104,6 @@ export default defineComponent({
         items.push({ name: 'cadastro', label: 'Cadastro', to: '/cadastro', icon: 'HomeIcon' })
       }
       return items
-    },
-    userInitials() {
-      const name = this.authStore.user?.name || ''
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     },
     userName() {
       return this.authStore.user?.name || ''
@@ -199,17 +188,6 @@ export default defineComponent({
   background: transparent;
   border: none;
   color: var(--gray-700);
-}
-
-.user-avatar {
-  width: 2rem;
-  height: 2rem;
-  background-color: var(--primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
 }
 
 .user-name {

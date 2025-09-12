@@ -9,36 +9,24 @@
       <!-- Grid de cards -->
       <div class="catalog-grid">
         <router-link to="/cadastro/fabricante" class="catalog-card">
-          <div class="card-icon">
-            <BuildingOfficeIcon />
-          </div>
           <h3>Fabricantes</h3>
           <p>Fabricantes de módulos e inversores</p>
           <span class="card-footer">{{ stats.fabricantes || 0 }} fabricantes →</span>
         </router-link>
 
         <router-link to="/cadastro/modulos" class="catalog-card">
-          <div class="card-icon">
-            <RectangleStackIcon />
-          </div>
           <h3>Módulos</h3>
           <p>Cadastro de módulos fotovoltaicos</p>
           <span class="card-footer">{{ stats.modulos || 0 }} módulos →</span>
         </router-link>
 
         <router-link to="/cadastro/inversores" class="catalog-card">
-          <div class="card-icon">
-            <CpuChipIcon />
-          </div>
           <h3>Inversores</h3>
           <p>Cadastro de inversores solares</p>
           <span class="card-footer">{{ stats.inversores || 0 }} inversores →</span>
         </router-link>
 
         <router-link to="/cadastro/climas" class="catalog-card">
-          <div class="card-icon">
-            <CloudIcon />
-          </div>
           <h3>Climas</h3>
           <p>Dados climáticos por localização</p>
           <span class="card-footer">{{ stats.climas || 0 }} localizações →</span>
@@ -148,22 +136,6 @@ onMounted(() => {
   font-size: 14px;
   color: #666;
   margin: 10px 0 15px;
-}
-
-.card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: #eef3ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-icon svg {
-  width: 24px;
-  height: 24px;
-  fill: #1a73e8;
 }
 
 .card-footer {

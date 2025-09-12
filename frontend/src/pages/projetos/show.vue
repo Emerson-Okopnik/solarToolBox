@@ -51,7 +51,6 @@
 
           <div class="card-body">
             <div v-if="!projeto.arranjos || projeto.arranjos.length === 0" class="empty-state">
-              <CpuChipIcon style="width:3rem;height:3rem" class="mb-2 text-muted" />
               <h6 class="mb-1">Nenhum arranjo</h6>
               <p class="text-muted mb-3">Adicione arranjos para começar a análise</p>
               <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="openArranjoModal()">
