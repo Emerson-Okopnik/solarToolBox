@@ -106,15 +106,6 @@
                 </div>
               </div>
             </div>
-
-            <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Curva de Eficiência</h4>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <div>
-                  <canvas :ref="el => setChartRef(el, inversor.id)"></canvas>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -124,7 +115,6 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue'
-import Chart from 'chart.js/auto'
 import { useCatalogosStore } from '@/stores/catalogos'
 
 const store = useCatalogosStore()
@@ -188,53 +178,6 @@ const gerarCurva = (inversor) => {
 onMounted(() => {
   store.carregarTodos()
 })
-
-const chartRefs = ref({})
-const chartInstances = ref({})
-
-const setChartRef = (el, id) => {
-  if (el) chartRefs.value[id] = el
-}
-
-const renderCharts = () => {
-  nextTick(() => {
-    inversoresFiltrados.value.forEach(inv => {
-      const ctx = chartRefs.value[inv.id]
-      if (!ctx) return
-      if (chartInstances.value[inv.id]) {
-        chartInstances.value[inv.id].destroy()
-      }
-      chartInstances.value[inv.id] = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['10%', '25%', '50%', '75%', '100%'],
-          datasets: [{
-            data: gerarCurva(inv),
-            borderColor: '#16a34a',
-            backgroundColor: 'rgba(34,197,94,0.2)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: {
-              beginAtZero: true,
-              max: 100,
-              grid: { display: false },
-              ticks: { display: false }
-            }
-          }
-        }
-      })
-    })
-  })
-}
 
 watch(inversoresFiltrados, () => {
   renderCharts()
