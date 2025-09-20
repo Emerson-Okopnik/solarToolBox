@@ -87,8 +87,8 @@ class ExecucaoController extends Controller
         try {
             // Use null-safe para evitar erro quando $projeto->clima é null
             $configuracoes = array_merge([
-                'temp_min' => $projeto->clima?->temp_min_historica ?? -5,
-                'temp_max' => $projeto->clima?->temp_max_historica ?? 70,
+                'temp_min' => $projeto->clima?->temp_min_historica ?? -10,
+                'temp_max' => $projeto->clima?->temp_max_historica ?? 80,
                 'temp_ambiente' => $projeto->clima?->temp_media_anual ?? 25,
                 'irradiancia' => 800,
                 'noct' => 45, //Temperatura Nominal de Operação da Célula (°C)
