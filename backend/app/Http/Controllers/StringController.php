@@ -88,9 +88,9 @@ class StringController extends Controller
             'num_strings_paralelo' => $request->num_strings_paralelo,
             'total_modulos' => $totalModulos,
             'modulo_id' => $request->modulo_id,
-            'mppt_id' => $request->mppt_id,
-            'azimute' => 'required|numeric|min:0|max:360',
-            'inclinacao' => 'required|numeric|min:0|max:90',
+            'mppt_id' => $request->mppt_id ?: null,
+            'azimute' => (float) $request->azimute,
+            'inclinacao' => (float) $request->inclinacao,
         ]);
 
         $string->load(['mppt', 'modulo.fabricante']);
