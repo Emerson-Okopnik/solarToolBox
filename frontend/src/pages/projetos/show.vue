@@ -67,9 +67,10 @@
                 <div class="d-flex align-items-start justify-content-between">
                   <div class="me-3">
                     <div class="fw-semibold text-dark">{{ arranjo.nome }}</div>
-                    <div class="text-muted small">
-                      {{ arranjo.modulo?.nome }} {{ arranjo.inversor?.modelo }}
-                    </div>
+                    <div class="text-muted small d-flex flex-wrap gap-1">
+                      <span>{{ getArranjoModuloLabel(arranjo) }}</span>
+                      <span v-if="arranjo.inversor">• {{ arranjo.inversor.modelo }}</span>
+                    </div>  
                     <div class="text-muted small">
                       Azimute: {{ arranjo.azimute }}° | Inclinação: {{ arranjo.inclinacao }}°
                     </div>
@@ -95,7 +96,14 @@
                     :key="string.id"
                     class="d-flex justify-content-between align-items-center small"
                   >
-                    <span>MPPT {{ string.mppt_id || '-' }} - Série</span>
+                    <div class="d-flex flex-column">
+                      <span class="fw-semibold">{{ getStringModuloLabel(string) }}</span>
+                    <div class="d-flex flex-column">
+                      <span class="fw-semibold">{{ getStringModuloLabel(string) }}</span>
+                      <span class="text-muted">{{ getStringMpptLabel(string) }} - Série</span>
+                      <span class="text-muted">Azimute: {{ formatGraus(string.azimute) }}° | Inclinação: {{ formatGraus(string.inclinacao) }}°</span>
+                    </div>
+                    </div>
                     <div class="d-flex align-items-center">
                       <span class="me-2">{{ string.total_modulos }} módulos ({{ string.num_modulos_serie }}s × {{ string.num_strings_paralelo }}p)</span>
                       <button type="button" class="btn btn-link btn-sm p-0 me-1" @click="openStringModal(arranjo, string)">
@@ -225,15 +233,6 @@
                   <input id="arranjo_nome" v-model="arranjoForm.nome" type="text" required class="form-control" />
                 </div>
                 <div class="mb-3">
-                  <label for="arranjo_modulo" class="form-label">Módulo *</label>
-                  <select id="arranjo_modulo" v-model.number="arranjoForm.modulo_id" required class="form-select">
-                    <option value="">Selecione</option>
-                    <option v-for="modulo in catalogosStore.modulos" :key="modulo.id" :value="modulo.id">
-                      {{ modulo.modelo }} - {{ modulo.potencia }}W
-                    </option>
-                  </select>
-                </div>
-                <div class="mb-3">
                   <label for="arranjo_inversor" class="form-label">Inversor *</label>
                   <select id="arranjo_inversor" v-model.number="arranjoForm.inversor_id" required class="form-select">
                     <option value="">Selecione</option>
@@ -241,16 +240,6 @@
                       {{ inversor.modelo }} - {{ inversor.potencia_nominal }}W
                     </option>
                   </select>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label for="arranjo_azimute" class="form-label">Azimute (°)</label>
-                    <input id="arranjo_azimute" v-model.number="arranjoForm.azimute" type="number" min="0" max="360" required class="form-control" />
-                  </div>
-                  <div class="col-md-6">
-                    <label for="arranjo_inclinacao" class="form-label">Inclinação (°)</label>
-                    <input id="arranjo_inclinacao" v-model.number="arranjoForm.inclinacao" type="number" min="0" max="90" required class="form-control" />
-                  </div>
                 </div>
               </div>
               <div class="modal-footer">
@@ -283,7 +272,25 @@
                   <input id="string_nome" v-model="stringForm.nome" type="text" required class="form-control" />
                 </div>
                 <div class="mb-3">
-                  <label for="string_ns" class="form-label">Módulos em Série</label>
+                  <label for="string_modulo" class="form-label">Módulo *</label>
+                  <select
+                    id="string_modulo"
+                    v-model.number="stringForm.modulo_id"
+                    required
+                    class="form-select"
+                  >
+                    <option value="">Selecione</option>
+                    <option
+                      v-for="modulo in catalogosStore.modulos"
+                      :key="modulo.id"
+                      :value="modulo.id"
+                    >
+                      {{ getModuloOptionLabel(modulo) }}
+                    </option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="string_ns" class="form-label">Quantidade de Módulos em Série</label>
                   <input id="string_ns" v-model.number="stringForm.num_modulos_serie" type="number" min="1" required class="form-control" />
                 </div>
                 <div class="mb-3">
@@ -305,6 +312,16 @@
                       {{ opcao.label }}
                     </option>
                   </select>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="string_azimute" class="form-label">Azimute (°)</label>
+                    <input id="string_azimute" v-model.number="stringForm.azimute" type="number" min="0" max="360" required class="form-control" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="string_inclinacao" class="form-label">Inclinação (°)</label>
+                    <input id="string_inclinacao" v-model.number="stringForm.inclinacao" type="number" min="0" max="90" required class="form-control" />
+                  </div>
                 </div>
               </div>
               <div class="modal-footer">
@@ -355,10 +372,9 @@ const showArranjoModal = ref(false)
 const salvandoArranjo = ref(false)
 const arranjoForm = ref({
   nome: '',
-  modulo_id: '',
   inversor_id: '',
-  azimute: 0,
-  inclinacao: 20
+  descricao: '',
+  fator_sombreamento: 1
 })
 const editingArranjo = ref(null)
 
@@ -367,8 +383,11 @@ const salvandoString = ref(false)
 const stringForm = ref({
   nome: '',
   num_modulos_serie: 1,
+  modulo_id: '',
   num_strings_paralelo: 1,
-  mppt_id: ''
+  mppt_id: '',
+  azimute: 180,
+  inclinacao: 20
 })
 const selectedArranjo = ref(null)
 const editingString = ref(null)
@@ -394,6 +413,62 @@ const mpptStringOptions = computed(() => {
     }))
   })
 })
+
+const formatModuloDescricao = (modulo) => {
+  if (!modulo) {
+    return 'Módulo não definido'
+  }
+
+  const fabricante = modulo.fabricante?.nome
+  const modelo = modulo.modelo
+  const potencia = modulo.potencia_nominal ?? modulo.potencia
+
+  const partes = [fabricante, modelo, potencia ? `${potencia}W` : null].filter(Boolean)
+
+  return partes.join(' ') || 'Módulo não definido'
+}
+
+const getModuloOptionLabel = (modulo) => formatModuloDescricao(modulo)
+
+const getArranjoModuloLabel = (arranjo) => {
+  const modulos = arranjo?.strings
+    ?.map((string) => string.modulo)
+    .filter(Boolean)
+
+  if (!modulos?.length) {
+    return 'Sem módulo definido'
+  }
+
+  const unicos = []
+  const vistos = new Set()
+
+  modulos.forEach((modulo) => {
+    if (modulo?.id && !vistos.has(modulo.id)) {
+      vistos.add(modulo.id)
+      unicos.push(modulo)
+    }
+  })
+
+  if (!unicos.length) {
+    return 'Sem módulo definido'
+  }
+
+  return unicos.map((modulo) => formatModuloDescricao(modulo)).join(', ')
+}
+
+const getStringModuloLabel = (string) => formatModuloDescricao(string?.modulo)
+
+const getStringMpptLabel = (string) => {
+  if (string?.mppt?.numero) {
+    return `MPPT ${string.mppt.numero}`
+  }
+
+  if (string?.mppt_id) {
+    return `MPPT ${string.mppt_id}`
+  }
+
+  return 'MPPT -'
+}
 
 const totalStrings = computed(() => {
   return projeto.value?.arranjos?.reduce((total, arranjo) => {
@@ -447,10 +522,16 @@ const openArranjoModal = (arranjo = null) => {
   if (arranjo) {
     arranjoForm.value = {
       nome: arranjo.nome || '',
-      modulo_id: arranjo.modulo_id || arranjo.modulo?.id || '',
       inversor_id: arranjo.inversor_id || arranjo.inversor?.id || '',
-      azimute: arranjo.azimute,
-      inclinacao: arranjo.inclinacao
+      descricao: arranjo.descricao || '',
+      fator_sombreamento: arranjo.fator_sombreamento ?? 1
+    }
+  } else {
+    arranjoForm.value = {
+      nome: '',
+      inversor_id: '',
+      descricao: '',
+      fator_sombreamento: 1
     }
   }
   showArranjoModal.value = true
@@ -461,10 +542,9 @@ const closeArranjoModal = () => {
   editingArranjo.value = null
   arranjoForm.value = {
     nome: '',
-    modulo_id: '',
     inversor_id: '',
-    azimute: 180,
-    inclinacao: 20
+    descricao: '',
+    fator_sombreamento: 1
   }
 }
 
@@ -513,9 +593,23 @@ const openStringModal = async (arranjo, string = null) => {
   if (string) {
     stringForm.value = {
       nome: string.nome || '',
+      modulo_id: string.modulo_id || string.modulo?.id || '',
       num_modulos_serie: string.num_modulos_serie || 1,
+      modulo_id: string.modulo_id || string.modulo?.id || '',
       num_strings_paralelo: string.num_strings_paralelo || 1,
-      mppt_id: string.mppt_id || ''
+      mppt_id: string.mppt_id || '',
+      azimute: Number(string.azimute ?? 0),
+      inclinacao: Number(string.inclinacao ?? 0)
+    }
+  } else {
+    stringForm.value = {
+      nome: '',
+      modulo_id: '',
+      num_modulos_serie: 1,
+      num_strings_paralelo: 1,
+      mppt_id: '',
+      azimute: 180,
+      inclinacao: 20
     }
   }
   showStringModal.value = true
@@ -527,9 +621,13 @@ const closeStringModal = () => {
   editingString.value = null
   stringForm.value = {
     nome: '',
+    modulo_id: '',
     num_modulos_serie: 1,
     num_strings_paralelo: 1,
-    mppt_id: ''
+    modulo_id: '',
+    mppt_id: '',
+    azimute: 180,
+    inclinacao: 20
   }
   mpptsList.value = []
 }

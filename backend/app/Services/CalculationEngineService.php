@@ -36,6 +36,12 @@ class CalculationEngineService
         try {
             DB::beginTransaction();
 
+            $execucao->load([
+                'projeto.arranjos.strings.modulo',
+                'projeto.arranjos.strings.mppt',
+                'projeto.arranjos.inversor.mppts',
+            ]);
+            
             // 1. Calcular parâmetros das strings
             $this->calcularParametrosStrings($execucao, $configuracoes);
 

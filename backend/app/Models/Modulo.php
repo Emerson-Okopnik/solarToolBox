@@ -53,9 +53,9 @@ class Modulo extends Model
         return $this->belongsTo(Fabricante::class);
     }
 
-    public function arranjos()
+    public function strings()
     {
-        return $this->hasMany(Arranjo::class);
+        return $this->hasMany(StringModel::class, 'modulo_id');
     }
 
     // Scopes

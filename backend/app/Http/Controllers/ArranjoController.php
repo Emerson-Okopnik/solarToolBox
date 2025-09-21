@@ -23,7 +23,7 @@ class ArranjoController extends Controller
         }
 
         $arranjos = $projeto->arranjos()
-            ->with(['modulo.fabricante', 'inversor.fabricante', 'inversor.mppts', 'strings'])
+            ->with(['inversor.fabricante', 'inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt'])
             ->orderBy('nome')
             ->get();
 
@@ -48,25 +48,19 @@ class ArranjoController extends Controller
 
         $request->validate([
             'nome' => 'required|string|max:255',
-            'modulo_id' => 'required|exists:modulos,id',
             'inversor_id' => 'required|exists:inversores,id',
-            'azimute' => 'required|numeric|min:0|max:360',
-            'inclinacao' => 'required|numeric|min:0|max:90',
             'descricao' => 'nullable|string|max:1000',
             'fator_sombreamento' => 'nullable|numeric|min:0|max:1',
         ]);
 
         $arranjo = $projeto->arranjos()->create([
             'nome' => $request->nome,
-            'modulo_id' => $request->modulo_id,
             'inversor_id' => $request->inversor_id,
-            'azimute' => $request->azimute,
-            'inclinacao' => $request->inclinacao,
             'descricao' => $request->descricao,
             'fator_sombreamento' => $request->fator_sombreamento ?? 1.0,
         ]);
 
-        $arranjo->load(['modulo.fabricante', 'inversor.fabricante', 'inversor.mppts']);
+        $arranjo->load(['inversor.fabricante', 'inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
 
         return response()->json([
             'success' => true,
@@ -93,7 +87,6 @@ class ArranjoController extends Controller
 
         $arranjo->load([
             'projeto',
-            'modulo.fabricante',
             'inversor.fabricante',
             'inversor.mppts',
             'strings.mppt',
@@ -123,16 +116,20 @@ class ArranjoController extends Controller
 
         $request->validate([
             'nome' => 'required|string|max:255',
-            'modulo_id' => 'required|exists:modulos,id',
             'inversor_id' => 'required|exists:inversores,id',
-            'azimute' => 'required|numeric|min:0|max:360',
-            'inclinacao' => 'required|numeric|min:0|max:90',
             'descricao' => 'nullable|string|max:1000',
             'fator_sombreamento' => 'nullable|numeric|min:0|max:1',
         ]);
 
-        $arranjo->update($request->all());
-        $arranjo->load(['modulo.fabricante', 'inversor.fabricante']);
+        $arranjo->update([
+            'nome' => $request->nome,
+            'inversor_id' => $request->inversor_id,
+            'descricao' => $request->input('descricao', $arranjo->descricao),
+            'fator_sombreamento' => $request->has('fator_sombreamento')
+                ? ($request->fator_sombreamento ?? 1.0)
+                : $arranjo->fator_sombreamento,
+        ]);
+        $arranjo->load(['inversor.fabricante', 'inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
 
         return response()->json([
             'success' => true,

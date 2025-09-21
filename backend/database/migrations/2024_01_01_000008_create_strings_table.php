@@ -12,7 +12,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('arranjo_id')->constrained('arranjos');
             $table->foreignId('mppt_id')->nullable()->constrained('mppts');
+            $table->foreignId('modulo_id')->constrained('modulos');
             
+            $table->foreignId('modulo_id')->constrained('modulos');
+            $table->decimal('azimute', 5, 2); // graus (0-360)
+            $table->decimal('inclinacao', 5, 2); // graus (0-90)
+
             $table->string('nome');
             $table->enum('tipo_conexao', ['serie'])->default('serie');
             

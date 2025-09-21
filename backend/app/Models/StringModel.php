@@ -14,6 +14,9 @@ class StringModel extends Model
     protected $fillable = [
         'arranjo_id',
         'mppt_id',
+        'modulo_id',
+        'azimute',
+        'inclinacao',
         'nome',
         'tipo_conexao',
         'num_modulos_serie',
@@ -32,6 +35,8 @@ class StringModel extends Model
         'corrente_curto_circuito' => 'decimal:2',
         'corrente_maxima_potencia' => 'decimal:2',
         'potencia_total' => 'decimal:2',
+        'azimute' => 'decimal:2',
+        'inclinacao' => 'decimal:2',
     ];
 
     // Relacionamentos
@@ -45,19 +50,27 @@ class StringModel extends Model
         return $this->belongsTo(Mppt::class);
     }
 
+    public function modulo()
+    {
+        return $this->belongsTo(Modulo::class);
+    }
+
+    // Accessors
     public function checagens()
     {
         return $this->hasMany(Checagem::class, 'string_id');
     }
 
-    // Accessors
-    public function getModuloAttribute()
-    {
-        return $this->arranjo->modulo;
-    }
-
     public function getInversorAttribute()
     {
         return $this->arranjo->inversor;
+    }
+
+    public function getOrientacaoGrupo(): string
+    {
+        $azimute = $this->azimute !== null ? number_format((float) $this->azimute, 2, '.', '') : '0.00';
+        $inclinacao = $this->inclinacao !== null ? number_format((float) $this->inclinacao, 2, '.', '') : '0.00';
+
+        return "Az{$azimute}_Inc{$inclinacao}";
     }
 }

@@ -178,11 +178,11 @@ class ModuloController extends Controller
 
     public function destroy(Modulo $modulo)
     {
-        // Verificar se há arranjos usando este módulo
-        if ($modulo->arranjos()->exists()) {
+        // Verificar se há strings usando este módulo
+        if ($modulo->strings()->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Não é possível excluir módulo que está sendo usado em arranjos',
+                'message' => 'Não é possível excluir módulo que está sendo usado em strings',
             ], 400);
         }
 

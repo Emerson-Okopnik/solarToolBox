@@ -113,10 +113,10 @@ class ProjetoController extends Controller
         $projeto->load([
             'clima',
             'user',
-            'arranjos.modulo.fabricante',
+            'arranjos.strings.modulo.fabricante',
             'arranjos.inversor.fabricante',
             'arranjos.inversor.mppts',
-            'arranjos.strings',
+            'arranjos.strings.mppt',
             'execucoes' => function ($query) {
                 $query
                     ->latest()

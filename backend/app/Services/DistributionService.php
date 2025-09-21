@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Arranjo;
 use App\Models\Inversor;
 use App\Exceptions\SolarCalculationException;
 use Illuminate\Support\Collection;
@@ -14,7 +13,7 @@ class DistributionService
      */
     public function distribuir(Inversor $inversor, Collection $arranjos, array $configuracoes = [])
     {
-        // Agrupar arranjos por orientação
+        // Agrupar strings por orientação
         $gruposOrientacao = $this->agruparPorOrientacao($arranjos);
         
         // Obter MPPTs disponíveis
@@ -34,24 +33,36 @@ class DistributionService
     }
 
     /**
-     * Agrupa arranjos por orientação (azimute + inclinação)
+     * Agrupa strings por orientação (azimute + inclinação)
      */
     private function agruparPorOrientacao(Collection $arranjos)
     {
-        return $arranjos->groupBy(function($arranjo) {
-            return $arranjo->getOrientacaoGrupo();
-        })->map(function($grupo, $orientacao) {
-            $primeiroArranjo = $grupo->first();
+        $strings = $arranjos->flatMap(function ($arranjo) {
+            return $arranjo->strings->map(function ($string) use ($arranjo) {
+                if (!$string->relationLoaded('arranjo')) {
+                    $string->setRelation('arranjo', $arranjo);
+                }
+
+                return $string;
+            });
+        })->filter(function ($string) {
+            return $string->azimute !== null && $string->inclinacao !== null;
+        });
+
+        return $strings->groupBy(function ($string) {
+            return $string->getOrientacaoGrupo();
+        })->map(function ($grupo, $orientacao) {
+            $primeiraString = $grupo->first();
+            $arranjos = $grupo->map->arranjo->filter()->unique('id')->values();
             return [
                 'orientacao' => $orientacao,
-                'azimute' => $primeiroArranjo->azimute,
-                'inclinacao' => $primeiroArranjo->inclinacao,
-                'arranjos' => $grupo,
-                'total_strings' => $grupo->sum(function($arranjo) {
-                    return $arranjo->strings->count();
-                }),
-                'potencia_total' => $grupo->sum(function($arranjo) {
-                    return $arranjo->strings->sum('potencia_total');
+                'azimute' => $primeiraString->azimute,
+                'inclinacao' => $primeiraString->inclinacao,
+                'arranjos' => $arranjos,
+                'strings' => $grupo,
+                'total_strings' => $grupo->count(),
+                'potencia_total' => $grupo->sum(function ($string) {
+                    return $string->potencia_total ?? 0;
                 })
             ];
         })->sortByDesc('potencia_total'); // Priorizar grupos com maior potência
@@ -191,12 +202,10 @@ class DistributionService
         }
 
         // Atualizar strings com o MPPT alocado
-        foreach ($grupo['arranjos'] as $arranjo) {
-            foreach ($arranjo->strings as $string) {
-                $string->mppt_id = $mpptInfo['mppt']->id;
-                $string->save();
-            }
-        }
+        collect($grupo['strings'])->each(function ($string) use ($mpptInfo) {
+            $string->mppt_id = $mpptInfo['mppt']->id;
+            $string->save();
+        });
 
         // Verificar se MPPT está lotado
         if ($mpptInfo['strings_total'] >= $mpptInfo['mppt']->strings_max) {
@@ -209,11 +218,16 @@ class DistributionService
      */
     private function estimarCorrenteGrupo($grupo)
     {
-        return $grupo['arranjos']->sum(function ($arranjo) {
-            return $arranjo->strings->sum(function ($string) use ($arranjo) {
-                return ($string->corrente_maxima_potencia ?? $arranjo->modulo->imp)
-                    * $string->num_strings_paralelo;
-            });
+        return collect($grupo['strings'])->sum(function ($string) {
+            $modulo = $string->modulo;
+            $corrente = $string->corrente_maxima_potencia
+                ?? ($modulo ? $modulo->imp : null);
+
+            if ($corrente === null) {
+                return 0;
+            }
+
+            return $corrente * $string->num_strings_paralelo;
         });
     }
 

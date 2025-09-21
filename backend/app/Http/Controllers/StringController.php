@@ -26,7 +26,7 @@ class StringController extends Controller
         }
 
         $strings = $arranjo->strings()
-            ->with('mppt')
+            ->with(['mppt', 'modulo.fabricante'])
             ->orderBy('nome')
             ->get();
 
@@ -56,7 +56,10 @@ class StringController extends Controller
             'nome' => 'required|string|max:255',
             'num_modulos_serie' => 'required|integer|min:1|max:50',
             'num_strings_paralelo' => 'required|integer|min:1|max:20',
+            'modulo_id' => 'required|exists:modulos,id',
             'mppt_id' => 'nullable|exists:mppts,id',
+            'azimute' => 'required|numeric|min:0|max:360',
+            'inclinacao' => 'required|numeric|min:0|max:90',
         ]);
 
         // Validar se MPPT pertence ao inversor do arranjo
@@ -84,10 +87,13 @@ class StringController extends Controller
             'num_modulos_serie' => $request->num_modulos_serie,
             'num_strings_paralelo' => $request->num_strings_paralelo,
             'total_modulos' => $totalModulos,
+            'modulo_id' => $request->modulo_id,
             'mppt_id' => $request->mppt_id,
+            'azimute' => 'required|numeric|min:0|max:360',
+            'inclinacao' => 'required|numeric|min:0|max:90',
         ]);
 
-        $string->load('mppt');
+        $string->load(['mppt', 'modulo.fabricante']);
 
         return response()->json([
             'success' => true,
@@ -113,8 +119,9 @@ class StringController extends Controller
         }
 
         $string->load([
-            'arranjo.modulo.fabricante',
             'arranjo.inversor.fabricante',
+            'arranjo.inversor.mppts',
+            'modulo.fabricante',
             'mppt',
         ]);
 
@@ -144,7 +151,10 @@ class StringController extends Controller
             'nome' => 'required|string|max:255',
             'num_modulos_serie' => 'required|integer|min:1|max:50',
             'num_strings_paralelo' => 'required|integer|min:1|max:20',
+            'modulo_id' => 'required|exists:modulos,id',
             'mppt_id' => 'nullable|exists:mppts,id',
+            'azimute' => 'required|numeric|min:0|max:360',
+            'inclinacao' => 'required|numeric|min:0|max:90',
         ]);
 
         if ($request->filled('mppt_id')) {
@@ -170,10 +180,13 @@ class StringController extends Controller
             'num_modulos_serie' => $request->num_modulos_serie,
             'num_strings_paralelo' => $request->num_strings_paralelo,
             'total_modulos' => $totalModulos,
+            'modulo_id' => $request->modulo_id,
             'mppt_id' => $request->mppt_id,
+            'azimute' => (float) $request->azimute,
+            'inclinacao' => (float) $request->inclinacao,
         ]);
 
-        $string->load('mppt');
+       $string->load(['mppt', 'modulo.fabricante']);
 
         return response()->json([
             'success' => true,

@@ -11,22 +11,17 @@ class Arranjo extends Model
 
     protected $fillable = [
         'projeto_id',
-        'modulo_id',
         'inversor_id',
         'nome',
         'descricao',
-        'azimute',
-        'inclinacao',
         'fator_sombreamento',
     ];
 
     protected $casts = [
-        'azimute' => 'decimal:2',
-        'inclinacao' => 'decimal:2',
         'fator_sombreamento' => 'decimal:4',
     ];
 
-        protected static function booted()
+    protected static function booted()
     {
         static::created(function (Arranjo $arranjo) {
             $projeto = $arranjo->projeto;
@@ -42,11 +37,6 @@ class Arranjo extends Model
         return $this->belongsTo(Projeto::class);
     }
 
-    public function modulo()
-    {
-        return $this->belongsTo(Modulo::class);
-    }
-
     public function inversor()
     {
         return $this->belongsTo(Inversor::class);
@@ -60,11 +50,5 @@ class Arranjo extends Model
     public function checagens()
     {
         return $this->hasMany(Checagem::class);
-    }
-
-    // Métodos auxiliares
-    public function getOrientacaoGrupo()
-    {
-        return "Az{$this->azimute}_Inc{$this->inclinacao}";
     }
 }
