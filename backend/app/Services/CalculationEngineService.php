@@ -58,7 +58,14 @@ class CalculationEngineService
 
             DB::commit();
 
-            return $execucao->fresh('checagens');
+            return $execucao->fresh([
+                'checagens' => function ($query) {
+                    $query
+                        ->with(['string', 'arranjo'])
+                        ->orderBy('tipo')
+                        ->orderBy('resultado', 'desc');
+                },
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();

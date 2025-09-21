@@ -14,6 +14,10 @@
         <!-- Resumos específicos por tipo -->
         <template v-if="checagem.tipo === 'compatibilidade_modulos'">
           <dl class="row small mb-2">
+            <dt class="col-6 text-muted">Arranjo</dt>
+            <dd class="col-6">{{ getArranjoLabel(checagem) }}</dd>
+            <dt class="col-6 text-muted">String</dt>
+            <dd class="col-6">{{ getStringLabel(checagem) }}</dd>
             <dt class="col-6 text-muted">Módulos em série</dt>
             <dd class="col-6">{{ checagem.valores_calculados.num_modulos_serie }}</dd>
             <dt class="col-6 text-muted">Strings em paralelo</dt>
@@ -76,6 +80,33 @@ const toggleDetalhes = (id) => {
 const getPrimeiroMppt = (checagem) => {
   const mppts = checagem?.valores_calculados?.mppts
   return mppts ? Object.values(mppts)[0] : null
+}
+
+const getArranjoLabel = (checagem) => {
+  const arranjo = checagem?.arranjo
+  if (!arranjo) {
+    return 'Não informado'
+  }
+
+  return arranjo.nome || `Arranjo ${arranjo.id}`
+}
+
+const getStringLabel = (checagem) => {
+  const string = checagem?.string
+
+  if (string?.nome) {
+    return string.nome
+  }
+
+  if (string?.id) {
+    return `String ${string.id}`
+  }
+
+  if (checagem?.string_id) {
+    return `String ${checagem.string_id}`
+  }
+
+  return 'Não informado'
 }
 
 const getResultadoLabel = (resultado) => {

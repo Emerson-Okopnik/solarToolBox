@@ -132,7 +132,7 @@ class ExecucaoController extends Controller
             'projeto',
             'user',
             'checagens' => function ($query) {
-                $query->orderBy('tipo')->orderBy('resultado', 'desc');
+                $query->with(['string', 'arranjo'])->orderBy('tipo')->orderBy('resultado', 'desc');
             },
         ]);
 

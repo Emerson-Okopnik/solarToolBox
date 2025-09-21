@@ -118,7 +118,17 @@ class ProjetoController extends Controller
             'arranjos.inversor.mppts',
             'arranjos.strings',
             'execucoes' => function ($query) {
-                $query->latest()->limit(5);
+                $query
+                    ->latest()
+                    ->limit(5)
+                    ->with([
+                        'checagens' => function ($checagensQuery) {
+                            $checagensQuery
+                                ->with(['string', 'arranjo'])
+                                ->orderBy('tipo')
+                                ->orderBy('resultado', 'desc');
+                        },
+                    ]);
             },
         ]);
 

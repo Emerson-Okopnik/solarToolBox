@@ -289,15 +289,9 @@
                     <option value="paralelo">Paralelo</option>
                   </select>
                 </div>
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6">
-                    <label for="string_ns" class="form-label">Módulos em Série</label>
-                    <input id="string_ns" v-model.number="stringForm.num_modulos_serie" type="number" min="1" required class="form-control" />
-                  </div>
-                  <div class="col-md-6">
-                    <label for="string_np" class="form-label">Strings em Paralelo</label>
-                    <input id="string_np" v-model.number="stringForm.num_strings_paralelo" type="number" min="1" required class="form-control" />
-                  </div>
+                <div class="mb-3">
+                  <label for="string_ns" class="form-label">Módulos em Série</label>
+                  <input id="string_ns" v-model.number="stringForm.num_modulos_serie" type="number" min="1" required class="form-control" />
                 </div>
                 <div class="mb-3">
                   <label for="string_mppt" class="form-label">MPPT do Inversor</label>
@@ -305,11 +299,17 @@
                     id="string_mppt"
                     v-model="stringForm.mppt_id"
                     class="form-select"
-                    :disabled="!mpptsList.length"
+                    :disabled="!mpptStringOptions.length"
                   >
-                    <option value="" disabled>{{ mpptsList.length ? 'Selecione MPPT' : 'Nenhum MPPT disponível' }}</option>
-                    <option v-for="mppt in mpptsList" :key="mppt.id" :value="mppt.id">
-                      MPPT {{ mppt.numero }}
+                    <option value="" disabled>
+                      {{ mpptStringOptions.length ? 'Selecione MPPT' : 'Nenhum MPPT disponível' }}
+                    </option>
+                    <option
+                      v-for="opcao in mpptStringOptions"
+                      :key="opcao.key"
+                      :value="opcao.value"
+                    >
+                      {{ opcao.label }}
                     </option>
                   </select>
                 </div>
@@ -381,6 +381,27 @@ const stringForm = ref({
 const selectedArranjo = ref(null)
 const editingString = ref(null)
 const mpptsList = ref([])
+const mpptStringOptions = computed(() => {
+  return mpptsList.value.flatMap((mppt) => {
+    const totalStrings = Number(mppt?.strings_max) || 0
+
+    if (totalStrings <= 0) {
+      return [
+        {
+          key: `${mppt.id}-1`,
+          value: mppt.id,
+          label: `MPPT ${mppt.numero}`
+        }
+      ]
+    }
+
+    return Array.from({ length: totalStrings }, (_, index) => ({
+      key: `${mppt.id}-${index + 1}`,
+      value: mppt.id,
+      label: `MPPT ${mppt.numero} - string ${index + 1} - ${mppt.corrente_entrada_max} (A)`
+    }))
+  })
+})
 
 const totalStrings = computed(() => {
   return projeto.value?.arranjos?.reduce((total, arranjo) => {
