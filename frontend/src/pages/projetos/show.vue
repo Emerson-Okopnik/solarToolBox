@@ -95,7 +95,7 @@
                     :key="string.id"
                     class="d-flex justify-content-between align-items-center small"
                   >
-                    <span>MPPT {{ string.mppt_id || '-' }} - {{ getTipoConexaoLabel(string.tipo_conexao) }}</span>
+                    <span>MPPT {{ string.mppt_id || '-' }} - Série</span>
                     <div class="d-flex align-items-center">
                       <span class="me-2">{{ string.total_modulos }} módulos ({{ string.num_modulos_serie }}s × {{ string.num_strings_paralelo }}p)</span>
                       <button type="button" class="btn btn-link btn-sm p-0 me-1" @click="openStringModal(arranjo, string)">
@@ -273,7 +273,7 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">{{ editingString ? 'Editar String' : 'Nova String' }}</h5>
+              <h5 class="modal-title">{{ editingString ? 'Editar String' : 'Nova String  - em série' }}</h5>
               <button type="button" class="btn-close" @click="closeStringModal"></button>
             </div>
             <form @submit.prevent="salvarString">
@@ -281,13 +281,6 @@
                 <div class="mb-3">
                   <label for="string_nome" class="form-label">Nome *</label>
                   <input id="string_nome" v-model="stringForm.nome" type="text" required class="form-control" />
-                </div>
-                <div class="mb-3">
-                  <label for="string_conexao" class="form-label">Tipo de Conexão *</label>
-                  <select id="string_conexao" v-model="stringForm.tipo_conexao" class="form-select" required>
-                    <option value="serie">Série</option>
-                    <option value="paralelo">Paralelo</option>
-                  </select>
                 </div>
                 <div class="mb-3">
                   <label for="string_ns" class="form-label">Módulos em Série</label>
@@ -373,7 +366,6 @@ const showStringModal = ref(false)
 const salvandoString = ref(false)
 const stringForm = ref({
   nome: '',
-  tipo_conexao: 'serie',
   num_modulos_serie: 1,
   num_strings_paralelo: 1,
   mppt_id: ''
@@ -435,14 +427,6 @@ const getStatusBadgeClass = (status) => {
     rejeitado: 'text-bg-danger'
   }
   return classes[status] || 'text-bg-secondary'
-}
-
-const getTipoConexaoLabel = (tipo) => {
-  const labels = {
-    serie: 'Série',
-    paralelo: 'Paralelo'
-  }
-  return labels[tipo] || tipo
 }
 
 const executarAnalise = async () => {
@@ -529,7 +513,6 @@ const openStringModal = async (arranjo, string = null) => {
   if (string) {
     stringForm.value = {
       nome: string.nome || '',
-      tipo_conexao: string.tipo_conexao || 'serie',
       num_modulos_serie: string.num_modulos_serie || 1,
       num_strings_paralelo: string.num_strings_paralelo || 1,
       mppt_id: string.mppt_id || ''
@@ -544,7 +527,6 @@ const closeStringModal = () => {
   editingString.value = null
   stringForm.value = {
     nome: '',
-    tipo_conexao: 'serie',
     num_modulos_serie: 1,
     num_strings_paralelo: 1,
     mppt_id: ''
@@ -556,11 +538,15 @@ const salvarString = async () => {
   if (!selectedArranjo.value) return
   salvandoString.value = true
   try {
+    const payload = {
+      ...stringForm.value,
+      tipo_conexao: 'serie'
+    }
     if (editingString.value) {
-      await projetosStore.atualizarString(selectedArranjo.value.id, editingString.value.id, stringForm.value)
+      await projetosStore.atualizarString(selectedArranjo.value.id, editingString.value.id, payload)
       toast.success('String atualizada com sucesso!')
     } else {
-      await projetosStore.criarString(selectedArranjo.value.id, stringForm.value)
+      await projetosStore.criarString(selectedArranjo.value.id, payload)
       toast.success('String criada com sucesso!')
     }
     closeStringModal()

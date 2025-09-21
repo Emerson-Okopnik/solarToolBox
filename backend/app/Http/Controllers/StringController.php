@@ -54,7 +54,6 @@ class StringController extends Controller
 
         $request->validate([
             'nome' => 'required|string|max:255',
-            'tipo_conexao' => 'required|in:serie,paralelo',
             'num_modulos_serie' => 'required|integer|min:1|max:50',
             'num_strings_paralelo' => 'required|integer|min:1|max:20',
             'mppt_id' => 'nullable|exists:mppts,id',
@@ -81,7 +80,7 @@ class StringController extends Controller
 
         $string = $arranjo->strings()->create([
             'nome' => $request->nome,
-            'tipo_conexao' => $request->tipo_conexao,
+            'tipo_conexao' => 'serie',
             'num_modulos_serie' => $request->num_modulos_serie,
             'num_strings_paralelo' => $request->num_strings_paralelo,
             'total_modulos' => $totalModulos,
@@ -143,7 +142,6 @@ class StringController extends Controller
 
         $request->validate([
             'nome' => 'required|string|max:255',
-            'tipo_conexao' => 'required|in:serie,paralelo',
             'num_modulos_serie' => 'required|integer|min:1|max:50',
             'num_strings_paralelo' => 'required|integer|min:1|max:20',
             'mppt_id' => 'nullable|exists:mppts,id',
@@ -169,7 +167,6 @@ class StringController extends Controller
 
         $string->update([
             'nome' => $request->nome,
-            'tipo_conexao' => $request->tipo_conexao,
             'num_modulos_serie' => $request->num_modulos_serie,
             'num_strings_paralelo' => $request->num_strings_paralelo,
             'total_modulos' => $totalModulos,

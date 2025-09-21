@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('mppt_id')->nullable()->constrained('mppts');
             
             $table->string('nome');
-            $table->enum('tipo_conexao', ['serie', 'paralelo']);
+            $table->enum('tipo_conexao', ['serie'])->default('serie');
             
             // Configuração da string
             $table->integer('num_modulos_serie'); // Ns

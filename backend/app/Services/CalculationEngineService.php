@@ -12,18 +12,15 @@ use Illuminate\Support\Facades\Log;
 class CalculationEngineService
 {
     protected $seriesCalculator;
-    protected $parallelCalculator;
     protected $inverterCapacityService;
     protected $distributionService;
 
     public function __construct(
         SeriesCalculatorService $seriesCalculator,
-        ParallelCalculatorService $parallelCalculator,
         InverterCapacityService $inverterCapacityService,
         DistributionService $distributionService
     ) {
         $this->seriesCalculator = $seriesCalculator;
-        $this->parallelCalculator = $parallelCalculator;
         $this->inverterCapacityService = $inverterCapacityService;
         $this->distributionService = $distributionService;
     }
@@ -106,20 +103,24 @@ class CalculationEngineService
         foreach ($projeto->arranjos as $arranjo) {
             foreach ($arranjo->strings as $string) {
                 try {
-                    if ($string->tipo_conexao === 'serie') {
-                        $resultados = $this->seriesCalculator->calcular($string, $configuracoes);
-                    } else {
-                        // Para paralelo, agrupar strings do mesmo arranjo
-                        $stringsParalelo = $arranjo->strings->where('tipo_conexao', 'paralelo');
-                        $resultados = $this->parallelCalculator->calcular($stringsParalelo, $configuracoes);
+                    if ($string->tipo_conexao !== 'serie') {
+                        throw new SolarCalculationException(
+                            "Tipo de conexão '{$string->tipo_conexao}' não é suportado para cálculo.",
+                            [
+                                'string_id' => $string->id,
+                                'tipo_conexao' => $string->tipo_conexao,
+                            ]
+                        );
                     }
+
+                    $resultados = $this->seriesCalculator->calcular($string, $configuracoes);
 
                     // Atualizar string com resultados
                     $string->update([
                         'tensao_circuito_aberto' => $resultados['tensao_circuito_aberto_frio'] ?? null,
                         'tensao_maxima_potencia' => $resultados['tensao_maxima_potencia_operacao'] ?? null,
-                        'corrente_curto_circuito' => $resultados['corrente_curto_circuito'] ?? $resultados['corrente_curto_circuito_total'] ?? null,
-                        'corrente_maxima_potencia' => $resultados['corrente_maxima_potencia'] ?? $resultados['corrente_maxima_potencia_total'] ?? null,
+                        'corrente_curto_circuito' => $resultados['corrente_curto_circuito'] ?? null,
+                        'corrente_maxima_potencia' => $resultados['corrente_maxima_potencia'] ?? null,
                         'potencia_total' => $resultados['potencia_total'] ?? null
                     ]);
 
@@ -233,7 +234,7 @@ class CalculationEngineService
             'tipo' => 'compatibilidade_modulos',
             'resultado' => 'aprovado',
             'titulo' => 'Compatibilidade de Módulos',
-            'descricao' => 'Módulos compatíveis para conexão em série/paralelo',
+            'descricao' => 'Módulos compatíveis para conexão em série',
             'valores_calculados' => $resultados,
             'limites_referencia' => [
                 'limite_compatibilidade' => $string->arranjo->projeto->limite_compatibilidade_tensao
