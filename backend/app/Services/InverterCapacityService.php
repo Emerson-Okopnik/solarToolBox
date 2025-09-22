@@ -23,7 +23,10 @@ class InverterCapacityService
                 'potencia_ac_disponivel' => $inversor->potencia_ac_nominal,
                 'utilizacao_percentual' => 0,
                 'mppts_utilizados' => 0,
-                'mppts_disponiveis' => $inversor->num_mppts
+                'mppts_disponiveis' => $inversor->num_mppts,
+                'modulos_conectados' => 0,
+                'modulos_disponiveis' => 0,
+                'modulos_excedentes' => 0,
             ]
         ];
 
@@ -34,6 +37,9 @@ class InverterCapacityService
             
             $resultados['mppts'][$mppt->id] = $resultadoMppt;
             $resultados['resumo']['potencia_dc_total'] += $resultadoMppt['potencia_total'];
+            $resultados['resumo']['modulos_conectados'] += $resultadoMppt['modulos_conectados'];
+            $resultados['resumo']['modulos_disponiveis'] += $resultadoMppt['modulos_disponiveis'];
+            $resultados['resumo']['modulos_excedentes'] += $resultadoMppt['modulos_excedentes'];
             
             if ($resultadoMppt['status'] !== 'aprovado') {
                 $resultados['status_geral'] = 'reprovado';
@@ -61,17 +67,30 @@ class InverterCapacityService
      */
     private function validarMppt($mppt, Collection $strings, array $configuracoes)
     {
+        $validacaoStrings = $this->validarNumeroStrings($mppt, $strings);
+
         $resultado = [
             'mppt_id' => $mppt->id,
             'numero' => $mppt->numero,
             'status' => 'aprovado',
-            'strings_conectadas' => $strings->count(),
-            'strings_max' => $mppt->strings_max,
+            'strings_conectadas' => $validacaoStrings['strings_conectadas'],
+            'strings_max' => $validacaoStrings['strings_max'],
+            'modulos_conectados' => $validacaoStrings['modulos_conectados'],
+            'strings_disponiveis' => $validacaoStrings['strings_disponiveis'],
+            'strings_excedentes' => $validacaoStrings['strings_excedentes'],
+            'modulos_disponiveis' => $validacaoStrings['modulos_disponiveis'],
+            'modulos_excedentes' => $validacaoStrings['modulos_excedentes'],
             'tensao_operacao' => null,
             'corrente_total' => 0,
             'potencia_total' => 0,
-            'validacoes' => []
+            'validacoes' => [
+                'numero_strings' => $validacaoStrings,
+            ]
         ];
+
+        if (!$validacaoStrings['aprovado']) {
+            $resultado['status'] = 'reprovado';
+        }
 
         if ($strings->isEmpty()) {
             return $resultado;
@@ -101,14 +120,6 @@ class InverterCapacityService
         $resultado['validacoes']['corrente_maxima'] = $validacaoCorrente;
         
         if (!$validacaoCorrente['aprovado']) {
-            $resultado['status'] = 'reprovado';
-        }
-
-        // Validar número de strings
-        $validacaoStrings = $this->validarNumeroStrings($mppt, $strings->count());
-        $resultado['validacoes']['numero_strings'] = $validacaoStrings;
-        
-        if (!$validacaoStrings['aprovado']) {
             $resultado['status'] = 'reprovado';
         }
 
@@ -174,18 +185,90 @@ class InverterCapacityService
     /**
      * Valida número de strings conectadas
      */
-    private function validarNumeroStrings($mppt, $numStrings)
+     private function validarNumeroStrings($mppt, Collection $strings)
     {
-        $aprovado = $numStrings <= $mppt->strings_max;
+        $stringsMax = (int) ($mppt->strings_max ?? 0);
+
+        $stringsConectadas = (int) $strings->sum(function ($string) {
+            $paralelos = (int) ($string->num_strings_paralelo ?? 0);
+            return $paralelos > 0 ? $paralelos : 1;
+        });
+
+        $modulosConectadosFloat = $strings->reduce(function ($carry, $string) {
+            $paralelos = (int) ($string->num_strings_paralelo ?? 0);
+            $paralelos = $paralelos > 0 ? $paralelos : 1;
+
+            $modulosSerie = (int) ($string->num_modulos_serie ?? 0);
+            $totalInformado = $string->total_modulos;
+
+            if (!is_numeric($totalInformado)) {
+                $totalInformado = $modulosSerie * $paralelos;
+            }
+
+            $totalInformado = is_numeric($totalInformado) ? (float) $totalInformado : 0.0;
+
+            return $carry + $totalInformado;
+        }, 0.0);
+
+        $modulosConectados = (int) round($modulosConectadosFloat);
+        $modulosPorStringReferencia = 0.0;
+
+        if ($stringsConectadas > 0) {
+            $modulosPorStringReferencia = $modulosConectadosFloat / $stringsConectadas;
+        } elseif ($strings->isNotEmpty()) {
+            $stringReferencia = $strings->first();
+            $paralelosRef = (int) ($stringReferencia->num_strings_paralelo ?? 0);
+            $paralelosRef = $paralelosRef > 0 ? $paralelosRef : 1;
+            $modulosSerieRef = (int) ($stringReferencia->num_modulos_serie ?? 0);
+            $totalRef = $stringReferencia->total_modulos;
+
+            if (!is_numeric($totalRef)) {
+                $totalRef = $modulosSerieRef * $paralelosRef;
+            }
+
+            $totalRef = is_numeric($totalRef) ? (float) $totalRef : 0.0;
+
+            $modulosPorStringReferencia = $paralelosRef > 0
+                ? $totalRef / $paralelosRef
+                : $modulosSerieRef;
+        }
+
+        $stringsDisponiveis = max(0, $stringsMax - $stringsConectadas);
+        $stringsExcedentes = max(0, $stringsConectadas - $stringsMax);
+
+        $modulosDisponiveis = (int) round($stringsDisponiveis * $modulosPorStringReferencia);
+        $modulosExcedentes = (int) round($stringsExcedentes * $modulosPorStringReferencia);
+
+        $aprovado = $stringsExcedentes === 0;
+
+        if ($stringsMax <= 0 && $stringsConectadas === 0) {
+            $mensagem = 'Nenhuma string conectada ao MPPT';
+        } elseif ($aprovado && $stringsDisponiveis > 0) {
+            $mensagem = sprintf(
+                'Capacidade disponível para %d strings adicionais (aprox. %d módulos).',
+                $stringsDisponiveis,
+                $modulosDisponiveis
+            );
+        } elseif ($aprovado) {
+            $mensagem = 'Número de strings dentro do limite';
+        } else {
+            $mensagem = sprintf(
+                'Muitas strings conectadas ao MPPT: excede em %d strings (aprox. %d módulos).',
+                $stringsExcedentes,
+                $modulosExcedentes
+            );
+        }
 
         return [
             'aprovado' => $aprovado,
-            'strings_conectadas' => $numStrings,
-            'strings_max' => $mppt->strings_max,
-            'strings_disponiveis' => $mppt->strings_max - $numStrings,
-            'mensagem' => $aprovado ? 
-                'Número de strings dentro do limite' : 
-                'Muitas strings conectadas ao MPPT'
+            'strings_conectadas' => $stringsConectadas,
+            'strings_max' => $stringsMax,
+            'strings_disponiveis' => $stringsDisponiveis,
+            'strings_excedentes' => $stringsExcedentes,
+            'modulos_conectados' => $modulosConectados,
+            'modulos_disponiveis' => $modulosDisponiveis,
+            'modulos_excedentes' => $modulosExcedentes,
+            'mensagem' => $mensagem,
         ];
     }
 
