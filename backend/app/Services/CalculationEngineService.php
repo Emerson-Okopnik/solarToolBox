@@ -41,7 +41,7 @@ class CalculationEngineService
                 'projeto.arranjos.strings.mppt',
                 'projeto.arranjos.inversor.mppts',
             ]);
-            
+
             // 1. Calcular parâmetros das strings
             $this->calcularParametrosStrings($execucao, $configuracoes);
 
@@ -154,15 +154,38 @@ class CalculationEngineService
         foreach ($arranjosPorInversor as $inversorId => $arranjos) {
             $inversor = $arranjos->first()->inversor;
             
+            $strings = $arranjos->flatMap(function ($arranjo) {
+                return $arranjo->strings;
+            });
+
+            $stringsSemMppt = $strings->filter(function ($string) {
+                return $string->mppt_id === null;
+            });
+
+            $usaDistribuicaoManual = $stringsSemMppt->isEmpty();
+            $configDistribuicao = array_merge($configuracoes, [
+                'preencher_somente_vazios' => !$usaDistribuicaoManual,
+                'somente_recomendacao' => $usaDistribuicaoManual,
+            ]);
+
+            $resumoDistribuicaoManual = $this->montarResumoDistribuicaoManual($arranjos, $inversor);
+            $contextoBase = [
+                'fonte' => $usaDistribuicaoManual ? 'manual' : 'automatico_fallback',
+                'strings_sem_mppt_iniciais' => $stringsSemMppt->count(),
+                'distribuicao_manual' => $resumoDistribuicaoManual,
+            ];
+
             try {
-                $distribuicao = $this->distributionService->distribuir($inversor, $arranjos, $configuracoes);
+                $distribuicao = $this->distributionService->distribuir($inversor, $arranjos, $configDistribuicao);
+
+                $distribuicao['contexto'] = array_merge($contextoBase, $distribuicao['contexto'] ?? []);
                 
                 // Criar checagem de distribuição
                 $this->criarChecagemDistribuicao($execucao, $inversor, $distribuicao);
                 
             } catch (SolarCalculationException $e) {
                 // Criar checagem reprovada para distribuição
-                $this->criarChecagemReprovada($execucao, null, $e, 'distribuicao_orientacao');
+                $this->criarChecagemReprovada($execucao, null, $e, 'distribuicao_orientacao', $contextoBase);
             }
         }
     }
@@ -251,9 +274,15 @@ class CalculationEngineService
     /**
      * Cria checagem reprovada
      */
-    private function criarChecagemReprovada(Execucao $execucao, $string, SolarCalculationException $e, $tipo = null)
+    private function criarChecagemReprovada(Execucao $execucao, $string, SolarCalculationException $e, $tipo = null, array $contextoExtra = [])
     {
         $tipo = $tipo ?? 'compatibilidade_modulos';
+
+        $detalhes = $e->getDetails();
+
+        if (!empty($contextoExtra)) {
+            $detalhes = array_merge($detalhes ?? [], ['contexto' => $contextoExtra]);
+        }
         
         Checagem::create([
             'execucao_id' => $execucao->id,
@@ -263,9 +292,42 @@ class CalculationEngineService
             'resultado' => 'reprovado',
             'titulo' => 'Erro de Compatibilidade',
             'descricao' => $e->getMessage(),
-            'valores_calculados' => $e->getDetails(),
+            'valores_calculados' => $detalhes,
             'limites_referencia' => []
         ]);
+    }
+
+    /**
+     * Gera resumo da distribuição cadastrada manualmente pelo usuário
+     */
+    private function montarResumoDistribuicaoManual($arranjos, $inversor)
+    {
+        $resumo = [
+            'total_strings_sem_mppt' => 0,
+            'mppts' => [],
+        ];
+
+        foreach ($inversor->mppts as $mppt) {
+            $resumo['mppts'][$mppt->id] = [
+                'mppt_id' => $mppt->id,
+                'numero' => $mppt->numero,
+                'strings_conectadas' => 0,
+                'potencia_total' => 0,
+            ];
+        }
+
+        foreach ($arranjos as $arranjo) {
+            foreach ($arranjo->strings as $string) {
+                if ($string->mppt_id !== null && isset($resumo['mppts'][$string->mppt_id])) {
+                    $resumo['mppts'][$string->mppt_id]['strings_conectadas']++;
+                    $resumo['mppts'][$string->mppt_id]['potencia_total'] += $string->potencia_total ?? 0;
+                } else {
+                    $resumo['total_strings_sem_mppt']++;
+                }
+            }
+        }
+
+        return $resumo;
     }
 
     /**

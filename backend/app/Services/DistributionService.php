@@ -13,8 +13,13 @@ class DistributionService
      */
     public function distribuir(Inversor $inversor, Collection $arranjos, array $configuracoes = [])
     {
+        $configuracoes = array_merge([
+            'somente_recomendacao' => false,
+            'preencher_somente_vazios' => false,
+        ], $configuracoes);
+
         // Agrupar strings por orientação
-        $gruposOrientacao = $this->agruparPorOrientacao($arranjos);
+        $gruposOrientacao = $this->agruparPorOrientacao($arranjos, $configuracoes);
         
         // Obter MPPTs disponíveis
         $mppts = $inversor->mppts()->orderBy('numero')->get();
@@ -24,7 +29,7 @@ class DistributionService
         }
 
         // Aplicar algoritmo de distribuição
-        $distribuicao = $this->aplicarAlgoritmoDistribuicao($gruposOrientacao, $mppts, $configuracoes);
+        $distribuicao = $this->aplicarAlgoritmoDistribuicao($gruposOrientacao, $mppts, $arranjos, $configuracoes);
         
         // Validar distribuição resultante
         $this->validarDistribuicao($distribuicao, $configuracoes);
@@ -35,18 +40,23 @@ class DistributionService
     /**
      * Agrupa strings por orientação (azimute + inclinação)
      */
-    private function agruparPorOrientacao(Collection $arranjos)
+    private function agruparPorOrientacao(Collection $arranjos, array $configuracoes = [])
     {
-        $strings = $arranjos->flatMap(function ($arranjo) {
-            return $arranjo->strings->map(function ($string) use ($arranjo) {
-                if (!$string->relationLoaded('arranjo')) {
-                    $string->setRelation('arranjo', $arranjo);
-                }
+        $considerarSomenteSemMppt = $configuracoes['preencher_somente_vazios'] ?? false;
 
-                return $string;
-            });
-        })->filter(function ($string) {
-            return $string->azimute !== null && $string->inclinacao !== null;
+        $strings = $arranjos->flatMap(function ($arranjo) use ($considerarSomenteSemMppt) {
+            return $arranjo->strings
+                ->filter(function ($string) use ($arranjo, $considerarSomenteSemMppt) {
+                    if (!$string->relationLoaded('arranjo')) {
+                        $string->setRelation('arranjo', $arranjo);
+                    }
+
+                    if ($considerarSomenteSemMppt && $string->mppt_id !== null) {
+                        return false;
+                    }
+
+                    return $string->azimute !== null && $string->inclinacao !== null;
+                });
         });
 
         return $strings->groupBy(function ($string) {
@@ -71,7 +81,7 @@ class DistributionService
     /**
      * Aplica algoritmo guloso de distribuição
      */
-    private function aplicarAlgoritmoDistribuicao($gruposOrientacao, Collection $mppts, array $configuracoes)
+    private function aplicarAlgoritmoDistribuicao($gruposOrientacao, Collection $mppts, Collection $arranjos, array $configuracoes)
     {
         $distribuicao = [
             'mppts' => [],
@@ -80,8 +90,14 @@ class DistributionService
             'estatisticas' => [
                 'grupos_processados' => 0,
                 'grupos_alocados' => 0,
-                'orientacoes_mistas' => 0
-            ]
+                'orientacoes_mistas' => 0,
+                'strings_processadas' => 0,
+                'strings_preexistentes' => 0,
+            ],
+            'contexto' => [
+                'somente_recomendacao' => (bool) ($configuracoes['somente_recomendacao'] ?? false),
+                'preencher_somente_vazios' => (bool) ($configuracoes['preencher_somente_vazios'] ?? false),
+            ],
         ];
 
         // Inicializar MPPTs
@@ -97,14 +113,21 @@ class DistributionService
             ];
         }
 
+        if ($distribuicao['contexto']['preencher_somente_vazios']) {
+            $distribuicao['estatisticas']['strings_preexistentes'] =
+                $this->carregarEstadoExistente($distribuicao['mppts'], $arranjos);
+        }
+
         // Algoritmo guloso: alocar cada grupo no melhor MPPT disponível
         foreach ($gruposOrientacao as $grupo) {
             $distribuicao['estatisticas']['grupos_processados']++;
+
+            $distribuicao['estatisticas']['strings_processadas'] += $grupo['total_strings'];
             
             $melhorMppt = $this->encontrarMelhorMppt($grupo, $distribuicao['mppts'], $configuracoes);
             
             if ($melhorMppt) {
-                $this->alocarGrupoNoMppt($grupo, $melhorMppt, $distribuicao);
+                $this->alocarGrupoNoMppt($grupo, $melhorMppt, $distribuicao, $configuracoes);
                 $distribuicao['estatisticas']['grupos_alocados']++;
             } else {
                 $distribuicao['grupos_nao_alocados'][] = $grupo;
@@ -190,7 +213,7 @@ class DistributionService
     /**
      * Aloca um grupo em um MPPT
      */
-    private function alocarGrupoNoMppt($grupo, &$mpptInfo, array &$distribuicao)
+    private function alocarGrupoNoMppt($grupo, &$mpptInfo, array &$distribuicao, array $configuracoes)
     {
         $mpptInfo['grupos_alocados'][] = $grupo;
         $mpptInfo['strings_total'] += $grupo['total_strings'];
@@ -202,10 +225,19 @@ class DistributionService
         }
 
         // Atualizar strings com o MPPT alocado
-        collect($grupo['strings'])->each(function ($string) use ($mpptInfo) {
-            $string->mppt_id = $mpptInfo['mppt']->id;
-            $string->save();
-        });
+        $devePersistir = !($configuracoes['somente_recomendacao'] ?? false);
+        $considerarSomenteSemMppt = $configuracoes['preencher_somente_vazios'] ?? false;
+
+        if ($devePersistir) {
+            collect($grupo['strings'])->each(function ($string) use ($mpptInfo, $considerarSomenteSemMppt) {
+                if ($considerarSomenteSemMppt && $string->mppt_id !== null) {
+                    return;
+                }
+
+                $string->mppt_id = $mpptInfo['mppt']->id;
+                $string->save();
+            });
+        }
 
         // Verificar se MPPT está lotado
         if ($mpptInfo['strings_total'] >= $mpptInfo['mppt']->strings_max) {
@@ -219,16 +251,67 @@ class DistributionService
     private function estimarCorrenteGrupo($grupo)
     {
         return collect($grupo['strings'])->sum(function ($string) {
-            $modulo = $string->modulo;
-            $corrente = $string->corrente_maxima_potencia
-                ?? ($modulo ? $modulo->imp : null);
-
-            if ($corrente === null) {
-                return 0;
-            }
-
-            return $corrente * $string->num_strings_paralelo;
+            return $this->estimarCorrenteString($string);
         });
+    }
+
+    /**
+     * Estima corrente individual de uma string
+     */
+    private function estimarCorrenteString($string)
+    {
+        $modulo = $string->modulo;
+        $corrente = $string->corrente_maxima_potencia
+            ?? ($modulo ? $modulo->imp : null);
+
+        if ($corrente === null) {
+            return 0;
+        }
+
+        $paralelos = $string->num_strings_paralelo ?: 1;
+
+        return $corrente * $paralelos;
+    }
+
+    /**
+     * Considera distribuição já existente nos MPPTs
+     */
+    private function carregarEstadoExistente(array &$mpptsInfo, Collection $arranjos)
+    {
+        $stringsPreexistentes = 0;
+
+        foreach ($arranjos as $arranjo) {
+            foreach ($arranjo->strings as $string) {
+                if ($string->mppt_id === null) {
+                    continue;
+                }
+
+                if (!isset($mpptsInfo[$string->mppt_id])) {
+                    continue;
+                }
+
+                if (!$string->relationLoaded('arranjo')) {
+                    $string->setRelation('arranjo', $arranjo);
+                }
+
+                $stringsPreexistentes++;
+                $mpptInfo = &$mpptsInfo[$string->mppt_id];
+
+                $mpptInfo['strings_total'] += 1;
+                $mpptInfo['potencia_total'] += $string->potencia_total ?? 0;
+                $mpptInfo['corrente_total'] += $this->estimarCorrenteString($string);
+
+                $orientacao = $string->getOrientacaoGrupo();
+                if (!in_array($orientacao, $mpptInfo['orientacoes'])) {
+                    $mpptInfo['orientacoes'][] = $orientacao;
+                }
+
+                if ($mpptInfo['strings_total'] >= $mpptInfo['mppt']->strings_max) {
+                    $mpptInfo['status'] = 'lotado';
+                }
+            }
+        }
+        return $stringsPreexistentes;
     }
 
     /**
