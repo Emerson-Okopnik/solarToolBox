@@ -82,6 +82,8 @@ class ExecucaoController extends Controller
             'configuracoes.noct' => 'nullable|numeric|min:40|max:50',
             'configuracoes.limite_compatibilidade' => 'nullable|numeric|min:1|max:20',
             'configuracoes.permitir_orientacoes_mistas' => 'nullable|boolean',
+            'configuracoes.limite_compatibilidade_tensao' => 'nullable|numeric|min:1|max:20',
+            'configuracoes.limite_compatibilidade_corrente' => 'nullable|numeric|min:1|max:20',
         ]);
 
         try {
@@ -94,6 +96,8 @@ class ExecucaoController extends Controller
                 'noct' => 45, //Temperatura Nominal de Operação da Célula (°C)
                 'limite_compatibilidade' => $projeto->limite_compatibilidade_tensao ?? 5.0,
                 'permitir_orientacoes_mistas' => false,
+                'limite_compatibilidade_tensao' => $projeto->limite_compatibilidade_tensao ?? 5.0,
+                'limite_compatibilidade_corrente' => $projeto->limite_compatibilidade_corrente ?? 5.0,
             ], $request->input('configuracoes', []));
 
             $execucao = $this->calculationEngine->executarAnalise($projeto, $configuracoes);

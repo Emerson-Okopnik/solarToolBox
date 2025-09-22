@@ -103,10 +103,95 @@ class InverterCapacityService
             $resultado['status'] = 'reprovado';
         }
 
+        $potenciasNormalizadas = [];
+        $stringsPorPotencia = [];
+        $stringsSemPotencia = [];
+
+        foreach ($strings->values() as $indice => $string) {
+            $potenciaNominal = null;
+
+            if (isset($string->modulo) && isset($string->modulo->potencia_nominal)) {
+                $potenciaNominal = (float) $string->modulo->potencia_nominal;
+            } elseif (isset($string->potencia_total) && $string->potencia_total !== null) {
+                $stringsParalelo = (float) ($string->num_strings_paralelo ?? 1);
+                $stringsParalelo = $stringsParalelo > 0 ? $stringsParalelo : 1;
+
+                $potenciaNominal = (float) $string->potencia_total / $stringsParalelo;
+            }
+
+            $identificadorString = null;
+
+            if (isset($string->nome) && $string->nome !== null) {
+                $identificadorString = (string) $string->nome;
+            } elseif (isset($string->id) && $string->id !== null) {
+                $identificadorString = sprintf('string_%s', $string->id);
+            } else {
+                $identificadorString = sprintf('string_%d', $indice + 1);
+            }
+
+            if ($potenciaNominal === null) {
+                $stringsSemPotencia[] = $identificadorString;
+                continue;
+            }
+
+            $potenciaNormalizada = round($potenciaNominal, 2);
+            $potenciaChave = number_format($potenciaNormalizada, 2, '.', '');
+
+            $potenciasNormalizadas[] = $potenciaChave;
+
+            if (!array_key_exists($potenciaChave, $stringsPorPotencia)) {
+                $stringsPorPotencia[$potenciaChave] = [];
+            }
+
+            $stringsPorPotencia[$potenciaChave][] = $identificadorString;
+        }
+
+        $potenciasDistintasChave = array_values(array_unique($potenciasNormalizadas));
+        sort($potenciasDistintasChave);
+        $potenciasDistintas = array_map('floatval', $potenciasDistintasChave);
+
+        $validacaoPotenciaModulo = [
+            'aprovado' => true,
+            'potencias_distintas' => $potenciasDistintas,
+            'strings_por_potencia' => $stringsPorPotencia,
+            'strings_sem_potencia' => $stringsSemPotencia,
+        ];
+
+        if (count($potenciasDistintas) > 1) {
+            $detalhes = [];
+
+            foreach ($stringsPorPotencia as $potencia => $identificadores) {
+                $detalhes[] = sprintf(
+                    '%s W (%s)',
+                    number_format((float) $potencia, 2, ',', '.'),
+                    implode(', ', $identificadores)
+                );
+            }
+
+            $validacaoPotenciaModulo['aprovado'] = false;
+            $validacaoPotenciaModulo['mensagem'] = sprintf(
+                'Strings conectadas possuem potências nominais distintas: %s.',
+                implode('; ', $detalhes)
+            );
+            $resultado['status'] = 'reprovado';
+        } elseif (count($potenciasDistintas) === 1) {
+            $validacaoPotenciaModulo['mensagem'] = sprintf(
+                'Todas as strings conectadas utilizam módulos de %s W.',
+                number_format($potenciasDistintas[0], 2, ',', '.')
+            );
+        } else {
+            $validacaoPotenciaModulo['mensagem'] = 'Não foi possível determinar a potência nominal das strings conectadas.';
+        }
+
+        $resultado['validacoes']['potencia_modulo_uniforme'] = $validacaoPotenciaModulo;
         // Calcular parâmetros agregados
         $tensaoOperacao = $this->calcularTensaoOperacao($strings, $configuracoes);
         $correnteTotal = $strings->sum(function($string) {
-            return $string->corrente_maxima_potencia * $string->num_strings_paralelo;
+            $corrente = (float) ($string->corrente_maxima_potencia ?? 0);
+            $paralelos = (int) ($string->num_strings_paralelo ?? 0);
+            $paralelos = $paralelos > 0 ? $paralelos : 1;
+
+            return $corrente * $paralelos;
         });
         $potenciaTotal = $tensaoOperacao * $correnteTotal;
 
@@ -114,6 +199,45 @@ class InverterCapacityService
         $resultado['corrente_total'] = $correnteTotal;
         $resultado['potencia_total'] = $potenciaTotal;
 
+                $tensoesPorString = $strings->map(function ($string) {
+            return (float) ($string->tensao_maxima_potencia ?? 0);
+        })->values()->all();
+
+        $correntesPorString = $strings->map(function ($string) {
+            $corrente = (float) ($string->corrente_maxima_potencia ?? 0);
+            $paralelos = (int) ($string->num_strings_paralelo ?? 0);
+            $paralelos = $paralelos > 0 ? $paralelos : 1;
+
+            return $corrente * $paralelos;
+        })->values()->all();
+
+        $limiteDesbalanceamentoTensao = (float) ($configuracoes['limite_compatibilidade_tensao']
+            ?? $configuracoes['limite_compatibilidade']
+            ?? 5.0);
+
+        $limiteDesbalanceamentoCorrente = (float) ($configuracoes['limite_compatibilidade_corrente']
+            ?? $configuracoes['limite_compatibilidade']
+            ?? 5.0);
+
+        $validacaoDesbalanceamentoTensao = $this->validarDesbalanceamento(
+            $tensoesPorString,
+            $limiteDesbalanceamentoTensao,
+            'tensão'
+        );
+
+        $validacaoDesbalanceamentoCorrente = $this->validarDesbalanceamento(
+            $correntesPorString,
+            $limiteDesbalanceamentoCorrente,
+            'corrente'
+        );
+
+        $resultado['validacoes']['desbalanceamento_tensao'] = $validacaoDesbalanceamentoTensao;
+        $resultado['validacoes']['desbalanceamento_corrente'] = $validacaoDesbalanceamentoCorrente;
+
+        if (!$validacaoDesbalanceamentoTensao['aprovado'] || !$validacaoDesbalanceamentoCorrente['aprovado']) {
+            $resultado['status'] = 'reprovado';
+        }
+        
         // Validar janela MPPT
         $validacaoTensao = $this->validarJanelaMppt($mppt, $tensaoOperacao);
         $resultado['validacoes']['janela_mppt'] = $validacaoTensao;
@@ -226,6 +350,73 @@ class InverterCapacityService
         // (assumindo que strings no mesmo MPPT têm tensões similares)
         $stringReferencia = $strings->first();
         return $stringReferencia->tensao_maxima_potencia ?? 0;
+    }
+
+        /**
+     * Avalia o desbalanceamento entre os valores informados e compara com o limite permitido.
+     */
+    private function validarDesbalanceamento(array $valores, float $limitePercentual, string $tipo)
+    {
+        $analise = $this->calcularDesvioEntreExtremos($valores);
+
+        $desvio = $analise['desvio_percentual'];
+        $aprovado = $desvio <= $limitePercentual;
+        $excesso = $aprovado ? 0.0 : $desvio - $limitePercentual;
+
+        $analise['aprovado'] = $aprovado;
+        $analise['limite_percentual'] = $limitePercentual;
+        $analise['excesso_percentual'] = $excesso;
+        $analise['mensagem'] = $aprovado
+            ? sprintf(
+                'Desbalanceamento de %s dentro do limite (desvio %.2f%%, limite %.2f%%).',
+                $tipo,
+                $desvio,
+                $limitePercentual
+            )
+            : sprintf(
+                'Desbalanceamento de %s excede o limite permitido em %.2f%% (desvio %.2f%%, limite %.2f%%).',
+                $tipo,
+                $excesso,
+                $desvio,
+                $limitePercentual
+            );
+
+        return $analise;
+    }
+
+    /**
+     * Calcula o desvio percentual entre o menor e o maior valor da lista.
+     */
+    private function calcularDesvioEntreExtremos(array $valores)
+    {
+        $valoresFiltrados = array_map('floatval', array_filter($valores, static function ($valor) {
+            return $valor !== null && $valor !== '';
+        }));
+
+        if (empty($valoresFiltrados)) {
+            return [
+                'valor_min' => 0.0,
+                'valor_max' => 0.0,
+                'desvio_percentual' => 0.0,
+                'valores' => [],
+            ];
+        }
+
+        $valorMinimo = min($valoresFiltrados);
+        $valorMaximo = max($valoresFiltrados);
+
+        $desvioPercentual = 0.0;
+
+        if (count($valoresFiltrados) > 1 && $valorMaximo > 0) {
+            $desvioPercentual = (($valorMaximo - $valorMinimo) / $valorMaximo) * 100;
+        }
+
+        return [
+            'valor_min' => $valorMinimo,
+            'valor_max' => $valorMaximo,
+            'desvio_percentual' => $desvioPercentual,
+            'valores' => array_values($valoresFiltrados),
+        ];
     }
 
     /**
