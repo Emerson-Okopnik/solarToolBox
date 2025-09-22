@@ -98,11 +98,10 @@
                   >
                     <div class="d-flex flex-column">
                       <span class="fw-semibold">{{ getStringModuloLabel(string) }}</span>
-                    <div class="d-flex flex-column">
-                      <span class="fw-semibold">{{ getStringModuloLabel(string) }}</span>
                       <span class="text-muted">{{ getStringMpptLabel(string) }} - Série</span>
-                      <span class="text-muted">Azimute: {{ formatGraus(string.azimute) }}° | Inclinação: {{ formatGraus(string.inclinacao) }}°</span>
-                    </div>
+                      <span class="text-muted">
+                        Azimute: {{ formatGraus(string.azimute) }}° | Inclinação: {{ formatGraus(string.inclinacao) }}°
+                      </span>
                     </div>
                     <div class="d-flex align-items-center">
                       <span class="me-2">{{ string.total_modulos }} módulos ({{ string.num_modulos_serie }}s × {{ string.num_strings_paralelo }}p)</span>
@@ -502,6 +501,23 @@ const getStatusBadgeClass = (status) => {
     rejeitado: 'text-bg-danger'
   }
   return classes[status] || 'text-bg-secondary'
+}
+
+const formatGraus = (valor) => {
+  if (valor === null || valor === undefined) {
+    return '--'
+  }
+
+  const numero = Number(valor)
+
+  if (Number.isNaN(numero)) {
+    return '--'
+  }
+
+  return numero.toLocaleString('pt-BR', {
+    minimumFractionDigits: Number.isInteger(numero) ? 0 : 2,
+    maximumFractionDigits: 2
+  })
 }
 
 const executarAnalise = async () => {
