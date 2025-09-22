@@ -43,15 +43,16 @@ class DistributionService
     private function agruparPorOrientacao(Collection $arranjos, array $configuracoes = [])
     {
         $considerarSomenteSemMppt = $configuracoes['preencher_somente_vazios'] ?? false;
+        $somenteRecomendacao = $configuracoes['somente_recomendacao'] ?? false;
 
-        $strings = $arranjos->flatMap(function ($arranjo) use ($considerarSomenteSemMppt) {
+        $strings = $arranjos->flatMap(function ($arranjo) use ($considerarSomenteSemMppt, $somenteRecomendacao) {
             return $arranjo->strings
-                ->filter(function ($string) use ($arranjo, $considerarSomenteSemMppt) {
+                ->filter(function ($string) use ($arranjo, $considerarSomenteSemMppt, $somenteRecomendacao) {
                     if (!$string->relationLoaded('arranjo')) {
                         $string->setRelation('arranjo', $arranjo);
                     }
 
-                    if ($considerarSomenteSemMppt && $string->mppt_id !== null) {
+                    if (($considerarSomenteSemMppt || $somenteRecomendacao) && $string->mppt_id !== null) {
                         return false;
                     }
 
@@ -113,7 +114,10 @@ class DistributionService
             ];
         }
 
-        if ($distribuicao['contexto']['preencher_somente_vazios']) {
+        if (
+            $distribuicao['contexto']['preencher_somente_vazios']
+            || $distribuicao['contexto']['somente_recomendacao']
+        ) {
             $distribuicao['estatisticas']['strings_preexistentes'] =
                 $this->carregarEstadoExistente($distribuicao['mppts'], $arranjos);
         }
