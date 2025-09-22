@@ -96,6 +96,13 @@ class InverterCapacityService
             return $resultado;
         }
 
+        $validacaoModulosPorString = $this->validarModulosPorString($strings);
+        $resultado['validacoes']['modulos_por_string'] = $validacaoModulosPorString;
+
+        if (!$validacaoModulosPorString['aprovado']) {
+            $resultado['status'] = 'reprovado';
+        }
+
         // Calcular parâmetros agregados
         $tensaoOperacao = $this->calcularTensaoOperacao($strings, $configuracoes);
         $correnteTotal = $strings->sum(function($string) {
@@ -124,6 +131,86 @@ class InverterCapacityService
         }
 
         return $resultado;
+    }
+
+    /**
+     * Valida consistência de módulos por string dentro do MPPT
+     */
+    private function validarModulosPorString(Collection $strings)
+    {
+        $distribuicao = [];
+
+        foreach ($strings as $string) {
+            $modulosSerie = (int) ($string->num_modulos_serie ?? 0);
+            $quantidadeStrings = (int) ($string->num_strings_paralelo ?? 0);
+            $quantidadeStrings = $quantidadeStrings > 0 ? $quantidadeStrings : 1;
+
+            if (!array_key_exists($modulosSerie, $distribuicao)) {
+                $distribuicao[$modulosSerie] = 0;
+            }
+
+            $distribuicao[$modulosSerie] += $quantidadeStrings;
+        }
+
+        if (empty($distribuicao)) {
+            return [
+                'aprovado' => true,
+                'valor_esperado' => null,
+                'valores_divergentes' => [],
+                'strings_ajustar' => 0,
+                'strings_por_valor' => [],
+                'mensagem' => 'Nenhuma string avaliada para módulos em série',
+            ];
+        }
+
+        $distribuicaoOrdenada = $distribuicao;
+        arsort($distribuicaoOrdenada);
+
+        $valorEsperado = (int) array_key_first($distribuicaoOrdenada);
+        $valoresDivergentes = [];
+        $stringsAjustar = 0;
+
+        foreach ($distribuicao as $valor => $quantidade) {
+            if ((int) $valor === $valorEsperado) {
+                continue;
+            }
+
+            $valoresDivergentes[] = (int) $valor;
+            $stringsAjustar += (int) $quantidade;
+        }
+
+        sort($valoresDivergentes);
+
+        $aprovado = empty($valoresDivergentes);
+        $stringsPorValor = [];
+
+        foreach ($distribuicao as $valor => $quantidade) {
+            $stringsPorValor[(int) $valor] = (int) $quantidade;
+        }
+
+        if ($aprovado) {
+            $mensagem = sprintf(
+                'Todas as strings conectadas possuem %d módulos em série.',
+                $valorEsperado
+            );
+        } else {
+            $mensagem = sprintf(
+                'Strings com quantidades distintas de módulos em série: esperado %d, divergentes %s. ' .
+                'Ajuste necessário em %d string(s).',
+                $valorEsperado,
+                implode(', ', $valoresDivergentes),
+                $stringsAjustar
+            );
+        }
+
+        return [
+            'aprovado' => $aprovado,
+            'valor_esperado' => $valorEsperado,
+            'valores_divergentes' => $valoresDivergentes,
+            'strings_ajustar' => $stringsAjustar,
+            'strings_por_valor' => $stringsPorValor,
+            'mensagem' => $mensagem,
+        ];
     }
 
     /**
