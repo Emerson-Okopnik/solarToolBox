@@ -77,20 +77,20 @@
               </ul>
             </div>
 
-            <div v-if="checagem.valores_calculados.validacoes_globais">
-              <div class="fw-semibold text-uppercase small text-muted mb-1">
-                Validações globais
+            <div v-if="getValidacoesGlobaisDetalhes(checagem).length">
+              <div
+                v-for="validacao in getValidacoesGlobaisDetalhes(checagem)"
+                :key="validacao.chave"
+                class="mb-2"
+              >
+                <div class="fw-semibold text-uppercase small text-muted">
+                  {{ validacao.titulo }}
+                </div>
+                <div class="small">{{ validacao.mensagem }}</div>
+                <div v-if="validacao.valor" class="text-muted small">
+                  {{ validacao.valor }}
+                </div>
               </div>
-              <ul class="list-unstyled mb-0">
-                <li v-if="checagem.valores_calculados.validacoes_globais?.potencia_dc">
-                  <strong>Potência DC:</strong>
-                  {{ checagem.valores_calculados.validacoes_globais?.potencia_dc?.mensagem }}
-                </li>
-                <li v-if="checagem.valores_calculados.validacoes_globais?.dimensionamento">
-                  <strong>Dimensionamento:</strong>
-                  {{ checagem.valores_calculados.validacoes_globais?.dimensionamento?.mensagem }}
-                </li>
-              </ul>
             </div>
           </div>
         </template>
@@ -189,6 +189,11 @@ const formatInteger = (valor) => {
   return integerFormatter.format(Math.round(numero))
 }
 
+const decimalFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})
+
 const formatMpptResumo = (mppt) => {
   const numero = mppt?.numero ?? mppt?.mppt_id ?? '?'
   const instaladosNumero = Number(mppt?.modulos_conectados ?? 0)
@@ -197,6 +202,97 @@ const formatMpptResumo = (mppt) => {
   const pluralInstalados = instaladosNumero === 1 ? 'módulo' : 'módulos'
 
   return `MPPT ${numero} — ${instaladosTexto} ${pluralInstalados} instalados`
+}
+
+const formatWatts = (valor) => {
+  if (valor === null || valor === undefined) {
+    return null
+  }
+
+  const numero = Number(valor)
+
+  if (Number.isNaN(numero)) {
+    return null
+  }
+
+  return `${formatInteger(numero)} W`
+}
+
+const formatPercentual = (valor) => {
+  if (valor === null || valor === undefined) {
+    return null
+  }
+
+  const numero = Number(valor)
+
+  if (Number.isNaN(numero)) {
+    return null
+  }
+
+  return `${decimalFormatter.format(numero)}%`
+}
+
+const getValidacoesGlobaisDetalhes = (checagem) => {
+  const validacoes = checagem?.valores_calculados?.validacoes_globais
+
+  if (!validacoes) {
+    return []
+  }
+
+  const detalhes = []
+
+  const validacaoPotencia = validacoes.potencia_dc
+
+  if (validacaoPotencia) {
+    const totalFormatado = formatWatts(validacaoPotencia.potencia_total)
+    const limiteFormatado = formatWatts(validacaoPotencia.potencia_max)
+    const excessoFormatado = formatWatts(validacaoPotencia.excesso)
+    const margemFormatada = formatWatts(validacaoPotencia.margem_disponivel)
+
+    let valor = null
+
+    if (totalFormatado && limiteFormatado && excessoFormatado) {
+      valor = `Potência total: ${totalFormatado} (excesso de ${excessoFormatado} sobre o limite de ${limiteFormatado})`
+    } else if (totalFormatado && limiteFormatado && margemFormatada) {
+      valor = `Potência total: ${totalFormatado} (limite: ${limiteFormatado}, margem disponível: ${margemFormatada})`
+    } else if (totalFormatado && limiteFormatado) {
+      valor = `Potência total: ${totalFormatado} (limite: ${limiteFormatado})`
+    } else if (totalFormatado) {
+      valor = `Potência total: ${totalFormatado}`
+    }
+
+    detalhes.push({
+      chave: 'potencia_dc',
+      titulo: 'Potência DC',
+      mensagem: validacaoPotencia.mensagem,
+      valor
+    })
+  }
+
+  const validacaoDimensionamento = validacoes.dimensionamento
+
+  if (validacaoDimensionamento) {
+    const oversizing = formatPercentual(validacaoDimensionamento.oversizing_percentual)
+    const recomendadoMin = formatPercentual(validacaoDimensionamento.recomendado_min)
+    const recomendadoMax = formatPercentual(validacaoDimensionamento.recomendado_max)
+
+    let valor = null
+
+    if (oversizing && recomendadoMin && recomendadoMax) {
+      valor = `Oversizing: ${oversizing} (recomendado entre ${recomendadoMin} e ${recomendadoMax})`
+    } else if (oversizing) {
+      valor = `Oversizing: ${oversizing}`
+    }
+
+    detalhes.push({
+      chave: 'dimensionamento',
+      titulo: 'Dimensionamento',
+      mensagem: validacaoDimensionamento.mensagem,
+      valor
+    })
+  }
+
+  return detalhes
 }
 
 const getResultadoBadgeClass = (resultado) => {
