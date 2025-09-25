@@ -391,29 +391,24 @@ const editingString = ref(null)
 const mpptsList = ref([])
 const selectedMpptOption = ref('')
 
+const normalizeId = (value) => (value === null || value === undefined ? '' : String(value))
+
 // Simplifica o mapeamento das opções de MPPT garantindo valor mínimo
 const mpptStringOptions = computed(() =>
-  mpptsList.value.flatMap((mppt) => {
-    if (!mppt) return []
-
-    const corrente = mppt.corrente_entrada_max ?? '--'
-    const totalStrings = Math.max(Number(mppt?.strings_max) || 0, 1)
-
-    return Array.from({ length: totalStrings }, (_, index) => {
-      const stringIndex = index + 1
+  mpptsList.value
+    .filter(Boolean)
+    .map((mppt) => {
+      const totalStrings = Math.max(Number(mppt?.strings_max) || 0, 1)
+      const numero = mppt?.numero ?? '--'
+      const normalizedId = normalizeId(mppt?.id ?? numero)
 
       return {
-        key: `${mppt.id}-${stringIndex}`,
-        value: `${mppt.id}:${stringIndex}`,
-        label:
-          totalStrings === 1
-            ? `MPPT ${mppt.numero}`
-            : `MPPT ${mppt.numero} - string ${stringIndex} - ${corrente} (A)`,
-        mpptId: mppt.id,
-        stringIndex
+        key: normalizedId || numero,
+        value: normalizedId,
+        label: `MPPT ${numero} - string${totalStrings > 1 ? 's' : ''} máx: ${totalStrings}`,
+        mpptId: normalizedId
       }
     })
-  })
 )
 
 watch(selectedMpptOption, (newValue) => {
@@ -422,37 +417,20 @@ watch(selectedMpptOption, (newValue) => {
     return
   }
 
-  const [rawMpptId] = newValue.split(':')
-  const parsedId = Number(rawMpptId)
-
-  stringForm.value.mppt_id = Number.isNaN(parsedId) ? rawMpptId : parsedId
+  const parsedId = Number(newValue)
+  stringForm.value.mppt_id = Number.isNaN(parsedId) ? newValue : parsedId
 })
 
-const normalizeId = (value) => (value === null || value === undefined ? '' : String(value))
-
-const findMpptOptionValue = (mpptId, preferredIndex = null) => {
+const findMpptOptionValue = (mpptId) => {
   const normalizedId = normalizeId(mpptId)
 
   if (!normalizedId) {
     return ''
   }
 
-  const optionsForMppt = mpptStringOptions.value.filter(
-    (option) => normalizeId(option.mpptId) === normalizedId
-  )
+  const option = mpptStringOptions.value.find((item) => item.mpptId === normalizedId)
 
-  if (!optionsForMppt.length) {
-    return ''
-  }
-
-  if (preferredIndex !== null && preferredIndex !== undefined) {
-    const preferred = optionsForMppt.find((option) => option.stringIndex === preferredIndex)
-    if (preferred) {
-      return preferred.value
-    }
-  }
-
-  return optionsForMppt[0].value
+  return option ? option.value : ''
 }
 
 watch(
@@ -664,9 +642,7 @@ const openStringModal = async (arranjo, string = null) => {
       azimute: Number(string.azimute ?? 0),
       inclinacao: Number(string.inclinacao ?? 0)
     }
-    const preferredIndex =
-      string?.mppt_string_index ?? string?.mppt_string ?? string?.string_index ?? null
-    selectedMpptOption.value = findMpptOptionValue(stringForm.value.mppt_id, preferredIndex)
+    selectedMpptOption.value = findMpptOptionValue(stringForm.value.mppt_id)
   } else {
     stringForm.value = createDefaultStringForm()
     selectedMpptOption.value = ''
