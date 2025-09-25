@@ -296,7 +296,7 @@
                   <label for="string_mppt" class="form-label">MPPT do Inversor</label>
                   <select
                     id="string_mppt"
-                    v-model="stringForm.mppt_id"
+                    v-model="selectedMpptOption"
                     class="form-select"
                     :disabled="!mpptStringOptions.length"
                   >
@@ -341,16 +341,11 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import {
-  PlusIcon,
-  CpuChipIcon,
-  PencilSquareIcon,
-  TrashIcon
-} from '@heroicons/vue/24/outline'
+import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import ChecagensList from '@/components/ChecagensList.vue'
 import { useProjetosStore } from '@/stores/projetos'
@@ -369,49 +364,111 @@ const projeto = ref(null)
 const ultimaExecucao = ref(null)
 const showArranjoModal = ref(false)
 const salvandoArranjo = ref(false)
-const arranjoForm = ref({
+const createDefaultArranjoForm = () => ({
   nome: '',
   inversor_id: '',
   descricao: '',
   fator_sombreamento: 1
 })
+const arranjoForm = ref(createDefaultArranjoForm())
 const editingArranjo = ref(null)
 
 const showStringModal = ref(false)
 const salvandoString = ref(false)
-const stringForm = ref({
+// Base única para resetar/gerar o formulário de string
+const createDefaultStringForm = () => ({
   nome: '',
-  num_modulos_serie: 1,
   modulo_id: '',
+  num_modulos_serie: 1,
   num_strings_paralelo: 1,
   mppt_id: '',
   azimute: 180,
   inclinacao: 20
 })
+const stringForm = ref(createDefaultStringForm())
 const selectedArranjo = ref(null)
 const editingString = ref(null)
 const mpptsList = ref([])
-const mpptStringOptions = computed(() => {
-  return mpptsList.value.flatMap((mppt) => {
-    const totalStrings = Number(mppt?.strings_max) || 0
+const selectedMpptOption = ref('')
 
-    if (totalStrings <= 0) {
-      return [
-        {
-          key: `${mppt.id}-1`,
-          value: mppt.id,
-          label: `MPPT ${mppt.numero}`
-        }
-      ]
+// Simplifica o mapeamento das opções de MPPT garantindo valor mínimo
+const mpptStringOptions = computed(() =>
+  mpptsList.value.flatMap((mppt) => {
+    if (!mppt) return []
+
+    const corrente = mppt.corrente_entrada_max ?? '--'
+    const totalStrings = Math.max(Number(mppt?.strings_max) || 0, 1)
+
+    return Array.from({ length: totalStrings }, (_, index) => {
+      const stringIndex = index + 1
+
+      return {
+        key: `${mppt.id}-${stringIndex}`,
+        value: `${mppt.id}:${stringIndex}`,
+        label:
+          totalStrings === 1
+            ? `MPPT ${mppt.numero}`
+            : `MPPT ${mppt.numero} - string ${stringIndex} - ${corrente} (A)`,
+        mpptId: mppt.id,
+        stringIndex
+      }
+    })
+  })
+)
+
+watch(selectedMpptOption, (newValue) => {
+  if (!newValue) {
+    stringForm.value.mppt_id = ''
+    return
+  }
+
+  const [rawMpptId] = newValue.split(':')
+  const parsedId = Number(rawMpptId)
+
+  stringForm.value.mppt_id = Number.isNaN(parsedId) ? rawMpptId : parsedId
+})
+
+const normalizeId = (value) => (value === null || value === undefined ? '' : String(value))
+
+const findMpptOptionValue = (mpptId, preferredIndex = null) => {
+  const normalizedId = normalizeId(mpptId)
+
+  if (!normalizedId) {
+    return ''
+  }
+
+  const optionsForMppt = mpptStringOptions.value.filter(
+    (option) => normalizeId(option.mpptId) === normalizedId
+  )
+
+  if (!optionsForMppt.length) {
+    return ''
+  }
+
+  if (preferredIndex !== null && preferredIndex !== undefined) {
+    const preferred = optionsForMppt.find((option) => option.stringIndex === preferredIndex)
+    if (preferred) {
+      return preferred.value
+    }
+  }
+
+  return optionsForMppt[0].value
+}
+
+watch(
+  () => mpptStringOptions.value,
+  (options) => {
+    if (!selectedMpptOption.value) {
+      return
     }
 
-    return Array.from({ length: totalStrings }, (_, index) => ({
-      key: `${mppt.id}-${index + 1}`,
-      value: mppt.id,
-      label: `MPPT ${mppt.numero} - string ${index + 1} - ${mppt.corrente_entrada_max} (A)`
-    }))
-  })
-})
+    const stillExists = options.some((option) => option.value === selectedMpptOption.value)
+
+    if (!stillExists) {
+      selectedMpptOption.value = findMpptOptionValue(stringForm.value.mppt_id)
+    }
+  }
+)
 
 const formatModuloDescricao = (modulo) => {
   if (!modulo) {
@@ -543,12 +600,7 @@ const openArranjoModal = (arranjo = null) => {
       fator_sombreamento: arranjo.fator_sombreamento ?? 1
     }
   } else {
-    arranjoForm.value = {
-      nome: '',
-      inversor_id: '',
-      descricao: '',
-      fator_sombreamento: 1
-    }
+    arranjoForm.value = createDefaultArranjoForm()
   }
   showArranjoModal.value = true
 }
@@ -556,12 +608,7 @@ const openArranjoModal = (arranjo = null) => {
 const closeArranjoModal = () => {
   showArranjoModal.value = false
   editingArranjo.value = null
-  arranjoForm.value = {
-    nome: '',
-    inversor_id: '',
-    descricao: '',
-    fator_sombreamento: 1
-  }
+  arranjoForm.value = createDefaultArranjoForm()
 }
 
 const salvarArranjo = async () => {
@@ -608,25 +655,21 @@ const openStringModal = async (arranjo, string = null) => {
   }
   if (string) {
     stringForm.value = {
+      ...createDefaultStringForm(),
       nome: string.nome || '',
       modulo_id: string.modulo_id || string.modulo?.id || '',
       num_modulos_serie: string.num_modulos_serie || 1,
-      modulo_id: string.modulo_id || string.modulo?.id || '',
       num_strings_paralelo: string.num_strings_paralelo || 1,
       mppt_id: string.mppt_id || '',
       azimute: Number(string.azimute ?? 0),
       inclinacao: Number(string.inclinacao ?? 0)
     }
+    const preferredIndex =
+      string?.mppt_string_index ?? string?.mppt_string ?? string?.string_index ?? null
+    selectedMpptOption.value = findMpptOptionValue(stringForm.value.mppt_id, preferredIndex)
   } else {
-    stringForm.value = {
-      nome: '',
-      modulo_id: '',
-      num_modulos_serie: 1,
-      num_strings_paralelo: 1,
-      mppt_id: '',
-      azimute: 180,
-      inclinacao: 20
-    }
+    stringForm.value = createDefaultStringForm()
+    selectedMpptOption.value = ''
   }
   showStringModal.value = true
 }
@@ -635,16 +678,8 @@ const closeStringModal = () => {
   showStringModal.value = false
   selectedArranjo.value = null
   editingString.value = null
-  stringForm.value = {
-    nome: '',
-    modulo_id: '',
-    num_modulos_serie: 1,
-    num_strings_paralelo: 1,
-    modulo_id: '',
-    mppt_id: '',
-    azimute: 180,
-    inclinacao: 20
-  }
+  stringForm.value = createDefaultStringForm()
+  selectedMpptOption.value = ''
   mpptsList.value = []
 }
 
