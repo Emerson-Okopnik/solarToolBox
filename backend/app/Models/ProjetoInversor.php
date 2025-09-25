@@ -9,6 +9,8 @@ class ProjetoInversor extends Model
 {
     use HasFactory;
 
+    protected $table = 'projeto_inversores';
+
     protected $fillable = [
         'projeto_id',
         'inversor_id',
