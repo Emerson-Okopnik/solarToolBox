@@ -262,7 +262,7 @@ class CalculationEngineService
             'arranjo_id' => $string->arranjo_id,
             'tipo' => 'compatibilidade_modulos',
             'resultado' => 'aprovado',
-            'titulo' => 'Compatibilidade de Módulos',
+            'titulo' => 'Análise de String',
             'descricao' => 'Módulos compatíveis para conexão em série',
             'valores_calculados' => $resultados,
             'limites_referencia' => [

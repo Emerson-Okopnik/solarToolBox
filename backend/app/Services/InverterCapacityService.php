@@ -168,12 +168,11 @@ class InverterCapacityService
                 );
             }
 
-            $validacaoPotenciaModulo['aprovado'] = false;
             $validacaoPotenciaModulo['mensagem'] = sprintf(
-                'Strings conectadas possuem potências nominais distintas: %s.',
+                'Strings conectadas possuem potências nominais distintas: %s. Compatibilidade será validada ' .
+                'pelos limites de tensão e corrente configurados.',
                 implode('; ', $detalhes)
             );
-            $resultado['status'] = 'reprovado';
         } elseif (count($potenciasDistintas) === 1) {
             $validacaoPotenciaModulo['mensagem'] = sprintf(
                 'Todas as strings conectadas utilizam módulos de %s W.',

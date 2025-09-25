@@ -26,12 +26,42 @@
         </template>
 
         <template v-else-if="checagem.tipo === 'distribuicao_orientacao'">
-          <dl class="row small mb-2" v-if="getPrimeiroMppt(checagem)">
-            <dt class="col-6 text-muted">Tensão MPPT mín</dt>
-            <dd class="col-6">{{ getPrimeiroMppt(checagem).mppt?.tensao_mppt_min }}</dd>
-            <dt class="col-6 text-muted">Tensão MPPT máx</dt>
-            <dd class="col-6">{{ getPrimeiroMppt(checagem).mppt?.tensao_mppt_max }}</dd>
-          </dl>
+          <div class="small d-flex flex-column gap-3">
+            <div v-if="getDistribuicaoEstatisticas(checagem)">
+              <div class="fw-semibold text-uppercase small text-muted mb-1">
+                Estatísticas
+              </div>
+              <dl class="row mb-0">
+                <dt class="col-6 text-muted">MPPTs avaliados</dt>
+                <dd class="col-6">{{ getDistribuicaoEstatisticas(checagem).mppts_avaliados }}</dd>
+                <dt class="col-6 text-muted">Strings avaliadas</dt>
+                <dd class="col-6">{{ getDistribuicaoEstatisticas(checagem).strings_avaliadas }}</dd>
+                <dt class="col-6 text-muted">Orientações mistas</dt>
+                <dd class="col-6">{{ getDistribuicaoEstatisticas(checagem).orientacoes_mistas }}</dd>
+              </dl>
+            </div>
+
+            <div v-if="getDistribuicaoAvisos(checagem).length">
+              <ul class="list-unstyled mb-0">
+                <li
+                  v-for="(aviso, index) in getDistribuicaoAvisos(checagem)"
+                  :key="getDistribuicaoAvisoKey(aviso, index)"
+                  class="mb-2"
+                >
+                  <div>
+                    <strong>{{ getDistribuicaoAvisoTitulo(aviso) }}</strong>
+                  </div>
+                  <div>{{ aviso.mensagem }}</div>
+                  <div class="text-muted" v-if="aviso.recomendacao">
+                    {{ aviso.recomendacao }}
+                  </div>
+                  <div class="text-muted" v-if="aviso.orientacoes?.length">
+                    Orientações: {{ formatOrientacoes(aviso.orientacoes) }}
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
         </template>
 
         <template v-else-if="checagem.tipo === 'capacidade_mppt'">
@@ -111,12 +141,6 @@ defineProps({
 const detalhes = ref({})
 const toggleDetalhes = (id) => {
   detalhes.value[id] = !detalhes.value[id]
-}
-
-// obtém o primeiro MPPT disponível para extração de tensões
-const getPrimeiroMppt = (checagem) => {
-  const mppts = checagem?.valores_calculados?.mppts
-  return mppts ? Object.values(mppts)[0] : null
 }
 
 const getArranjoLabel = (checagem) => {
@@ -226,5 +250,56 @@ const getResultadoBadgeClass = (resultado) => {
     aviso: 'text-bg-warning'
   }
   return classes[resultado] || 'text-bg-secondary'
+}
+const getDistribuicaoEstatisticas = (checagem) => {
+  return checagem?.valores_calculados?.estatisticas ?? null
+}
+
+const getDistribuicaoAvisos = (checagem) => {
+  const avisos = checagem?.valores_calculados?.avisos
+  if (!Array.isArray(avisos)) {
+    return []
+  }
+
+  return avisos
+}
+
+const getDistribuicaoAvisoKey = (aviso, index) => {
+  const chave = [aviso?.tipo, aviso?.mppt_id, aviso?.mppt_numero]
+    .filter((parte) => parte !== undefined && parte !== null && parte !== '')
+    .join('-')
+
+  return chave || `aviso-${index}`
+}
+
+const getDistribuicaoAvisoTitulo = (aviso) => {
+  if (aviso?.mppt_numero) {
+    return `MPPT ${aviso.mppt_numero}`
+  }
+
+  if (aviso?.mppt_id) {
+    return `MPPT ${aviso.mppt_id}`
+  }
+
+  return aviso?.tipo ? aviso.tipo.toString() : 'Aviso'
+}
+
+const formatOrientacoes = (orientacoes) => {
+  if (!Array.isArray(orientacoes) || !orientacoes.length) {
+    return ''
+  }
+
+  return orientacoes
+    .map((orientacao) => {
+      if (typeof orientacao !== 'string') {
+        return orientacao
+      }
+
+      return orientacao
+        .replace('Az', 'Azimute ')
+        .replace('_Inc', ' - Inclinação ')
+        .replace(/_/g, ' ')
+    })
+    .join(', ')
 }
 </script>
