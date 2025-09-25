@@ -38,6 +38,8 @@ class DistributionService
             ],
         ];
 
+        $orientacoesInternas = 0;
+
         foreach ($mppts as $mppt) {
 
             $infoMppt = $this->avaliarOrientacoesDoMppt($mppt, $arranjos);
@@ -46,7 +48,7 @@ class DistributionService
             $distribuicao['estatisticas']['strings_sem_orientacao'] += $infoMppt['strings_sem_orientacao'];
 
             if (count($infoMppt['orientacoes']) > 1) {
-                $distribuicao['estatisticas']['orientacoes_mistas']++;
+                $orientacoesInternas++;
                 $distribuicao['avisos'][] = [
                     'tipo' => 'orientacao_mista',
                     'mppt_id' => $mppt->id,
@@ -58,6 +60,12 @@ class DistributionService
             }
             $distribuicao['mppts'][$mppt->id] = $infoMppt;
         }
+
+        $orientacoesEntreMppts = $this->contarOrientacoesEntreMppts($distribuicao['mppts']);
+
+        $distribuicao['estatisticas']['orientacoes_mistas_internas'] = $orientacoesInternas;
+        $distribuicao['estatisticas']['orientacoes_mistas_entre_mppts'] = $orientacoesEntreMppts;
+        $distribuicao['estatisticas']['orientacoes_mistas'] = $orientacoesInternas + $orientacoesEntreMppts;
 
         $this->validarOrientacoes($distribuicao, $configuracoes);
 
@@ -121,15 +129,45 @@ class DistributionService
     private function validarOrientacoes(array $distribuicao, array $configuracoes)
     {
         $permitirOrientacoesMistas = (bool) ($configuracoes['permitir_orientacoes_mistas'] ?? false);
-
-        if (!$permitirOrientacoesMistas && $distribuicao['estatisticas']['orientacoes_mistas'] > 0) {
+        $misturasInternas = $distribuicao['estatisticas']['orientacoes_mistas_internas']
+            ?? $distribuicao['estatisticas']['orientacoes_mistas']
+            ?? 0;
+       if (!$permitirOrientacoesMistas && $misturasInternas > 0) {
             throw new SolarCalculationException(
-                "Detectadas orientações mistas em {$distribuicao['estatisticas']['orientacoes_mistas']} MPPT(s)",
+               "Detectadas orientações mistas em {$misturasInternas} MPPT(s)",
                 [
                     'avisos' => $distribuicao['avisos'],
                     'sugestao' => 'Reorganize as strings ou permita orientações mistas nas configurações',
                 ]
             );
         }
+    }
+
+    private function contarOrientacoesEntreMppts(array $mpptsInfo): int
+    {
+        $mpptsComStrings = collect($mpptsInfo)
+            ->filter(fn ($info) => ($info['strings_total'] ?? 0) > 0);
+
+        if ($mpptsComStrings->count() <= 1) {
+            return 0;
+        }
+
+        $assinaturasOrientacoes = $mpptsComStrings->map(function ($info) {
+            $orientacoes = collect($info['orientacoes'] ?? [])
+                ->filter(fn ($orientacao) => $orientacao !== null && $orientacao !== '')
+                ->unique()
+                ->sort()
+                ->values();
+
+            return $orientacoes->implode('|');
+        });
+
+        $orientacoesDistintas = $assinaturasOrientacoes->unique();
+
+        if ($orientacoesDistintas->count() <= 1) {
+            return 0;
+        }
+
+        return $orientacoesDistintas->count() - 1;
     }
 }

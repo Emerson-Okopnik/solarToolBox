@@ -66,25 +66,6 @@
 
         <template v-else-if="checagem.tipo === 'capacidade_mppt'">
           <div class="small d-flex flex-column gap-3">
-            <div v-if="getCapacidadeResumo(checagem)">
-              <div class="fw-semibold text-uppercase small text-muted mb-1">
-                Resumo do inversor
-              </div>
-              <ul class="list-unstyled mb-0">
-                <li>
-                  <strong>Módulos conectados:</strong>
-                  {{ getModuloLabel(getCapacidadeResumo(checagem)?.modulos_conectados) }}
-                </li>
-                <li>
-                  <strong>Módulos disponíveis:</strong>
-                  {{ getModuloLabel(getCapacidadeResumo(checagem)?.modulos_disponiveis) }}
-                </li>
-                <li v-if="(getCapacidadeResumo(checagem)?.modulos_excedentes ?? 0) > 0">
-                  <strong>Módulos excedentes:</strong>
-                  {{ getModuloLabel(getCapacidadeResumo(checagem)?.modulos_excedentes) }}
-                </li>
-              </ul>
-            </div>
             <div v-if="getMpptsDetalhes(checagem).length">
               <div class="fw-semibold text-uppercase small text-muted mb-1">
                 Resumo por MPPT
@@ -208,39 +189,14 @@ const formatInteger = (valor) => {
   return integerFormatter.format(Math.round(numero))
 }
 
-const getModuloLabel = (valor) => {
-  const numero = valor === undefined || valor === null ? 0 : Number(valor)
-
-  if (Number.isNaN(numero)) {
-    return valor ?? '-'
-  }
-
-  const texto = formatInteger(numero)
-  const plural = numero === 1 ? 'módulo' : 'módulos'
-  return `${texto} ${plural}`
-}
-
 const formatMpptResumo = (mppt) => {
   const numero = mppt?.numero ?? mppt?.mppt_id ?? '?'
   const instaladosNumero = Number(mppt?.modulos_conectados ?? 0)
-  const disponiveisNumero = Number(mppt?.modulos_disponiveis ?? 0)
-  const excedentesNumero = Number(mppt?.modulos_excedentes ?? 0)
 
   const instaladosTexto = formatInteger(instaladosNumero)
   const pluralInstalados = instaladosNumero === 1 ? 'módulo' : 'módulos'
 
-  let complemento = 'sem margem para mais módulos'
-  if (excedentesNumero > 0) {
-    const excedentesTexto = formatInteger(excedentesNumero)
-    const pluralExcedentes = excedentesNumero === 1 ? 'módulo' : 'módulos'
-    complemento = `excedente de ${excedentesTexto} ${pluralExcedentes}`
-  } else if (disponiveisNumero > 0) {
-    const disponiveisTexto = formatInteger(disponiveisNumero)
-    const pluralDisponiveis = disponiveisNumero === 1 ? 'módulo' : 'módulos'
-    complemento = `sobra para +${disponiveisTexto} ${pluralDisponiveis}`
-  }
-
-  return `MPPT ${numero} — ${instaladosTexto} ${pluralInstalados} instalados, ${complemento}`
+  return `MPPT ${numero} — ${instaladosTexto} ${pluralInstalados} instalados`
 }
 
 const getResultadoBadgeClass = (resultado) => {
