@@ -25,8 +25,6 @@ class InverterCapacityService
                 'mppts_utilizados' => 0,
                 'mppts_disponiveis' => $inversor->num_mppts,
                 'modulos_conectados' => 0,
-                'modulos_disponiveis' => 0,
-                'modulos_excedentes' => 0,
             ]
         ];
 
@@ -38,8 +36,6 @@ class InverterCapacityService
             $resultados['mppts'][$mppt->id] = $resultadoMppt;
             $resultados['resumo']['potencia_dc_total'] += $resultadoMppt['potencia_total'];
             $resultados['resumo']['modulos_conectados'] += $resultadoMppt['modulos_conectados'];
-            $resultados['resumo']['modulos_disponiveis'] += $resultadoMppt['modulos_disponiveis'];
-            $resultados['resumo']['modulos_excedentes'] += $resultadoMppt['modulos_excedentes'];
             
             if ($resultadoMppt['status'] !== 'aprovado') {
                 $resultados['status_geral'] = 'reprovado';
@@ -78,8 +74,6 @@ class InverterCapacityService
             'modulos_conectados' => $validacaoStrings['modulos_conectados'],
             'strings_disponiveis' => $validacaoStrings['strings_disponiveis'],
             'strings_excedentes' => $validacaoStrings['strings_excedentes'],
-            'modulos_disponiveis' => $validacaoStrings['modulos_disponiveis'],
-            'modulos_excedentes' => $validacaoStrings['modulos_excedentes'],
             'tensao_operacao' => null,
             'corrente_total' => 0,
             'potencia_total' => 0,
@@ -488,33 +482,9 @@ class InverterCapacityService
         }, 0.0);
 
         $modulosConectados = (int) round($modulosConectadosFloat);
-        $modulosPorStringReferencia = 0.0;
-
-        if ($stringsConectadas > 0) {
-            $modulosPorStringReferencia = $modulosConectadosFloat / $stringsConectadas;
-        } elseif ($strings->isNotEmpty()) {
-            $stringReferencia = $strings->first();
-            $paralelosRef = (int) ($stringReferencia->num_strings_paralelo ?? 0);
-            $paralelosRef = $paralelosRef > 0 ? $paralelosRef : 1;
-            $modulosSerieRef = (int) ($stringReferencia->num_modulos_serie ?? 0);
-            $totalRef = $stringReferencia->total_modulos;
-
-            if (!is_numeric($totalRef)) {
-                $totalRef = $modulosSerieRef * $paralelosRef;
-            }
-
-            $totalRef = is_numeric($totalRef) ? (float) $totalRef : 0.0;
-
-            $modulosPorStringReferencia = $paralelosRef > 0
-                ? $totalRef / $paralelosRef
-                : $modulosSerieRef;
-        }
 
         $stringsDisponiveis = max(0, $stringsMax - $stringsConectadas);
         $stringsExcedentes = max(0, $stringsConectadas - $stringsMax);
-
-        $modulosDisponiveis = (int) round($stringsDisponiveis * $modulosPorStringReferencia);
-        $modulosExcedentes = (int) round($stringsExcedentes * $modulosPorStringReferencia);
 
         $aprovado = $stringsExcedentes === 0;
 
@@ -522,17 +492,15 @@ class InverterCapacityService
             $mensagem = 'Nenhuma string conectada ao MPPT';
         } elseif ($aprovado && $stringsDisponiveis > 0) {
             $mensagem = sprintf(
-                'Capacidade disponível para %d strings adicionais (aprox. %d módulos).',
-                $stringsDisponiveis,
-                $modulosDisponiveis
+                'Capacidade disponível para %d strings adicionais.',
+                $stringsDisponiveis
             );
         } elseif ($aprovado) {
             $mensagem = 'Número de strings dentro do limite';
         } else {
             $mensagem = sprintf(
-                'Muitas strings conectadas ao MPPT: excede em %d strings (aprox. %d módulos).',
-                $stringsExcedentes,
-                $modulosExcedentes
+                'Muitas strings conectadas ao MPPT: excede em %d strings.',
+                $stringsExcedentes
             );
         }
 
@@ -543,8 +511,6 @@ class InverterCapacityService
             'strings_disponiveis' => $stringsDisponiveis,
             'strings_excedentes' => $stringsExcedentes,
             'modulos_conectados' => $modulosConectados,
-            'modulos_disponiveis' => $modulosDisponiveis,
-            'modulos_excedentes' => $modulosExcedentes,
             'mensagem' => $mensagem,
         ];
     }
