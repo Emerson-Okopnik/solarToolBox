@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Projeto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ProjetoController extends Controller
 {
@@ -198,15 +199,33 @@ class ProjetoController extends Controller
             ], 403);
         }
 
-        // Verificar se há execuções
-        if ($projeto->execucoes()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Não é possível excluir projeto com execuções. Considere alterar o status.',
-            ], 400);
-        }
+        DB::transaction(function () use ($projeto) {
+            $projeto->loadMissing([
+                'execucoes.checagens',
+                'arranjos.strings.checagens',
+                'arranjos.checagens',
+                'projetoInversores',
+            ]);
 
-        $projeto->delete();
+            foreach ($projeto->execucoes as $execucao) {
+                $execucao->checagens()->delete();
+                $execucao->delete();
+            }
+
+            foreach ($projeto->arranjos as $arranjo) {
+                foreach ($arranjo->strings as $string) {
+                    $string->checagens()->delete();
+                    $string->delete();
+                }
+
+                $arranjo->checagens()->delete();
+                $arranjo->delete();
+            }
+
+            $projeto->projetoInversores()->delete();
+
+            $projeto->delete();
+        });
 
         return response()->json([
             'success' => true,
