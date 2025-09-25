@@ -46,7 +46,7 @@ class SeriesCalculatorService
     private function calcularParametrosEletricos(Modulo $modulo, StringModel $string, $clima, array $configuracoes)
     {
         $ns = $string->num_modulos_serie;
-        $np = $string->num_strings_paralelo;
+        $np = $this->calcularNumeroStringsParaleloEfetivo($string);
 
         // Temperaturas de operação
         $tempMin = $configuracoes['temp_min'] ?? $clima->temp_min_historica ?? -5;
@@ -81,6 +81,32 @@ class SeriesCalculatorService
             'num_modulos_serie' => $ns,
             'num_strings_paralelo' => $np,
         ];
+    }
+
+    private function calcularNumeroStringsParaleloEfetivo(StringModel $string): int
+    {
+        $np = (int) ($string->num_strings_paralelo ?? 0);
+
+        if (!$string->mppt_id) {
+            return $np;
+        }
+
+        $string->loadMissing(['arranjo.projeto.arranjos.strings']);
+
+        $arranjo = $string->arranjo;
+        $projeto = $arranjo?->projeto;
+
+        if (!$arranjo || !$projeto) {
+            return $np;
+        }
+
+        $total = $projeto->arranjos
+            ->filter(fn ($arr) => $arr->projeto_inversor_id === $arranjo->projeto_inversor_id)
+            ->flatMap(fn ($arr) => $arr->strings)
+            ->filter(fn ($str) => $str->mppt_id === $string->mppt_id)
+            ->sum(fn ($str) => (int) ($str->num_strings_paralelo ?? 0));
+
+        return $total > 0 ? $total : $np;
     }
 
     /**
