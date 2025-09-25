@@ -119,8 +119,9 @@ class StringController extends Controller
         }
 
         $string->load([
-            'arranjo.projetoInversor.inversor.fabricante',
-            'arranjo.projetoInversor.inversor.mppts',
+            'arranjo.projetoInversor',
+            'arranjo.inversor.fabricante',
+            'arranjo.inversor.mppts',
             'modulo.fabricante',
             'mppt',
         ]);

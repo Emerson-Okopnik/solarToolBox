@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * @property-read \App\Models\ProjetoInversor|null $projetoInversor
@@ -22,7 +23,6 @@ class Arranjo extends Model
     ];
 
     protected $appends = [
-        'inversor',
         'inversor_id',
     ];
 
@@ -59,9 +59,16 @@ class Arranjo extends Model
         return $this->belongsTo(ProjetoInversor::class);
     }
 
-    public function getInversorAttribute()
+    public function inversor(): HasOneThrough
     {
-        return $this->projetoInversor?->inversor;
+        return $this->hasOneThrough(
+            Inversor::class,
+            ProjetoInversor::class,
+            'id',
+            'id',
+            'projeto_inversor_id',
+            'inversor_id'
+        );
     }
 
     public function getInversorIdAttribute()

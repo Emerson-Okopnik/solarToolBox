@@ -23,7 +23,7 @@ class ArranjoController extends Controller
         }
 
         $arranjos = $projeto->arranjos()
-            ->with(['projetoInversor.inversor.fabricante', 'projetoInversor.inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt'])
+            ->with(['projetoInversor','inversor.fabricante','inversor.mppts','strings.modulo.fabricante','strings.mppt'])
             ->orderBy('nome')
             ->get();
 
@@ -65,7 +65,7 @@ class ArranjoController extends Controller
         ]);
 
 
-        $arranjo->load(['projetoInversor.inversor.fabricante', 'projetoInversor.inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
+        $arranjo->load(['projetoInversor','inversor.fabricante','inversor.mppts','strings.modulo.fabricante','strings.mppt']);
 
         return response()->json([
             'success' => true,
@@ -92,8 +92,9 @@ class ArranjoController extends Controller
 
         $arranjo->load([
             'projeto',
-            'projetoInversor.inversor.fabricante',
-            'projetoInversor.inversor.mppts',
+            'projetoInversor',
+            'inversor.fabricante',
+            'inversor.mppts',
             'strings.mppt',
         ]);
 
@@ -146,7 +147,7 @@ class ArranjoController extends Controller
             $arranjo->update(['projeto_inversor_id' => $novoProjetoInversor->id]);
         }
 
-        $arranjo->load(['projetoInversor.inversor.fabricante', 'projetoInversor.inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
+        $arranjo->load(['projetoInversor','inversor.fabricante','inversor.mppts','strings.modulo.fabricante','strings.mppt']);
 
         return response()->json([
             'success' => true,

@@ -39,7 +39,8 @@ class CalculationEngineService
             $execucao->load([
                 'projeto.arranjos.strings.modulo',
                 'projeto.arranjos.strings.mppt',
-                'projeto.arranjos.projetoInversor.inversor.mppts',
+                'projeto.arranjos.projetoInversor',
+                'projeto.arranjos.inversor.mppts',
             ]);
 
             // 1. Calcular parâmetros das strings
