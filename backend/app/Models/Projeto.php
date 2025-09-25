@@ -42,6 +42,11 @@ class Projeto extends Model
         return $this->hasMany(Arranjo::class);
     }
 
+    public function projetoInversores()
+    {
+        return $this->hasMany(ProjetoInversor::class);
+    }
+
     public function execucoes()
     {
         return $this->hasMany(Execucao::class);

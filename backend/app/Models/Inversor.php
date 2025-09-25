@@ -61,6 +61,11 @@ class Inversor extends Model
         return $this->hasMany(Arranjo::class);
     }
 
+    public function projetoInversores()
+    {
+        return $this->hasMany(ProjetoInversor::class);
+    }
+
     // Scopes
     public function scopeAtivos($query)
     {

@@ -113,8 +113,8 @@ class ProjetoController extends Controller
         $projeto->load([
             'clima',
             'user',
-            'arranjos.strings.modulo.fabricante',
-            'arranjos.inversor.fabricante',
+            'arranjos.projetoInversor.inversor.fabricante',
+            'arranjos.projetoInversor.inversor.mppts',
             'arranjos.inversor.mppts',
             'arranjos.strings.mppt',
             'execucoes' => function ($query) {

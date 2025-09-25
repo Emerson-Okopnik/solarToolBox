@@ -39,7 +39,7 @@ class CalculationEngineService
             $execucao->load([
                 'projeto.arranjos.strings.modulo',
                 'projeto.arranjos.strings.mppt',
-                'projeto.arranjos.inversor.mppts',
+                'projeto.arranjos.projetoInversor.inversor.mppts',
             ]);
 
             // 1. Calcular parâmetros das strings
@@ -149,7 +149,7 @@ class CalculationEngineService
         $projeto = $execucao->projeto;
         
         // Agrupar por inversor
-        $arranjosPorInversor = $projeto->arranjos->groupBy('inversor_id');
+        $arranjosPorInversor = $projeto->arranjos->groupBy('projeto_inversor_id');
         
         foreach ($arranjosPorInversor as $inversorId => $arranjos) {
             $inversor = $arranjos->first()->inversor;
@@ -197,7 +197,7 @@ class CalculationEngineService
     {
         $projeto = $execucao->projeto;
         
-        $arranjosPorInversor = $projeto->arranjos->groupBy('inversor_id');
+        $arranjosPorInversor = $projeto->arranjos->groupBy('projeto_inversor_id');
         
         foreach ($arranjosPorInversor as $inversorId => $arranjos) {
             $inversor = $arranjos->first()->inversor;

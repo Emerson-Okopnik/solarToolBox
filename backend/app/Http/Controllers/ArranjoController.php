@@ -23,7 +23,7 @@ class ArranjoController extends Controller
         }
 
         $arranjos = $projeto->arranjos()
-            ->with(['inversor.fabricante', 'inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt'])
+            ->with(['projetoInversor.inversor.fabricante', 'projetoInversor.inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt'])
             ->orderBy('nome')
             ->get();
 
@@ -53,14 +53,19 @@ class ArranjoController extends Controller
             'fator_sombreamento' => 'nullable|numeric|min:0|max:1',
         ]);
 
+        $projetoInversor = $projeto->projetoInversores()->create([
+            'inversor_id' => $request->inversor_id,
+        ]);
+
         $arranjo = $projeto->arranjos()->create([
             'nome' => $request->nome,
-            'inversor_id' => $request->inversor_id,
+            'projeto_inversor_id' => $projetoInversor->id,
             'descricao' => $request->descricao,
             'fator_sombreamento' => $request->fator_sombreamento ?? 1.0,
         ]);
 
-        $arranjo->load(['inversor.fabricante', 'inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
+
+        $arranjo->load(['projetoInversor.inversor.fabricante', 'projetoInversor.inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
 
         return response()->json([
             'success' => true,
@@ -87,8 +92,8 @@ class ArranjoController extends Controller
 
         $arranjo->load([
             'projeto',
-            'inversor.fabricante',
-            'inversor.mppts',
+            'projetoInversor.inversor.fabricante',
+            'projetoInversor.inversor.mppts',
             'strings.mppt',
         ]);
 
@@ -123,13 +128,25 @@ class ArranjoController extends Controller
 
         $arranjo->update([
             'nome' => $request->nome,
-            'inversor_id' => $request->inversor_id,
             'descricao' => $request->input('descricao', $arranjo->descricao),
             'fator_sombreamento' => $request->has('fator_sombreamento')
                 ? ($request->fator_sombreamento ?? 1.0)
                 : $arranjo->fator_sombreamento,
         ]);
-        $arranjo->load(['inversor.fabricante', 'inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
+
+        $projetoInversor = $arranjo->projetoInversor;
+
+        if ($projetoInversor) {
+            $projetoInversor->update(['inversor_id' => $request->inversor_id]);
+        } else {
+            $novoProjetoInversor = $arranjo->projeto->projetoInversores()->create([
+                'inversor_id' => $request->inversor_id,
+            ]);
+
+            $arranjo->update(['projeto_inversor_id' => $novoProjetoInversor->id]);
+        }
+
+        $arranjo->load(['projetoInversor.inversor.fabricante', 'projetoInversor.inversor.mppts', 'strings.modulo.fabricante', 'strings.mppt']);
 
         return response()->json([
             'success' => true,
