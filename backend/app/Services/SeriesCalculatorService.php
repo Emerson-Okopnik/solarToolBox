@@ -49,8 +49,8 @@ class SeriesCalculatorService
         $np = $this->calcularNumeroStringsParaleloEfetivo($string);
 
         // Temperaturas de operação
-        $tempMin = $configuracoes['temp_min'] ?? $clima->temp_min_historica ?? -5;
-        $tempMax = $configuracoes['temp_max'] ?? $clima->temp_max_historica ?? 70;
+        $tempMin = $configuracoes['temp_min'] ?? $clima->temp_min_historica ?? -10;
+        $tempMax = $configuracoes['temp_max'] ?? $clima->temp_max_historica ?? 80;
         $tempOperacao = $this->calcularTemperaturaOperacao($clima, $configuracoes);
 
         // Cálculos STC (25°C)
@@ -151,6 +151,7 @@ class SeriesCalculatorService
     {
         $inversor = $string->arranjo->inversor;
         $mppt = $string->mppt;
+        $stringParalelo = $this->calcularNumeroStringsParaleloEfetivo($string)?? 1;
 
         // Validar tensão DC máxima
         if ($resultados['tensao_circuito_aberto_frio'] > $inversor->tensao_dc_max) {
@@ -175,7 +176,9 @@ class SeriesCalculatorService
                         'vmppt_min' => $mppt->tensao_mppt_min,
                         'vmppt_max' => $mppt->tensao_mppt_max,
                         'string_id' => $string->id,
-                        'mppt_id' => $mppt->id
+                        'mppt_id' => $mppt->id,
+                        'num_modulos_serie'=> $string->num_modulos_serie,
+                        'num_strings_paralelo'=> $stringParalelo,
                     ]
                 );
             }
@@ -188,7 +191,9 @@ class SeriesCalculatorService
                         'corrente_total' => $resultados['corrente_total'],
                         'idc_max_mppt' => $mppt->corrente_entrada_max,
                         'string_id' => $string->id,
-                        'mppt_id' => $mppt->id
+                        'mppt_id' => $mppt->id,
+                        'num_modulos_serie'=> $string->num_modulos_serie,
+                        'num_strings_paralelo'=> $stringParalelo,
                     ]
                 );
             }
