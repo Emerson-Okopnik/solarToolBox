@@ -35,7 +35,7 @@
     </div>
     
     <!-- Recent Projects and Quick Actions -->
-    <div class="two-col">
+    <div v-if="isAuthenticated" class="two-col">
       <div class="card">
         <div class="card-header">
           <div class="header-row">
@@ -97,17 +97,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ArrowRightIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import { projetosService } from '@/services/projetos'
 import { catalogosService } from '@/services/catalogos'
+import { useAuthStore } from '@/stores/auth'
 
 const stats = ref({})
 const recentProjects = ref([])
-const loadingProjects = ref(true)
+const loadingProjects = ref(false)
+const authStore = useAuthStore()
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const loadStats = async () => {
   try {
@@ -159,9 +162,21 @@ const getStatusBadgeClass = status => {
   return classes[status] || 'badge-secondary'
 }
 
+watch(
+  isAuthenticated,
+  async autenticado => {
+    if (autenticado) {
+      await loadRecentProjects()
+    } else {
+      loadingProjects.value = false
+      recentProjects.value = []
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   loadStats()
-  loadRecentProjects()
 })
 </script>
 

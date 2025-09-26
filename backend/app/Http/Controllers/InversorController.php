@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Inversor;
 use App\Models\Mppt;
+use App\Services\InverterRecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -64,6 +65,42 @@ class InversorController extends Controller
             'success' => true,
             'data' => $inversores,
         ]);
+    }
+
+    public function recomendar(Request $request, InverterRecommendationService $recommendationService)
+    {
+        $dados = $request->validate([
+            'quantidade_modulos' => 'required|integer|min:1',
+            'potencia_total' => 'required|numeric|min:0.1',
+            'orientacoes' => 'required|array|min:1',
+        ]);
+
+        try {
+            $resultado = $recommendationService->recomendar(
+                (int) $dados['quantidade_modulos'],
+                (float) $dados['potencia_total'],
+                $dados['orientacoes']
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $resultado,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Erro ao recomendar inversores', [
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar recomendações de inversores',
+            ], 500);
+        }
     }
 
     //Cria novo inversor

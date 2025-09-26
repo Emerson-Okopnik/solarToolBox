@@ -26,6 +26,13 @@
         <span v-if="loading" class="spinner-border spinner-border-sm"></span>
         {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
+      
+      <router-link
+        to="/catalogos"
+        class="btn btn-secondary w-100 mt-4"
+      >
+        Acessar catálogo
+      </router-link>
     </form>
   </div>
   <p class="text-center text-muted my-4">

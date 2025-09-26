@@ -7,13 +7,13 @@
       </div>
       
       <nav class="sidebar-nav nav flex-column">
-      <router-link
-        v-for="item in navigation"
-        :key="item.name"
-        :to="item.to"
-        class="nav-link d-flex align-items-center gap-1"
-        :class="{ active: $route.path.startsWith(item.to) }"
-      >
+       <router-link
+         v-for="item in navigation"
+         :key="item.name"
+         :to="item.to"
+         class="nav-link d-flex align-items-center gap-1"
+         :class="{ active: $route.path.startsWith(item.to) }"
+       >
         <component :is="item.icon" class="nav-icon" />
         {{ item.label }}
       </router-link>
@@ -38,7 +38,7 @@
           <Bars3Icon class="nav-icon" />
         </button>
 
-        <div class="user-menu ms-3">
+        <div class="user-menu ms-3" v-if="isAuthenticated">
           <button class="btn user-btn" type="button" @click="toggleUserMenu" >
             <span class="user-name">{{ userName }}</span>
           </button>
@@ -50,6 +50,14 @@
               Sair
             </button>
           </div>
+        </div>
+        <div class="guest-actions ms-3" v-else>
+          <router-link class="btn btn-outline-primary btn-sm" to="/auth/login">
+            Entrar
+          </router-link>
+          <router-link class="btn btn-primary btn-sm" to="/auth/register">
+            Criar conta
+          </router-link>
         </div>
       </div>
 
@@ -98,12 +106,18 @@ export default defineComponent({
     navigation() {
       const items = [
         { name: 'catalogos', label: 'Catálogos', to: '/catalogos', icon: 'BookOpenIcon' },
-        { name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' },
       ]
-      if (this.authStore.isAdmin) {
-        items.push({ name: 'cadastro', label: 'Cadastro', to: '/cadastro', icon: 'HomeIcon' })
+      if (this.authStore.isAuthenticated) {
+        items.push({ name: 'projetos', label: 'Projetos', to: '/projetos', icon: 'FolderIcon' })
+
+        if (this.authStore.isAdmin) {
+          items.push({ name: 'cadastro', label: 'Cadastro', to: '/cadastro', icon: 'HomeIcon' })
+        }
       }
       return items
+    },
+    isAuthenticated() {
+      return this.authStore.isAuthenticated
     },
     userName() {
       return this.authStore.user?.name || ''
@@ -179,6 +193,12 @@ export default defineComponent({
 
 .user-menu {
   position: relative;
+}
+
+.guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .user-btn {

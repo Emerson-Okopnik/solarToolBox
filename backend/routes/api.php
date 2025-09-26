@@ -34,6 +34,7 @@ Route::middleware('jwt.auth')->group(function () {
     Route::apiResource('fabricantes', FabricanteController::class)->except(['index']);
     Route::apiResource('modulos', ModuloController::class)->except(['index']);
     Route::apiResource('inversores', InversorController::class)->parameters(['inversores' => 'inversor'])->except(['index']);
+    Route::post('/inversores/recomendados', [InversorController::class, 'recomendar']);
     Route::apiResource('climas', ClimaController::class)->except(['index']);
 
     // Projetos

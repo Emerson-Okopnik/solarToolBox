@@ -231,14 +231,140 @@
                   <label for="arranjo_nome" class="form-label">Nome *</label>
                   <input id="arranjo_nome" v-model="arranjoForm.nome" type="text" required class="form-control" />
                 </div>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="arranjo_modulos" class="form-label">Quantidade de Módulos *</label>
+                    <input
+                      id="arranjo_modulos"
+                      v-model.number="arranjoForm.quantidade_modulos"
+                      type="number"
+                      min="1"
+                      required
+                      class="form-control"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="arranjo_modulo_catalogo" class="form-label">Módulo *</label>
+                    <select
+                      id="arranjo_modulo_catalogo"
+                      v-model="arranjoForm.modulo_id"
+                      required
+                      class="form-select"
+                    >
+                      <option value="">Selecione</option>
+                      <option
+                        v-for="modulo in catalogosStore.modulos"
+                        :key="modulo.id"
+                        :value="modulo.id"
+                      >
+                        {{ getModuloOptionLabel(modulo) }}
+                      </option>
+                    </select>
+                    <div class="form-text" v-if="potenciaModuloSelecionado">
+                      Potência nominal do módulo: {{ formatNumero(potenciaModuloSelecionado, 2) }} W
+                    </div>
+                    <div class="form-text" v-if="potenciaTotalEstimado">
+                      Potência total estimada: {{ formatNumero(potenciaTotalEstimado, 2) }} W
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3 mt-3">
+                  <label for="arranjo_orientacoes" class="form-label">Orientações das Strings *</label>
+                  <textarea
+                    id="arranjo_orientacoes"
+                    v-model="arranjoForm.orientacoes_texto"
+                    rows="3"
+                    required
+                    class="form-control"
+                    placeholder="Informe uma orientação por linha (ex: Az180_Inc20)"
+                  ></textarea>
+                  <div class="form-text">Cada linha representa uma string. Utilize azimute e inclinação no formato desejado.</div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    @click="buscarInversoresCompatíveis"
+                    :disabled="!podeBuscarSugestoes || buscandoSugestoes"
+                  >
+                    <span
+                      v-if="buscandoSugestoes"
+                      class="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    {{ buscandoSugestoes ? 'Buscando...' : 'Buscar inversores compatíveis' }}
+                  </button>
+                  <span v-if="!podeBuscarSugestoes" class="text-muted small">
+                    Informe a quantidade de módulos, selecione um módulo e descreva as orientações para gerar recomendações.
+                  </span
+                  >
+                </div>
+                <div v-if="erroSugestoes" class="alert alert-danger py-2">{{ erroSugestoes }}</div>
+                <div v-if="resumoRecomendacao" class="alert alert-info py-2">
+                  <div class="small fw-semibold mb-1">Resumo das strings identificadas</div>
+                  <div class="d-flex flex-wrap gap-3 small">
+                    <span><strong>{{ resumoRecomendacao.total_strings }}</strong> strings</span>
+                    <span>{{ resumoRecomendacao.modulos_por_string }} módulos/string</span>
+                    <span>{{ formatNumero(resumoRecomendacao.potencia_por_string) }} W/string</span>
+                    <span>{{ formatNumero(resumoRecomendacao.potencia_por_modulo) }} W/módulo</span>
+                  </div>
+                </div>
                 <div class="mb-3">
                   <label for="arranjo_inversor" class="form-label">Inversor *</label>
                   <select id="arranjo_inversor" v-model.number="arranjoForm.inversor_id" required class="form-select">
                     <option value="">Selecione</option>
-                    <option v-for="inversor in catalogosStore.inversores" :key="inversor.id" :value="inversor.id">
-                      {{ inversor.modelo }} - {{ inversor.potencia_nominal }}W
+                    <option v-for="opcao in inversorOptions" :key="opcao.id" :value="opcao.id">
+                      {{ opcao.label }}
                     </option>
                   </select>
+                  <div v-if="!sugestoesInversores.length" class="form-text">
+                    Sem recomendações automáticas no momento. Utilize o catálogo completo para selecionar o inversor.
+                  </div>
+                </div>
+                <div v-if="sugestoesInversores.length" class="mb-3">
+                  <div class="fw-semibold mb-2">Inversores compatíveis sugeridos</div>
+                  <div
+                    v-for="sugestao in sugestoesInversores"
+                    :key="sugestao.inversor.id"
+                    class="border rounded p-2 mb-2 bg-light"
+                  >
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <div class="fw-semibold">{{ sugestao.inversor.modelo }}</div>
+                        <div v-if="sugestao.inversor.fabricante" class="text-muted small">
+                          {{ sugestao.inversor.fabricante }}
+                        </div>
+                      </div>
+                      <span
+                        v-if="arranjoForm.inversor_id === sugestao.inversor.id"
+                        class="badge bg-primary"
+                        >Selecionado</span
+                      >
+                    </div>
+                    <div class="small mt-2">
+                      <span class="badge bg-success me-1">Oversizing {{ formatNumero(sugestao.metricas.fator_oversizing) }}%</span>
+                      <span class="badge bg-secondary">Margem DC {{ formatNumero(sugestao.metricas.margem_potencia_dc) }} W</span>
+                    </div>
+                    <ul class="small mb-0 mt-2 ps-3">
+                      <li v-for="mppt in sugestao.distribuicao" :key="mppt.mppt">
+                        MPPT {{ mppt.mppt }} — {{ mppt.strings_alocadas }}/{{ mppt.capacidade_strings }} strings
+                        <span v-if="mppt.orientacoes.length">
+                          •
+                          <span
+                            v-for="orientacao in mppt.orientacoes"
+                            :key="`${mppt.mppt}-${orientacao.identificador}`"
+                            class="me-1"
+                          >
+                            {{ orientacao.strings }}×{{ orientacao.identificador }}
+                          </span>
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div v-else-if="resumoRecomendacao && !buscandoSugestoes" class="alert alert-warning py-2">
+                  Nenhum inversor compatível foi encontrado. Ajuste os parâmetros informados e tente novamente.
                 </div>
               </div>
               <div class="modal-footer">
@@ -352,6 +478,7 @@ import { useProjetosStore } from '@/stores/projetos'
 import { useCatalogosStore } from '@/stores/catalogos'
 import { useToast } from 'vue-toastification'
 import { catalogosService } from '@/services/catalogos'
+import { inversoresService } from '@/services/inversores'
 
 const route = useRoute()
 const projetosStore = useProjetosStore()
@@ -368,10 +495,294 @@ const createDefaultArranjoForm = () => ({
   nome: '',
   inversor_id: '',
   descricao: '',
-  fator_sombreamento: 1
+  fator_sombreamento: 1,
+  quantidade_modulos: null,
+  modulo_id: '',
+  orientacoes_texto: ''
 })
 const arranjoForm = ref(createDefaultArranjoForm())
 const editingArranjo = ref(null)
+
+const sugestoesInversores = ref([])
+const resumoRecomendacao = ref(null)
+const erroSugestoes = ref('')
+const buscandoSugestoes = ref(false)
+
+const formatNumero = (valor, fractionDigits = 2) => {
+  const numero = Number(valor)
+
+  if (!Number.isFinite(numero)) {
+    return '--'
+  }
+
+  return numero.toLocaleString('pt-BR', {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits
+  })
+}
+
+const orientacoesList = computed(() =>
+  (arranjoForm.value.orientacoes_texto || '')
+    .split(/\r?\n/)
+    .map((texto) => texto.trim())
+    .filter(Boolean)
+)
+
+const moduloSelecionado = computed(() => {
+  const moduloId = arranjoForm.value.modulo_id
+
+  if (!moduloId) {
+    return null
+  }
+
+  const idNormalizado = Number(moduloId)
+
+  return (
+    catalogosStore.modulos.find((modulo) => {
+      const idModulo = Number(modulo?.id)
+
+      return Number.isNaN(idModulo) ? modulo?.id === moduloId : idModulo === idNormalizado
+    }) || null
+  )
+})
+
+const potenciaModuloSelecionado = computed(() => {
+  const modulo = moduloSelecionado.value
+
+  if (!modulo) {
+    return 0
+  }
+
+  const potencia = Number(modulo?.potencia_nominal ?? modulo?.potencia)
+
+  return Number.isFinite(potencia) && potencia > 0 ? potencia : 0
+})
+
+const potenciaTotalEstimado = computed(() => {
+  const quantidade = Number(arranjoForm.value.quantidade_modulos)
+  const potenciaModulo = potenciaModuloSelecionado.value
+
+  if (quantidade > 0 && potenciaModulo > 0) {
+    return quantidade * potenciaModulo
+  }
+
+  return 0
+})
+
+const podeBuscarSugestoes = computed(() => {
+  const quantidade = Number(arranjoForm.value.quantidade_modulos)
+  const potencia = Number(potenciaTotalEstimado.value)
+  const moduloId = arranjoForm.value.modulo_id
+
+  return (
+    quantidade > 0 &&
+    Boolean(moduloId) &&
+    Number.isFinite(potencia) &&
+    potencia > 0 &&
+    orientacoesList.value.length > 0
+  )
+})
+
+const inversorOptions = computed(() => {
+  const recomendados = sugestoesInversores.value.map((item) => {
+    const potenciaAc = formatNumero(item.inversor.potencia_ac_nominal, 0)
+    const oversizing = formatNumero(item.metricas?.fator_oversizing, 2)
+    const fabricante = item.inversor.fabricante ? ` • ${item.inversor.fabricante}` : ''
+
+    return {
+      id: item.inversor.id,
+      label: `${item.inversor.modelo}${fabricante} • ${potenciaAc} W • Oversizing ${oversizing}%`
+    }
+  })
+
+  const catalogo = (catalogosStore.inversores || []).map((inversor) => {
+    const potencia = formatNumero(inversor.potencia_ac_nominal ?? inversor.potencia_nominal, 0)
+    const fabricante = inversor.fabricante?.nome ? ` • ${inversor.fabricante.nome}` : ''
+
+    return {
+      id: inversor.id,
+      label: `${inversor.modelo}${fabricante} • ${potencia} W`
+    }
+  })
+
+  const unicos = []
+  const vistos = new Set()
+
+  const adicionar = (opcao) => {
+    if (!vistos.has(opcao.id)) {
+      vistos.add(opcao.id)
+      unicos.push(opcao)
+    }
+  }
+
+  recomendados.forEach(adicionar)
+  catalogo.forEach(adicionar)
+
+  return unicos
+})
+
+const resetarSugestoes = () => {
+  sugestoesInversores.value = []
+  resumoRecomendacao.value = null
+  erroSugestoes.value = ''
+}
+
+const formatarOrientacaoString = (string) => {
+  const formatValor = (valor) => {
+    const numero = Number(valor)
+    if (!Number.isFinite(numero)) {
+      return '0.00'
+    }
+
+    return numero.toFixed(2)
+  }
+
+  return `Az${formatValor(string?.azimute)}_Inc${formatValor(string?.inclinacao)}`
+}
+
+const calcularTotalModulos = (strings = []) =>
+  strings.reduce((total, item) => {
+    const totalInformado = Number(item?.total_modulos)
+
+    if (Number.isFinite(totalInformado) && totalInformado > 0) {
+      return total + totalInformado
+    }
+
+    const serie = Number(item?.num_modulos_serie ?? 0)
+    const paralelo = Number(item?.num_strings_paralelo ?? 1)
+
+    if (serie > 0) {
+      const paraleloValido = Number.isFinite(paralelo) && paralelo > 0 ? paralelo : 1
+      return total + serie * paraleloValido
+    }
+
+    return total
+  }, 0)
+
+const calcularPotenciaStrings = (strings = []) =>
+  strings.reduce((total, item) => {
+    const potencia = Number(item?.potencia_total)
+
+    if (Number.isFinite(potencia)) {
+      return total + potencia
+    }
+
+    return total
+  }, 0)
+
+const inferModuloId = (strings = []) => {
+  const ids = strings
+    .map((item) => item?.modulo_id ?? item?.modulo?.id)
+    .filter((id) => id !== null && id !== undefined && id !== '')
+
+  if (ids.length) {
+    const primeiro = ids[0]
+    const numero = Number(primeiro)
+
+    return Number.isNaN(numero) ? primeiro : numero
+  }
+
+  const totalModulos = calcularTotalModulos(strings)
+  const potenciaTotal = calcularPotenciaStrings(strings)
+
+  if (totalModulos > 0 && potenciaTotal > 0) {
+    const potenciaModulo = potenciaTotal / totalModulos
+
+    const moduloEncontrado = catalogosStore.modulos.find((modulo) => {
+      const potenciaCatalogo = Number(modulo?.potencia_nominal ?? modulo?.potencia)
+
+      return Number.isFinite(potenciaCatalogo) && Math.abs(potenciaCatalogo - potenciaModulo) < 0.51
+    })
+
+    if (moduloEncontrado) {
+      const numeroId = Number(moduloEncontrado.id)
+      return Number.isNaN(numeroId) ? moduloEncontrado.id : numeroId
+    }
+  }
+
+  return ''
+}
+watch(
+  () => [
+    arranjoForm.value.quantidade_modulos,
+    arranjoForm.value.modulo_id,
+    arranjoForm.value.orientacoes_texto
+  ],
+  () => {
+    if (!buscandoSugestoes.value) {
+      resetarSugestoes()
+    }
+  }
+)
+
+const buscarInversoresCompatíveis = async () => {
+  if (!podeBuscarSugestoes.value) {
+    erroSugestoes.value = 'Preencha a quantidade de módulos, selecione um módulo do catálogo e informe as orientações das strings.'
+    return
+  }
+
+  buscandoSugestoes.value = true
+  erroSugestoes.value = ''
+  resumoRecomendacao.value = null
+  sugestoesInversores.value = []
+
+  try {
+    const potenciaTotal = Number(potenciaTotalEstimado.value)
+
+    if (!Number.isFinite(potenciaTotal) || potenciaTotal <= 0) {
+      erroSugestoes.value =
+        'Não foi possível calcular a potência total estimada. Verifique a quantidade informada e o módulo selecionado.'
+      return
+    }
+
+    const payload = {
+      quantidade_modulos: Number(arranjoForm.value.quantidade_modulos),
+      potencia_total: potenciaTotal,
+      orientacoes: orientacoesList.value
+    }
+
+    const response = await inversoresService.recomendar(payload)
+
+    if (!response?.success) {
+      erroSugestoes.value = response?.message || 'Não foi possível calcular recomendações.'
+      return
+    }
+
+    const dados = response.data ?? {}
+
+    const potenciaPorModuloResposta = Number(dados.potencia_por_modulo ?? 0)
+    const potenciaModulo = potenciaModuloSelecionado.value
+
+    resumoRecomendacao.value = {
+      total_strings: dados.total_strings ?? 0,
+      modulos_por_string: dados.modulos_por_string ?? 0,
+      potencia_por_string: dados.potencia_por_string ?? 0,
+      potencia_por_modulo:
+        Number.isFinite(potenciaPorModuloResposta) && potenciaPorModuloResposta > 0
+          ? potenciaPorModuloResposta
+          : potenciaModulo
+    }
+
+    sugestoesInversores.value = dados.inversores ?? []
+
+    if (sugestoesInversores.value.length) {
+      const selecionado = sugestoesInversores.value.find(
+        (item) => item.inversor.id === arranjoForm.value.inversor_id
+      )
+
+      if (!selecionado) {
+        arranjoForm.value.inversor_id = sugestoesInversores.value[0].inversor.id
+      }
+    } else if (!catalogosStore.inversores.some((inv) => inv.id === arranjoForm.value.inversor_id)) {
+      arranjoForm.value.inversor_id = ''
+    }
+  } catch (error) {
+    erroSugestoes.value =
+      error.response?.data?.message || 'Erro ao buscar inversores compatíveis.'
+  } finally {
+    buscandoSugestoes.value = false
+  }
+}
 
 const showStringModal = ref(false)
 const salvandoString = ref(false)
@@ -570,12 +981,26 @@ const executarAnalise = async () => {
 
 const openArranjoModal = (arranjo = null) => {
   editingArranjo.value = arranjo
+  resetarSugestoes()
+  erroSugestoes.value = ''
+
   if (arranjo) {
+    const strings = arranjo.strings || []
+    const totalModulos = calcularTotalModulos(strings)
+    const moduloInferido = inferModuloId(strings)
+    const orientacoesTexto = strings.length
+      ? strings.map((string) => formatarOrientacaoString(string)).join('\n')
+      : ''
+
     arranjoForm.value = {
+      ...createDefaultArranjoForm(),
       nome: arranjo.nome || '',
       inversor_id: arranjo.inversor_id || arranjo.inversor?.id || '',
       descricao: arranjo.descricao || '',
-      fator_sombreamento: arranjo.fator_sombreamento ?? 1
+      fator_sombreamento: arranjo.fator_sombreamento ?? 1,
+      quantidade_modulos: totalModulos || null,
+      modulo_id: moduloInferido,
+      orientacoes_texto: orientacoesTexto
     }
   } else {
     arranjoForm.value = createDefaultArranjoForm()
@@ -586,17 +1011,32 @@ const openArranjoModal = (arranjo = null) => {
 const closeArranjoModal = () => {
   showArranjoModal.value = false
   editingArranjo.value = null
+  resetarSugestoes()
+  erroSugestoes.value = ''
+  buscandoSugestoes.value = false
   arranjoForm.value = createDefaultArranjoForm()
 }
 
 const salvarArranjo = async () => {
+  if (!arranjoForm.value.inversor_id) {
+    toast.error('Selecione um inversor compatível antes de salvar o arranjo.')
+    return
+  }
+
   salvandoArranjo.value = true
+
+  const payload = {
+    nome: arranjoForm.value.nome,
+    inversor_id: arranjoForm.value.inversor_id,
+    descricao: arranjoForm.value.descricao,
+    fator_sombreamento: arranjoForm.value.fator_sombreamento ?? 1
+  }
   try {
     if (editingArranjo.value) {
-      await projetosStore.atualizarArranjo(editingArranjo.value.id, arranjoForm.value)
+      await projetosStore.atualizarArranjo(editingArranjo.value.id, payload)
       toast.success('Arranjo atualizado com sucesso!')
     } else {
-      await projetosStore.criarArranjo(projeto.value.id, arranjoForm.value)
+      await projetosStore.criarArranjo(projeto.value.id, payload)
       toast.success('Arranjo criado com sucesso!')
     }
     closeArranjoModal()

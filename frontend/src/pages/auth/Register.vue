@@ -97,6 +97,13 @@
         <div v-if="loading" class="loading-spinner mr-2"></div>
         {{ loading ? 'Criando conta...' : 'Criar conta' }}
       </button>
+
+      <router-link
+        to="/catalogos"
+        class="w-full btn btn-secondary inline-flex justify-center mt-4"
+      >
+        Acessar catálogo
+      </router-link>
     </form>
   </div>
 </template>
