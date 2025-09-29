@@ -233,22 +233,20 @@
                 </div>
                 <div class="row g-3">
                   <div class="col-md-6">
-                    <label for="arranjo_modulos" class="form-label">Quantidade de Módulos *</label>
+                    <label for="arranjo_modulos" class="form-label">Quantidade de Módulos</label>
                     <input
                       id="arranjo_modulos"
                       v-model.number="arranjoForm.quantidade_modulos"
                       type="number"
                       min="1"
-                      required
                       class="form-control"
                     />
                   </div>
                   <div class="col-md-6">
-                    <label for="arranjo_modulo_catalogo" class="form-label">Módulo *</label>
+                    <label for="arranjo_modulo_catalogo" class="form-label">Módulo</label>
                     <select
                       id="arranjo_modulo_catalogo"
                       v-model="arranjoForm.modulo_id"
-                      required
                       class="form-select"
                     >
                       <option value="">Selecione</option>
@@ -269,12 +267,11 @@
                   </div>
                 </div>
                 <div class="mb-3 mt-3">
-                  <label for="arranjo_orientacoes" class="form-label">Orientações das Strings *</label>
+                  <label for="arranjo_orientacoes" class="form-label">Orientações das Strings</label>
                   <textarea
                     id="arranjo_orientacoes"
                     v-model="arranjoForm.orientacoes_texto"
                     rows="3"
-                    required
                     class="form-control"
                     placeholder="Informe uma orientação por linha (ex: Az180_Inc20)"
                   ></textarea>
