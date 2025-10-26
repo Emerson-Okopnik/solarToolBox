@@ -122,7 +122,7 @@ class SeriesCalculatorService
 
     /**
      * Calcula Vmp em operação (NOCT)
-     */
+    */
     private function calcularVmpOperacao(Modulo $modulo, int $ns, float $tempOperacao)
     {
         $deltaT = $tempOperacao - 25; // STC = 25°C

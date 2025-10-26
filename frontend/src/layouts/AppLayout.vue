@@ -3,7 +3,7 @@
     <!-- Sidebar -->
     <div class="sidebar bg-light border-end " :class="{ 'open': sidebarOpen }">
       <div class="sidebar-header">
-        <h1 class="h4 m-0">Solar Toolbox</h1>
+        <h1 class="h4 m-0">Solar Inverter Tools</h1>
       </div>
       
       <nav class="sidebar-nav nav flex-column">
