@@ -1,58 +1,48 @@
-# Solar Toolbox - Sistema de Análise de Compatibilidade Solar
+# Solar Toolbox
 
-Sistema completo para análise de compatibilidade entre módulos fotovoltaicos e inversores, com cálculos de capacidade por MPPT, verificação de conexões série/paralelo e distribuição otimizada de strings.
+Sistema completo para análise de compatibilidade entre módulos fotovoltaicos e inversores. O projeto oferece cálculos de capacidade por MPPT, verificação de conexões série/paralelo e distribuição otimizada de strings, com API RESTful em Laravel e interface Vue 3.
 
-## 🚀 Funcionalidades
+## 📦 Visão geral
+- **Compatibilidade de módulos** com validação de diferença ≤ 5% (configurável).
+- **Capacidade técnica por MPPT**: janela MPPT (Vmppt_min ≤ Vmp_string_op ≤ Vmppt_max), Voc a frio ≤ Vdc_max e I_total ≤ Idc_in_max.
+- **Distribuição inteligente de strings** por orientação/tilt entre os MPPTs.
+- **Autenticação** via Laravel Sanctum.
+- **Testes**: PHPUnit no backend e Vitest no frontend.
 
-### Requisitos Funcionais Implementados
+## 🗂️ Estrutura do projeto
+```
+.
+├── backend/    # API Laravel 10
+└── frontend/   # SPA Vue 3 + Vite + Tailwind
+```
 
-- **RF01**: Consulta de compatibilidade entre módulos (série/paralelo) com limite de diferença ≤ 5% (configurável)
-- **RF02**: Cálculo de capacidade técnica do inversor por MPPT:
-  - Validação da janela MPPT (Vmppt_min ≤ Vmp_string_op ≤ Vmppt_max)
-  - Verificação de Voc a frio ≤ Vdc_max
-  - Controle de I_total ≤ Idc_in_max por MPPT
-- **RF03**: Distribuição inteligente de strings por orientação/tilt nos MPPTs
-
-### Características Técnicas
-
-- **Backend**: Laravel 10 com API RESTful
-- **Frontend**: Vue 3 + Vite + Tailwind CSS
-- **Banco de Dados**: MySQL/PostgreSQL
-- **Autenticação**: Laravel Sanctum
-- **Testes**: PHPUnit (Backend) + Vitest (Frontend)
-
-## 📋 Pré-requisitos
-
+## 🔧 Requisitos
 ### Backend
 - PHP 8.2+
 - Composer
-- MySQL 8.0+ ou PostgreSQL 13+
+- PostgreSQL 13+
 - Redis (opcional, para cache)
 
 ### Frontend
 - Node.js 18+
 - npm ou yarn
 
-## 🛠️ Instalação
-
-### 1. Clone o repositório
-\`\`\`bash
+## 🚀 Como executar
+### 1. Clonar o repositório
+```bash
 git clone https://github.com/seu-usuario/solar-toolbox.git
 cd solar-toolbox
-\`\`\`
+```
 
-### 2. Configuração do Backend
-
-\`\`\`bash
+### 2. Backend (Laravel)
+```bash
 cd backend
 
 # Instalar dependências
 composer install
 
-# Copiar arquivo de ambiente
+# Copiar e ajustar variáveis de ambiente
 cp .env.example .env
-
-# Gerar chave da aplicação
 php artisan key:generate
 
 # Configurar banco de dados no .env
@@ -63,65 +53,54 @@ DB_DATABASE=solar_toolbox
 DB_USERNAME=seu_usuario
 DB_PASSWORD=sua_senha
 
-# Executar migrations e seeders
+# Rodar migrations e seeders
 php artisan migrate --seed
 
-# Iniciar servidor de desenvolvimento
-php artisan serve
-\`\`\`
+# Subir o servidor (defina uma porta livre, ex.: 8001)
+php artisan serve --port=8001
+```
 
-### 3. Configuração do Frontend
-
-\`\`\`bash
+### 3. Frontend (Vue 3 + Vite)
+```bash
 cd frontend
 
 # Instalar dependências
 npm install
 
-# Configurar variáveis de ambiente
-cp .env.example .env.local
+# Variáveis de ambiente
+touch .env.local
+# Ajuste a URL da API para a porta usada pelo backend
+VITE_API_URL=http://localhost:8001/api
 
-# Configurar URL da API no .env.local
-VITE_API_URL=http://localhost:8000/api
-
-# Iniciar servidor de desenvolvimento
+# Subir o servidor de desenvolvimento (porta configurada em package.json)
 npm run dev
-\`\`\`
+```
+> Observação: o script `npm run dev` está configurado para usar a porta 8000. Caso o backend esteja nessa porta, escolha outra (por exemplo 8001) ao iniciar o Laravel ou ajuste o script/variável `VITE_API_URL` conforme necessário.
 
-## 🧪 Executando Testes
-
+## 🧪 Testes
 ### Backend
-\`\`\`bash
+```bash
 cd backend
-
-# Executar todos os testes
-php artisan test
-
-# Executar testes específicos
-php artisan test --filter=SeriesCalculatorTest
-
-# Executar com cobertura
-php artisan test --coverage
-\`\`\`
+php artisan test                 # Todos os testes
+php artisan test --filter=NomeDoTeste  # Teste específico
+php artisan test --coverage      # Cobertura
+```
 
 ### Frontend
-\`\`\`bash
+```bash
 cd frontend
+npm run test          # Vitest
+npm run test:watch    # Modo watch
+npm run test:coverage # Cobertura
+```
 
-# Executar testes
-npm run test
+## 📚 Endpoints básicos
+- `POST /api/login`
+- `POST /api/register`
+- `POST /api/logout`
 
-# Executar testes em modo watch
-npm run test:watch
+## 🤝 Contribuição
+Sinta-se à vontade para abrir issues ou pull requests. Descreva o contexto da alteração, passos para reproduzir (quando aplicável) e inclua testes relevantes.
 
-# Executar com cobertura
-npm run test:coverage
-\`\`\`
-
-## 📚 Documentação da API
-
-### Autenticação
-```http
-POST /api/login
-POST /api/register
-POST /api/logout
+## 📜 Licença
+Este projeto está licenciado sob os termos especificados no repositório. Verifique o arquivo de licença correspondente, se disponível.
